@@ -1,0 +1,117 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Test API with Streaming",
+    "version": "1.0.0",
+    "description": "Sample OpenAPI specification with streaming endpoints"
+  },
+  "paths": {
+    "/events": {
+      "get": {
+        "operationId": "streamEvents",
+        "tags": ["events"],
+        "summary": "Stream server-sent events",
+        "responses": {
+          "200": {
+            "description": "Server-Sent Events stream",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/data/stream": {
+      "get": {
+        "operationId": "streamData",
+        "tags": ["data"],
+        "summary": "Stream data as NDJSON",
+        "responses": {
+          "200": {
+            "description": "Newline-delimited JSON stream",
+            "content": {
+              "application/x-ndjson": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "timestamp": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "value": {
+                        "type": "number"
+                      }
+                    },
+                    "required": ["id", "timestamp", "value"]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/logs": {
+      "get": {
+        "operationId": "streamLogs",
+        "tags": ["logs"],
+        "summary": "Stream application logs",
+        "responses": {
+          "200": {
+            "description": "Chunked log stream",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users": {
+      "get": {
+        "operationId": "listUsers",
+        "tags": ["users"],
+        "summary": "List users (non-streaming)",
+        "responses": {
+          "200": {
+            "description": "List of users",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {}
+  }
+}

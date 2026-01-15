@@ -1,0 +1,100 @@
+// Generated types from OpenAPI components.schemas
+
+{{! Generate import statements for predefined types actually used in this schema file }}
+{{#if (getSchemaPredefinedTypes)}}
+{{#each (groupByPackage (getSchemaPredefinedTypes))}}
+import type { {{joinTypes this.types}} } from '{{this.package}}';
+{{/each}}
+{{/if}}
+
+export type Enum<T> = T[keyof T];
+
+{{! Enums: const objects + union types }}
+{{#if (gt (len IR.modelDefs) 0)}}
+{{#each IR.modelDefs}}
+  {{#if (eq this.schema.kind "enum")}}
+  export const {{this.name}} = {
+    {{#each this.schema.enumValues as |v|}}
+    "{{v}}": {{#if (or (eq v "true") (eq v "false"))}}{{v}}{{else if (reMatch "^-?[0-9]+(\\.[0-9]+)?$" v)}}{{v}}{{else}}"{{v}}"{{/if}},
+    {{/each}}
+  } as const;
+
+  export type {{this.name}} = Enum<typeof {{this.name}}>;
+
+  {{/if}}
+{{/each}}
+
+{{! Simple types: generate as regular type exports (not in namespace) }}
+{{! Skip predefined types - they are imported instead }}
+{{#each IR.modelDefs}}
+  {{#if (or (eq this.schema.kind "string") (eq this.schema.kind "number") (eq this.schema.kind "integer") (eq this.schema.kind "boolean") (eq this.schema.kind "null"))}}
+  {{#unless (isPredefinedType this.name)}}
+  {{#if this.annotations.description}}
+  /**
+   * {{decodeHtml (replace this.annotations.description "*/" "*\\/")}}
+   */
+  {{/if}}
+  export type {{this.name}} = {{tsTypeStripNs this.schema}};
+  {{/unless}}
+  {{/if}}
+{{/each}}
+
+{{! Objects and other named models: render interfaces/types from structured IR }}
+{{#each IR.modelDefs}}
+  {{#unless (or (eq this.schema.kind "string") (eq this.schema.kind "number") (eq this.schema.kind "integer") (eq this.schema.kind "boolean") (eq this.schema.kind "null"))}}
+  {{#if this.annotations.description}}
+  /**
+   * {{decodeHtml (replace this.annotations.description "*/" "*\\/")}}
+   */
+  {{/if}}
+  {{#if (eq this.schema.kind "object")}}
+  export interface {{this.name}} {
+    {{#each this.schema.properties}}
+    {{#if this.annotations.description}}
+    /** {{decodeHtml (replace this.annotations.description "*/" "*\\/")}} */
+    {{/if}}
+    {{quotePropName this.name}}{{#unless this.required}}?{{/unless}}: {{tsTypeStripNs this.type}};
+    {{/each}}
+  }
+
+  {{else if (eq this.schema.kind "ref")}}
+  export type {{this.name}} = {{tsTypeStripNs this.schema}};
+
+  {{else if (or (eq this.schema.kind "oneOf") (eq this.schema.kind "anyOf") (eq this.schema.kind "allOf"))}}
+  export type {{this.name}} = {{tsTypeStripNs this.schema}};
+
+  {{else if (eq this.schema.kind "array")}}
+  export type {{this.name}} = {{tsTypeStripNs this.schema}};
+
+  {{/if}}
+  {{/unless}}
+{{/each}}
+{{/if}}
+
+{{#if IR.services}}
+
+// Operation query parameter interfaces
+
+{{#each IR.services}}
+  {{#each this.operations}}
+    {{#if (gt (len this.queryParams) 0)}}
+  /**
+   * Query params for {{../tag}}.{{pascal (methodName this)}}
+  {{~#if this.description~}}
+   *
+   * {{decodeHtml (replace this.description "*/" "*\\/")}}
+  {{~/if~}}
+   */
+  export interface {{pascal ../tag}}{{pascal (methodName this)}}Query {
+    {{#each this.queryParams}}
+    {{#if this.description}}
+    /** {{decodeHtml (replace this.description "*/" "*\\/")}} */
+    {{/if}}
+    {{quotePropName this.name}}{{#unless this.required}}?{{/unless}}: {{tsTypeStripNs this.schema}};
+    {{/each}}
+  }
+
+    {{/if}}
+  {{/each}}
+{{/each}}
+{{/if}}

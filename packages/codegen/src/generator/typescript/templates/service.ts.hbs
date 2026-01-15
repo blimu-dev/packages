@@ -1,0 +1,113 @@
+import { CoreClient } from "../client";
+import * as Schema from "../schema";
+{{! Generate import statements for predefined types used in this specific service }}
+{{#if (getServicePredefinedTypes Service)}}
+{{#each (groupByPackage (getServicePredefinedTypes Service))}}
+import type { {{joinTypes this.types}} } from '{{this.package}}';
+{{/each}}
+{{/if}}
+
+export class {{serviceName Service.tag}} {
+  constructor(private core: CoreClient) {}
+  {{#each Service.operations}}
+
+  /**
+   * {{this.method}} {{this.path}}
+  {{~#if summary~}}
+   *
+   * @summary {{decodeHtml (replace summary "*/" "*\\/")}}
+  {{~else if response.description~}}
+   *
+   * @returns {{decodeHtml (replace response.description "*/" "*\\/")}}
+  {{~/if~}}
+  {{~#if description~}}
+   *
+   * @description {{decodeHtml (replace description "*/" "*\\/")}}
+  {{~/if~}}
+   */
+  {{#if (isStreaming this)}}
+  async *{{methodName this}}(
+    {{#each (methodSignature this) as |param|}}
+    {{param}}{{#unless @last}},{{/unless}}
+    {{/each}}
+  ): AsyncGenerator<{{{streamingItemType this}}}, void, unknown> {
+    yield* this.core.requestStream({
+      method: "{{this.method}}",
+      path: {{pathTemplate this}},
+      {{#if (gt (len queryParams) 0)}}
+      query,
+      {{/if}}
+      {{#if requestBody}}
+      {{#if (eq requestBody.contentType "application/json")}}
+      headers: {
+        ...(init?.headers || {}),
+        "content-type": "application/json",
+      },
+      body: JSON.stringify(body),
+      {{else if (eq requestBody.contentType "multipart/form-data")}}
+      body: (body as any),
+      {{else if (eq requestBody.contentType "application/x-www-form-urlencoded")}}
+      headers: {
+        ...(init?.headers || {}),
+        "content-type": "application/x-www-form-urlencoded",
+      },
+      body: (body as any),
+      {{else}}
+      body: (body as any),
+      {{/if}}
+      {{/if}}
+      contentType: "{{response.contentType}}",
+      streamingFormat: "{{response.streamingFormat}}",
+      ...(init || {}),
+    });
+  }
+  {{else}}
+  {{methodName this}}(
+    {{#each (methodSignature this) as |param|}}
+    {{param}}{{#unless @last}},{{/unless}}
+    {{/each}}
+  ): Promise<{{{tsType response.schema}}}> {
+    return this.core.request({
+      method: "{{this.method}}",
+      path: {{pathTemplate this}},
+      {{#if (gt (len queryParams) 0)}}
+      query,
+      {{/if}}
+      {{#if requestBody}}
+      {{#if (eq requestBody.contentType "application/json")}}
+      headers: {
+        ...(init?.headers || {}),
+        "content-type": "application/json",
+      },
+      body: JSON.stringify(body),
+      {{else if (eq requestBody.contentType "multipart/form-data")}}
+      body: (body as any),
+      {{else if (eq requestBody.contentType "application/x-www-form-urlencoded")}}
+      headers: {
+        ...(init?.headers || {}),
+        "content-type": "application/x-www-form-urlencoded",
+      },
+      body: (body as any),
+      {{else}}
+      body: (body as any),
+      {{/if}}
+      {{/if}}
+      ...(init || {}),
+    });
+  }
+  {{/if}}
+  {{#if ../Client.includeQueryKeys}}
+  /**
+   * @summary Get query keys for {{methodName this}}
+   * @returns [{{queryKeyBase this}}{{#each (queryKeyArgs this)}}, {{this}}{{/each}}]
+   */
+  {{methodName this}}__queryKeys(
+    {{~#each (methodSignatureNoInit this) as |param|~}}
+    {{param}}{{#unless @last}},{{/unless}}
+    {{~/each~}}
+  ) {
+    return [{{queryKeyBase this}}{{#each (queryKeyArgs this)}}, {{this}}{{/each}}] as const;
+  }
+  {{/if}}
+  {{/each}}
+}

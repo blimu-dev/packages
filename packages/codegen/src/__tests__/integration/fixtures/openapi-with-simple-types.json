@@ -1,0 +1,113 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Test API with Simple Types",
+    "version": "1.0.0"
+  },
+  "components": {
+    "schemas": {
+      "ResourceType": {
+        "type": "string",
+        "description": "The type of resource"
+      },
+      "EntitlementType": {
+        "type": "string",
+        "description": "The type of entitlement"
+      },
+      "PlanType": {
+        "type": "string",
+        "description": "The type of plan"
+      },
+      "LimitType": {
+        "type": "string",
+        "description": "The type of limit"
+      },
+      "UsageLimitType": {
+        "type": "string",
+        "description": "The type of usage-based limit"
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "resourceType": {
+            "$ref": "#/components/schemas/ResourceType"
+          }
+        },
+        "required": ["id", "name"]
+      }
+    }
+  },
+  "paths": {
+    "/v1/resources/{resourceType}": {
+      "get": {
+        "operationId": "ResourceController_list",
+        "tags": ["Resources"],
+        "parameters": [
+          {
+            "name": "resourceType",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/ResourceType"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/User"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/entitlements/check": {
+      "post": {
+        "operationId": "EntitlementsController_check",
+        "tags": ["Entitlements"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "entitlement": {
+                    "$ref": "#/components/schemas/EntitlementType"
+                  }
+                },
+                "required": ["entitlement"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

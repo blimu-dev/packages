@@ -1,0 +1,126 @@
+# {{Client.name}} TypeScript SDK
+
+This is an auto-generated TypeScript/JavaScript SDK for the {{Client.name}} API.
+
+## Installation
+
+```bash
+npm install {{Client.packageName}}
+# or
+yarn add {{Client.packageName}}
+```
+
+## Quick Start
+
+```typescript
+import { {{pascal Client.name}}Client } from '{{Client.packageName}}';
+
+// Create a new client
+const client = new {{pascal Client.name}}Client({
+  baseURL: '{{Client.defaultBaseURL}}',
+  timeoutMs: 10000,
+  retry: { retries: 2, strategy: 'exponential', backoffMs: 300, retryOn: [429, 500, 502, 503, 504] },
+  // Auth configuration
+  auth: {
+    strategies: [
+      {
+        type: 'bearer',
+        token: process.env.API_TOKEN,
+      },
+    ],
+  },
+});
+
+{{#each IR.services}}
+{{#if (gt (len this.operations) 0)}}
+{{#with (index this.operations 0) as |firstOp|}}
+// Example: {{firstOp.summary}}
+try {
+  const result = await client.{{serviceProp ../tag}}.{{methodName firstOp}}(
+    {{#each (pathParamsInOrder firstOp)}}{{#if @index}}, {{/if}}'{{this.name}}'{{/each}}
+    {{#if (gt (len firstOp.queryParams) 0)}}{{#if (gt (len (pathParamsInOrder firstOp)) 0)}}, {{/if}}{
+      {{#each firstOp.queryParams}}
+      {{#if this.required}}
+      {{this.name}}: {{#if (eq this.schema.kind "string")}}'example'{{else if (eq this.schema.kind "integer")}}123{{else if (eq this.schema.kind "boolean")}}true{{else}}undefined{{/if}},
+      {{/if}}
+      {{/each}}
+    }{{/if}}
+    {{#if firstOp.requestBody}}{{#if (or (gt (len (pathParamsInOrder firstOp)) 0) (gt (len firstOp.queryParams) 0))}}, {{/if}}{
+      // Request body data
+    }{{/if}}
+  );
+  console.log('Result:', result);
+} catch (error) {
+  // FetchError with structured data
+  console.error(error);
+}
+{{/with}}
+{{/if}}
+{{/each}}
+```
+
+## TypeScript Support
+
+This SDK is written in TypeScript and provides full type safety:
+
+```typescript
+import { {{pascal Client.name}}Client, Schema } from '{{Client.packageName}}';
+
+const client = new {{pascal Client.name}}Client({ /* config */ });
+
+// All methods are fully typed
+// Schema types are available
+{{#if IR.modelDefs}}
+{{#with (index IR.modelDefs 0) as |firstModel|}}
+const data: Schema.{{firstModel.name}} = {
+  // Fully typed object
+};
+{{/with}}
+{{/if}}
+```
+
+## Node.js Usage
+
+For Node.js environments, you may need to provide a fetch implementation:
+
+```bash
+npm install undici
+```
+
+```typescript
+import { fetch } from 'undici';
+import { {{pascal Client.name}}Client } from '{{Client.packageName}}';
+
+const client = new {{pascal Client.name}}Client({
+  baseURL: '{{Client.defaultBaseURL}}',
+  fetch,
+});
+```
+
+{{#if IR.modelDefs}}
+## Models and Types
+
+The SDK includes the following TypeScript interfaces:
+
+{{#each IR.modelDefs}}
+- **{{this.name}}**{{#if this.annotations.description}}: {{this.annotations.description}}{{/if}}
+{{/each}}
+
+All types are available under the `Schema` namespace:
+
+```typescript
+import { Schema } from '{{Client.packageName}}';
+
+// Use any model type
+const user: Schema.User = { /* ... */ };
+```
+{{/if}}
+
+## Contributing
+
+This SDK is auto-generated. Please do not edit the generated files directly. 
+If you find issues, please report them in the main project repository.
+
+## License
+
+This SDK is generated from the {{Client.name}} API specification.

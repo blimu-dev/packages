@@ -1,0 +1,142 @@
+// Generated @blimu/schema schemas from OpenAPI components.schemas
+// Use these schemas for runtime validation in forms, API requests, etc.
+
+import { schema } from "@blimu/schema";
+import * as Schema from "./schema";
+
+{{! Simple types: generate as regular Zod schema exports (not in namespace) }}
+{{#each IR.modelDefs}}
+  {{#if (or (eq this.schema.kind "string") (eq this.schema.kind "number") (eq this.schema.kind "integer") (eq this.schema.kind "boolean") (eq this.schema.kind "null"))}}
+  /**
+   * Schema for {{this.name}}
+{{#if this.annotations.description}}
+   * {{decodeHtml (replace this.annotations.description "*/" "*\\/")}}
+{{/if}}
+   */
+  export const {{this.name}}Schema = {{zodSchema this.schema}};
+  {{/if}}
+{{/each}}
+
+{{! Objects and other named models: render Zod schemas from structured IR }}
+{{#if (gt (len IR.modelDefs) 0)}}
+{{~#each IR.modelDefs}}
+  {{~#unless (or (eq this.schema.kind "string") (eq this.schema.kind "number") (eq this.schema.kind "integer") (eq this.schema.kind "boolean") (eq this.schema.kind "null"))}}
+  {{~#if (eq this.schema.kind "enum")~}}
+/**
+ * Zod schema for {{this.name}}
+{{~#if this.annotations.description~}}
+ * {{decodeHtml (replace this.annotations.description "*/" "*\\/")}}
+{{~/if~}}
+ */
+export const {{this.name}}Schema = schema.enum([
+  {{~#each this.schema.enumValues as |v|~}}
+  {{#if (or (eq v "true") (eq v "false"))}}{{v}}{{else if (reMatch "^-?[0-9]+(\\.[0-9]+)?$" v)}}{{v}}{{else}}{{json v}}{{/if}}{{#unless @last}},{{/unless}}
+  {{~/each~}}
+]);
+
+  {{~else if (eq this.schema.kind "object")~}}
+/**
+ * Zod schema for {{this.name}}
+{{~#if this.annotations.description~}}
+ * {{decodeHtml (replace this.annotations.description "*/" "*\\/")}}
+{{~/if~}}
+ */
+export const {{this.name}}Schema = schema.object({
+  {{~#each this.schema.properties~}}
+  {{~#if this.annotations.description~}}
+  /** {{decodeHtml (replace this.annotations.description "*/" "*\\/")}} */
+  {{~/if~}}
+  {{quotePropName this.name}}: {{zodSchema this.type}}{{#unless this.required}}.optional(){{/unless}},
+  {{~/each~}}
+});
+
+  {{~else if (eq this.schema.kind "ref")~}}
+/**
+ * Zod schema for {{this.name}}
+ */
+export const {{this.name}}Schema = Schema.{{this.schema.ref}}Schema;
+
+  {{~else if (eq this.schema.kind "oneOf")~}}
+/**
+ * Zod schema for {{this.name}}
+{{~#if this.annotations.description~}}
+ * {{decodeHtml (replace this.annotations.description "*/" "*\\/")}}
+{{~/if~}}
+ */
+export const {{this.name}}Schema = schema.union([
+  {{~#each this.schema.oneOf as |opt|~}}
+  {{zodSchema opt}}{{#unless @last}},{{/unless}}
+  {{~/each~}}
+]);
+
+  {{~else if (eq this.schema.kind "anyOf")~}}
+/**
+ * Zod schema for {{this.name}}
+{{~#if this.annotations.description~}}
+ * {{decodeHtml (replace this.annotations.description "*/" "*\\/")}}
+{{~/if~}}
+ */
+export const {{this.name}}Schema = schema.union([
+  {{~#each this.schema.anyOf as |opt|~}}
+  {{zodSchema opt}}{{#unless @last}},{{/unless}}
+  {{~/each~}}
+]);
+
+  {{~else if (eq this.schema.kind "allOf")~}}
+/**
+ * Zod schema for {{this.name}}
+{{~#if this.annotations.description~}}
+ * {{decodeHtml (replace this.annotations.description "*/" "*\\/")}}
+{{~/if~}}
+ */
+export const {{this.name}}Schema = {{#each this.schema.allOf}}{{#if @first}}{{zodSchema this}}{{else}}.extend({{zodSchema this}}.shape){{/if}}{{/each}};
+
+  {{~else if (eq this.schema.kind "array")~}}
+/**
+ * Zod schema for {{this.name}}
+{{~#if this.annotations.description~}}
+ * {{decodeHtml (replace this.annotations.description "*/" "*\\/")}}
+{{~/if~}}
+ */
+export const {{this.name}}Schema = schema.array({{#if this.schema.items}}{{zodSchema this.schema.items}}{{else}}schema.unknown(){{/if}});
+
+  {{~else~}}
+/**
+ * Zod schema for {{this.name}}
+{{~#if this.annotations.description~}}
+ * {{decodeHtml (replace this.annotations.description "*/" "*\\/")}}
+{{~/if~}}
+ */
+export const {{this.name}}Schema = {{zodSchema this.schema}};
+
+  {{~/if~}}
+  {{~/unless~}}
+{{~/each~}}
+{{~/if~}}
+
+{{#if IR.services}}
+
+// Operation query parameter schemas
+
+{{#each IR.services}}
+  {{#each this.operations}}
+    {{#if (gt (len this.queryParams) 0)}}
+/**
+ * Schema for query params of {{../tag}}.{{pascal (methodName this)}}
+{{~#if this.description~}}
+ * {{decodeHtml (replace this.description "*/" "*\\/")}}
+{{~/if~}}
+ */
+export const {{pascal ../tag}}{{pascal (methodName this)}}QuerySchema = schema.object({
+  {{~#each this.queryParams~}}
+  {{~#if this.description~}}
+  /** {{decodeHtml (replace this.description "*/" "*\\/")}} */
+  {{~/if~}}
+  {{quotePropName this.name}}: {{zodSchema this.schema}}{{#unless this.required}}.optional(){{/unless}},
+  {{~/each~}}
+});
+
+    {{/if}}
+  {{/each}}
+{{/each}}
+{{/if}}

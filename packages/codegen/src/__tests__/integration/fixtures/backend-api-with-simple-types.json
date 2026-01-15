@@ -1,0 +1,330 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/v1/resources/{resourceType}": {
+      "get": {
+        "description": "Retrieves a paginated list of resources of the specified type. Supports search and filtering. Resources are returned with their parent relationships and metadata.",
+        "operationId": "ResourceController_list",
+        "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "description": "API key for authentication",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "resourceType",
+            "required": true,
+            "in": "path",
+            "description": "The type of resource (e.g., \"organization\", \"workspace\", \"project\")",
+            "schema": {
+              "$ref": "#/components/schemas/ResourceType"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search query to filter resources by name",
+            "schema": {
+              "example": "engineering",
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "Page number for pagination",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Number of items per page (minimum: 1, maximum: 100)",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "example": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resources retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing API key"
+          }
+        },
+        "security": [
+          {
+            "X-API-KEY": []
+          }
+        ],
+        "summary": "List resources",
+        "tags": ["Resources"]
+      }
+    },
+    "/v1/entitlements/check": {
+      "post": {
+        "description": "Checks whether a user has permission to perform a specific action (entitlement) on a resource.",
+        "operationId": "EntitlementsController_checkEntitlement",
+        "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "description": "API key for authentication",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EntitlementCheckBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Entitlement check completed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntitlementCheckResult"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "X-API-KEY": []
+          }
+        ],
+        "summary": "Check if a user has a specific entitlement on a resource",
+        "tags": ["Entitlements"]
+      }
+    },
+    "/v1/usage/balance/{resourceType}/{resourceId}/{limitType}": {
+      "get": {
+        "description": "Retrieves the current balance of a usage wallet for a specific resource and limit type.",
+        "operationId": "UsageController_getBalance",
+        "parameters": [
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "description": "API key for authentication",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "resourceType",
+            "required": true,
+            "in": "path",
+            "description": "The type of resource",
+            "schema": {
+              "$ref": "#/components/schemas/ResourceType"
+            }
+          },
+          {
+            "name": "resourceId",
+            "required": true,
+            "in": "path",
+            "description": "The unique identifier of the resource",
+            "schema": {
+              "example": "org_123",
+              "type": "string"
+            }
+          },
+          {
+            "name": "limitType",
+            "required": true,
+            "in": "path",
+            "description": "The type of usage limit",
+            "schema": {
+              "$ref": "#/components/schemas/UsageLimitType"
+            }
+          },
+          {
+            "name": "period",
+            "required": true,
+            "in": "query",
+            "description": "Time period for the balance calculation",
+            "schema": {
+              "enum": ["monthly", "yearly", "lifetime"],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Balance retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BalanceResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "X-API-KEY": []
+          }
+        ],
+        "summary": "Get wallet balance",
+        "tags": ["Usage"]
+      }
+    }
+  },
+  "info": {
+    "title": "Backend API",
+    "description": "The Backend API documentation",
+    "version": "1.0"
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "ApiKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-KEY"
+      }
+    },
+    "schemas": {
+      "ResourceType": {
+        "type": "string",
+        "minLength": 1,
+        "description": "Resource type identifier",
+        "example": "organization"
+      },
+      "EntitlementType": {
+        "type": "string",
+        "minLength": 1,
+        "description": "Entitlement identifier",
+        "example": "organization:create_workspace"
+      },
+      "UsageLimitType": {
+        "type": "string",
+        "minLength": 1,
+        "description": "Usage-based limit type identifier",
+        "example": "api_calls_per_month"
+      },
+      "LimitType": {
+        "type": "string",
+        "minLength": 1,
+        "description": "Limit type identifier",
+        "example": "projects_per_workspace"
+      },
+      "ResourceLimitType": {
+        "type": "string",
+        "minLength": 1,
+        "description": "Resource-based limit type identifier",
+        "example": "projects_per_workspace"
+      },
+      "PlanType": {
+        "type": "string",
+        "minLength": 1,
+        "description": "Plan type identifier",
+        "example": "free"
+      },
+      "ResourceList": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "type": {
+                  "$ref": "#/components/schemas/ResourceType",
+                  "description": "The type of resource"
+                },
+                "name": {
+                  "type": "string",
+                  "nullable": true
+                }
+              },
+              "required": ["id", "type", "name"]
+            }
+          },
+          "total": {
+            "type": "number"
+          }
+        },
+        "required": ["items", "total"]
+      },
+      "EntitlementCheckBody": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "entitlement": {
+            "$ref": "#/components/schemas/EntitlementType",
+            "description": "The entitlement to check"
+          },
+          "resourceId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": ["userId", "entitlement", "resourceId"]
+      },
+      "EntitlementCheckResult": {
+        "type": "object",
+        "properties": {
+          "allowed": {
+            "type": "boolean"
+          }
+        },
+        "required": ["allowed"]
+      },
+      "BalanceResponse": {
+        "type": "object",
+        "properties": {
+          "balance": {
+            "type": "number"
+          }
+        },
+        "required": ["balance"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "security": [
+    {
+      "ApiKey": []
+    }
+  ]
+}

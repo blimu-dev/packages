@@ -1,0 +1,41 @@
+{
+  "name": "blimu-packages",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Blimu packages - A collection of open-source packages built by Blimu team.",
+  "repository": "https://github.com/blimu-dev/packages",
+  "author": "viniciusdacal",
+  "license": "MIT",
+  "workspaces": [
+    "packages/*",
+    "examples/*"
+  ],
+  "packageManager": "yarn@4.12.0",
+  "volta": {
+    "node": "25.2.1",
+    "yarn": "4.12.0"
+  },
+  "files": [
+    "packages/*/dist/**"
+  ],
+  "scripts": {
+    "build": "yarn build:codegen && yarn build:others",
+    "build:codegen": "yarn workspace @blimu/codegen build",
+    "build:others": "yarn workspace @blimu/fetch build",
+    "typecheck": "yarn workspaces foreach -A run typecheck",
+    "lint": "yarn workspaces foreach -A run lint",
+    "format": "yarn workspaces foreach -A run format",
+    "clean": "yarn workspaces foreach -A run clean",
+    "test": "yarn workspaces foreach -A run test",
+    "test:coverage": "yarn workspaces foreach -A run test:coverage"
+  },
+  "dependencies": {
+    "zod": "^4.3.5"
+  },
+  "devDependencies": {
+    "@types/inquirer": "^9.0.9",
+    "@types/node": "^25.0.8",
+    "prettier": "^3.7.4",
+    "typescript": "^5.9.3"
+  }
+}

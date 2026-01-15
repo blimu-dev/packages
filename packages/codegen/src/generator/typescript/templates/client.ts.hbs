@@ -1,0 +1,110 @@
+import { FetchClient, FetchError, type FetchClientConfig, type AuthStrategy } from "@blimu/fetch";
+
+export type ClientOption = FetchClientConfig & {
+  {{~#each IR.securitySchemes~}}
+  {{~#if (eq this.type "http")~}}
+    {{~#if (eq this.scheme "bearer")~}}
+  {{camel this.key}}?: string;
+    {{~else if (eq this.scheme "basic")~}}
+  {{camel this.key}}?: { username: string; password: string };
+    {{~/if~}}
+  {{~else if (eq this.type "apiKey")~}}
+  {{camel this.key}}?: string;
+  {{~/if~}}
+  {{~/each~}}
+};
+
+// Re-export FetchError for backward compatibility
+export { FetchError };
+
+export class CoreClient extends FetchClient {
+  constructor(private cfg: ClientOption = {}) {
+    // Build auth strategies from OpenAPI security schemes
+    const authStrategies: AuthStrategy[] = [];
+    
+    {{~#each IR.securitySchemes~}}
+    {{~#if (eq this.type "http")~}}
+      {{~#if (eq this.scheme "bearer")~}}
+    if (cfg.{{camel this.key}}) {
+      authStrategies.push({
+        type: "bearer",
+        token: () => this.cfg.{{camel this.key}},
+      });
+    }
+      {{~else if (eq this.scheme "basic")~}}
+    if (cfg.{{camel this.key}}) {
+      authStrategies.push({
+        type: "basic",
+        username: cfg.{{camel this.key}}.username,
+        password: cfg.{{camel this.key}}.password,
+      });
+    }
+      {{~/if~}}
+    {{~else if (eq this.type "apiKey")~}}
+      {{~#if (eq this.in "header")~}}
+    if (cfg?.{{camel this.key}}) {
+      authStrategies.push({
+        type: "apiKey",
+        key: () => this.cfg?.{{camel this.key}},
+        location: "header",
+        name: "{{this.name}}",
+      });
+    }
+      {{~else if (eq this.in "query")~}}
+    if (cfg?.{{camel this.key}}) {
+      authStrategies.push({
+        type: "apiKey",
+        key: () => this.cfg?.{{camel this.key}},
+        location: "query",
+        name: "{{this.name}}",
+      });
+    }
+      {{~else if (eq this.in "cookie")~}}
+    if (cfg?.{{camel this.key}}) {
+      authStrategies.push({
+        type: "apiKey",
+        key: () => this.cfg?.{{camel this.key}},
+        location: "cookie",
+        name: "{{this.name}}",
+      });
+    }
+      {{~/if~}}
+    {{~/if~}}
+    {{~/each~}}
+
+    const fetchConfig: FetchClientConfig = {
+      ...cfg,
+      baseURL: cfg.baseURL ?? "{{Client.defaultBaseURL}}",
+      // Add auth strategies if any were found
+      ...(authStrategies.length > 0 ? {
+        auth: {
+          strategies: authStrategies,
+        },
+      } : {}),
+    };
+
+    super(fetchConfig);
+  }
+
+  async request(
+    init: RequestInit & {
+      path: string;
+      method: string;
+      query?: Record<string, any>;
+    }
+  ) {
+    return await super.request(init);
+  }
+
+  async *requestStream<T = any>(
+    init: RequestInit & {
+      path: string;
+      method: string;
+      query?: Record<string, any>;
+      contentType: string;
+      streamingFormat?: "sse" | "ndjson" | "chunked";
+    }
+  ): AsyncGenerator<T, void, unknown> {
+    yield* super.requestStream(init);
+  }
+}
