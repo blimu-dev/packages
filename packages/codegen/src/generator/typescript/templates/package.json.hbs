@@ -39,7 +39,7 @@
     }
   },
   "scripts": {
-    "build": "tsup src/index.ts src/services/*.ts src/schema.ts src/schema.zod.ts src/client.ts src/utils.ts --format cjs,esm --dts --no-splitting",
+    "build": "tsup",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint .",
     "format": "eslint --fix . && prettier --write .",

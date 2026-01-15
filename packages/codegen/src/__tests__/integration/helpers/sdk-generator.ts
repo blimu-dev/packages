@@ -1,7 +1,7 @@
-import * as fs from "fs";
-import * as path from "path";
-import { generate } from "../../../api/generate";
-import { Config } from "../../../config/config.schema";
+import * as fs from 'fs';
+import * as path from 'path';
+import { generate } from '../../../api/generate';
+import { Config } from '../../../config/config.schema';
 
 /**
  * Generate a test SDK from an OpenAPI spec file
@@ -13,27 +13,27 @@ export async function generateTestSDK(
   specPath: string,
   customConfig?: Partial<Config>
 ): Promise<string> {
-  const fixturesDir = path.join(__dirname, "../fixtures");
+  const fixturesDir = path.join(__dirname, '../fixtures');
   const fullSpecPath = path.resolve(fixturesDir, specPath);
 
   // Create .tests directory if it doesn't exist
-  const testsDir = path.join(process.cwd(), ".tests");
+  const testsDir = path.join(process.cwd(), '.tests');
   if (!fs.existsSync(testsDir)) {
     fs.mkdirSync(testsDir, { recursive: true });
   }
 
   // Create temp directory for generated SDK inside .tests
-  const tempDir = fs.mkdtempSync(path.join(testsDir, "test-sdk-"));
-  const sdkDir = path.join(tempDir, "generated-sdk");
+  const tempDir = fs.mkdtempSync(path.join(testsDir, 'test-sdk-'));
+  const sdkDir = path.join(tempDir, 'generated-sdk');
 
   const defaultConfig: Config = {
     spec: fullSpecPath,
     clients: [
       {
-        type: "typescript",
+        type: 'typescript',
         outDir: sdkDir,
-        packageName: "test-sdk",
-        name: "TestClient",
+        packageName: 'test-sdk',
+        name: 'TestClient',
       },
     ],
   };
@@ -65,19 +65,19 @@ export async function generateTestSDK(
  */
 export async function importGeneratedSDK(sdkDir: string): Promise<any> {
   // The generated SDK exports from src/index.ts (not directly from sdkDir)
-  const srcDir = path.join(sdkDir, "src");
-  const indexPath = path.join(srcDir, "index.ts");
+  const srcDir = path.join(sdkDir, 'src');
+  const indexPath = path.join(srcDir, 'index.ts');
 
   // Check if src/index.ts exists, otherwise try index.ts in root
   const actualIndexPath = fs.existsSync(indexPath)
     ? indexPath
-    : path.join(sdkDir, "index.ts");
+    : path.join(sdkDir, 'index.ts');
 
   if (!fs.existsSync(actualIndexPath)) {
     // List files to help debug
     const files = fs.existsSync(srcDir)
-      ? fs.readdirSync(srcDir).join(", ")
-      : fs.readdirSync(sdkDir).join(", ");
+      ? fs.readdirSync(srcDir).join(', ')
+      : fs.readdirSync(sdkDir).join(', ');
     throw new Error(
       `SDK index file not found at ${actualIndexPath}. Available files: ${files}`
     );
@@ -114,12 +114,12 @@ export async function cleanupTestSDK(sdkDir: string): Promise<void> {
     const parentDir = path.dirname(sdkDir);
     // Check if it's a test-sdk directory (either in .tests or root)
     if (
-      parentDir.includes("test-sdk-") ||
-      path.basename(parentDir).startsWith("test-sdk-")
+      parentDir.includes('test-sdk-') ||
+      path.basename(parentDir).startsWith('test-sdk-')
     ) {
-      // fs.rmSync(parentDir, { recursive: true, force: true });
+      fs.rmSync(parentDir, { recursive: true, force: true });
     } else {
-      // fs.rmSync(sdkDir, { recursive: true, force: true });
+      fs.rmSync(sdkDir, { recursive: true, force: true });
     }
   }
 }

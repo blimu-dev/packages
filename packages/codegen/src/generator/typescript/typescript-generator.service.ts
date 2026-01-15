@@ -1,12 +1,12 @@
-import { Injectable, Logger } from "@nestjs/common";
-import * as fs from "fs";
-import * as path from "path";
-import * as Handlebars from "handlebars";
-import { IR } from "../../ir/ir.types";
-import { TypeScriptClient } from "../../config/config.schema";
-import { Generator } from "../generator.interface";
-import { ConfigService } from "../../config/config.service";
-import { registerCommonHandlebarsHelpers } from "../handlebars-helpers";
+import { Injectable, Logger } from '@nestjs/common';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as Handlebars from 'handlebars';
+import { IR } from '../../ir/ir.types';
+import { TypeScriptClient } from '../../config/config.schema';
+import { Generator } from '../generator.interface';
+import { ConfigService } from '../../config/config.service';
+import { registerCommonHandlebarsHelpers } from '../handlebars-helpers';
 import {
   schemaToTSType,
   resolveMethodName,
@@ -21,10 +21,11 @@ import {
   isStreamingOperation,
   getStreamingItemType,
   collectPredefinedTypesUsedInService,
-} from "./helpers";
-import { schemaToSchema } from "./schema-converter";
-import { toPascalCase, toSnakeCase } from "../../utils/string.utils";
-import { formatWithBiome } from "./biome-formatter";
+} from './helpers';
+import { schemaToSchema } from './schema-converter';
+import { schemaToZodSchema } from './zod-schema-converter';
+import { toPascalCase, toSnakeCase } from '../../utils/string.utils';
+import { formatWithPrettier } from './prettier-formatter';
 
 @Injectable()
 export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
@@ -33,13 +34,21 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
   constructor(private readonly configService: ConfigService) {}
 
   getType(): string {
-    return "typescript";
+    return 'typescript';
   }
 
   async generate(client: TypeScriptClient, ir: IR): Promise<void> {
+    // Extract defaultBaseURL from OpenAPI servers if not already set
+    if (!client.defaultBaseURL && ir.openApiDocument?.servers) {
+      const servers = ir.openApiDocument.servers;
+      if (Array.isArray(servers) && servers.length > 0) {
+        client.defaultBaseURL = servers[0].url || '';
+      }
+    }
+
     // Ensure directories
-    const srcDir = path.join(client.outDir, "src");
-    const servicesDir = path.join(srcDir, "services");
+    const srcDir = path.join(client.outDir, 'src');
+    const servicesDir = path.join(srcDir, 'services');
     await fs.promises.mkdir(servicesDir, { recursive: true });
 
     // Pre-process operations to resolve method names (async operation)
@@ -57,16 +66,21 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
     await this.generateZodSchema(client, processedIR, srcDir);
     await this.generatePackageJson(client);
     await this.generateTsConfig(client);
+    await this.generateTsupConfig(client);
     await this.generateReadme(client, processedIR);
 
-    // Format generated TypeScript files with Biome (if enabled)
+    // Format generated TypeScript files with Prettier (if enabled)
     // Default to true if formatCode is not specified
     const shouldFormat = client.formatCode !== false;
     if (shouldFormat) {
-      this.logger.debug("Formatting generated TypeScript files with Biome...");
-      await formatWithBiome(client.outDir, this.logger);
+      // Generate .prettierrc config before formatting to ensure single quotes are used
+      await this.generatePrettierConfig(client);
+      this.logger.debug(
+        'Formatting generated TypeScript files with Prettier...'
+      );
+      await formatWithPrettier(client.outDir, this.logger);
     } else {
-      this.logger.debug("Code formatting is disabled for this client.");
+      this.logger.debug('Code formatting is disabled for this client.');
     }
   }
 
@@ -102,27 +116,27 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
 
     // TypeScript-specific helpers
     // Use pre-resolved method names from _resolvedMethodName
-    Handlebars.registerHelper("methodName", (op: any) => {
+    Handlebars.registerHelper('methodName', (op: any) => {
       return op._resolvedMethodName || deriveMethodName(op);
     });
-    Handlebars.registerHelper("queryTypeName", (op: any) => {
+    Handlebars.registerHelper('queryTypeName', (op: any) => {
       const methodName = op._resolvedMethodName || deriveMethodName(op);
-      return toPascalCase(op.tag) + toPascalCase(methodName) + "Query";
+      return toPascalCase(op.tag) + toPascalCase(methodName) + 'Query';
     });
-    Handlebars.registerHelper("pathTemplate", (op: any) => {
+    Handlebars.registerHelper('pathTemplate', (op: any) => {
       const result = buildPathTemplate(op);
       // Return as Handlebars.SafeString to prevent HTML escaping
       return new Handlebars.SafeString(result);
     });
-    Handlebars.registerHelper("queryKeyBase", (op: any) => {
+    Handlebars.registerHelper('queryKeyBase', (op: any) => {
       const result = buildQueryKeyBase(op);
       // Return as Handlebars.SafeString to prevent HTML escaping
       return new Handlebars.SafeString(result);
     });
-    Handlebars.registerHelper("pathParamsInOrder", (op: any) =>
+    Handlebars.registerHelper('pathParamsInOrder', (op: any) =>
       orderPathParams(op)
     );
-    Handlebars.registerHelper("methodSignature", (op: any, options: any) => {
+    Handlebars.registerHelper('methodSignature', (op: any, options: any) => {
       const methodName = op._resolvedMethodName || deriveMethodName(op);
       const modelDefs = options?.data?.root?.IR?.modelDefs || [];
       const predefinedTypes = options?.data?.root?.PredefinedTypes || [];
@@ -139,7 +153,7 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
       return signature.map((s) => new Handlebars.SafeString(s));
     });
     Handlebars.registerHelper(
-      "methodSignatureNoInit",
+      'methodSignatureNoInit',
       (op: any, options: any) => {
         const methodName = op._resolvedMethodName || deriveMethodName(op);
         const modelDefs = options?.data?.root?.IR?.modelDefs || [];
@@ -156,31 +170,31 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
         return parts.slice(0, -1); // Remove init parameter
       }
     );
-    Handlebars.registerHelper("queryKeyArgs", (op: any) => {
+    Handlebars.registerHelper('queryKeyArgs', (op: any) => {
       const args = queryKeyArgs(op);
       // Return as SafeString array to prevent HTML escaping
       return args.map((arg) => new Handlebars.SafeString(arg));
     });
-    Handlebars.registerHelper("tsType", (x: any, options: any) => {
-      if (x && typeof x === "object" && "kind" in x) {
+    Handlebars.registerHelper('tsType', (x: any, options: any) => {
+      if (x && typeof x === 'object' && 'kind' in x) {
         const predefinedTypes = options?.data?.root?.PredefinedTypes || [];
         const modelDefs = options?.data?.root?.IR?.modelDefs || [];
         // When generating schema.ts, isSameFile=true; for service files, isSameFile=false
         const isSameFile = options?.data?.root?.isSameFile || false;
         return schemaToTSType(x, predefinedTypes, modelDefs, isSameFile);
       }
-      return "unknown";
+      return 'unknown';
     });
-    Handlebars.registerHelper("stripSchemaNs", (s: string) =>
-      s.replace(/^Schema\./, "")
+    Handlebars.registerHelper('stripSchemaNs', (s: string) =>
+      s.replace(/^Schema\./, '')
     );
-    Handlebars.registerHelper("tsTypeStripNs", (x: any, options: any) => {
+    Handlebars.registerHelper('tsTypeStripNs', (x: any, options: any) => {
       const predefinedTypes = options?.data?.root?.PredefinedTypes || [];
       const modelDefs = options?.data?.root?.IR?.modelDefs || [];
       // When generating schema.ts, isSameFile=true; for service files, isSameFile=false
       const isSameFile = options?.data?.root?.isSameFile || false;
 
-      if (x && typeof x === "object" && "kind" in x) {
+      if (x && typeof x === 'object' && 'kind' in x) {
         // Use schemaToTSType with predefinedTypes and modelDefs to get correct type
         // When isSameFile=true, schemaToTSType already returns types without Schema. prefix for local types
         const typeStr = schemaToTSType(
@@ -191,15 +205,15 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
         );
         // Strip ALL occurrences of Schema. prefix (including nested ones in inline objects)
         // For inline objects like Array<({ type: Schema.ResourceType })>, we need to strip all Schema. references
-        const stripped = typeStr.replace(/Schema\./g, "");
+        const stripped = typeStr.replace(/Schema\./g, '');
         // Return as SafeString to prevent Handlebars HTML escaping
         return new Handlebars.SafeString(stripped);
       }
 
       // If it's a string that looks like "Schema.TypeName", check for predefined types
-      if (typeof x === "string") {
-        if (x.startsWith("Schema.")) {
-          const typeName = x.replace(/^Schema\./, "");
+      if (typeof x === 'string') {
+        if (x.startsWith('Schema.')) {
+          const typeName = x.replace(/^Schema\./, '');
           const predefinedType = predefinedTypes.find(
             (pt: any) => pt.type === typeName
           );
@@ -212,11 +226,11 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
         return new Handlebars.SafeString(x);
       }
 
-      return "unknown";
+      return 'unknown';
     });
     // Helper to check if a type is predefined
     Handlebars.registerHelper(
-      "isPredefinedType",
+      'isPredefinedType',
       (typeName: string, options: any) => {
         const predefinedTypes = options?.data?.root?.PredefinedTypes || [];
         return predefinedTypes.some((pt: any) => pt.type === typeName);
@@ -224,14 +238,14 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
     );
     // Helper to get predefined type info
     Handlebars.registerHelper(
-      "getPredefinedType",
+      'getPredefinedType',
       (typeName: string, options: any) => {
         const predefinedTypes = options?.data?.root?.PredefinedTypes || [];
         return predefinedTypes.find((pt: any) => pt.type === typeName);
       }
     );
     // Helper to group predefined types by package
-    Handlebars.registerHelper("groupByPackage", (predefinedTypes: any[]) => {
+    Handlebars.registerHelper('groupByPackage', (predefinedTypes: any[]) => {
       const grouped: Record<string, { package: string; types: string[] }> = {};
       for (const pt of predefinedTypes || []) {
         if (!grouped[pt.package]) {
@@ -243,7 +257,7 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
     });
     // Helper to get predefined types used in a service
     Handlebars.registerHelper(
-      "getServicePredefinedTypes",
+      'getServicePredefinedTypes',
       (service: any, options: any) => {
         const predefinedTypes = options?.data?.root?.PredefinedTypes || [];
         const modelDefs = options?.data?.root?.IR?.modelDefs || [];
@@ -255,17 +269,17 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
       }
     );
     // Helper to get predefined types used in the schema file
-    Handlebars.registerHelper("getSchemaPredefinedTypes", (options: any) => {
+    Handlebars.registerHelper('getSchemaPredefinedTypes', (options: any) => {
       const predefinedTypes = options?.data?.root?.PredefinedTypes || [];
       const modelDefs = options?.data?.root?.IR?.modelDefs || [];
       return collectPredefinedTypesUsedInSchema(modelDefs, predefinedTypes);
     });
     // Helper to join type names with commas
-    Handlebars.registerHelper("joinTypes", (types: string[]) => {
-      return types.join(", ");
+    Handlebars.registerHelper('joinTypes', (types: string[]) => {
+      return types.join(', ');
     });
     // Helper to get unique packages from predefined types
-    Handlebars.registerHelper("uniquePackages", (predefinedTypes: any[]) => {
+    Handlebars.registerHelper('uniquePackages', (predefinedTypes: any[]) => {
       const packages = new Set<string>();
       for (const pt of predefinedTypes || []) {
         if (pt.package) {
@@ -276,7 +290,7 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
     });
     // Helper to check if a package is in predefined types
     Handlebars.registerHelper(
-      "isPredefinedPackage",
+      'isPredefinedPackage',
       (packageName: string, predefinedTypes: any[]) => {
         if (!predefinedTypes) return false;
         return predefinedTypes.some((pt: any) => pt.package === packageName);
@@ -284,10 +298,11 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
     );
     // Helper to get all dependencies (predefined types + explicit dependencies)
     Handlebars.registerHelper(
-      "getAllDependencies",
+      'getAllDependencies',
       (client: TypeScriptClient) => {
         const deps: Record<string, string> = {
-          zod: "^4.3.5", // Always include zod
+          '@blimu/fetch': '^0.2.0', // Always include @blimu/fetch (the generated client extends FetchClient)
+          zod: '^4.3.5', // Always include zod
         };
 
         // Add predefined type packages
@@ -295,7 +310,7 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
           for (const pt of client.predefinedTypes) {
             if (pt.package && !deps[pt.package]) {
               // Use explicit version if provided, otherwise "*"
-              deps[pt.package] = client.dependencies?.[pt.package] || "*";
+              deps[pt.package] = client.dependencies?.[pt.package] || '*';
             }
           }
         }
@@ -303,7 +318,7 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
         // Add any other explicit dependencies (excluding zod and predefined packages)
         if (client.dependencies) {
           for (const [pkg, version] of Object.entries(client.dependencies)) {
-            if (pkg !== "zod" && !deps[pkg]) {
+            if (pkg !== 'zod' && !deps[pkg]) {
               deps[pkg] = version;
             }
           }
@@ -315,48 +330,48 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
     // Decode HTML entities in strings
     // Note: &amp; must be replaced last to avoid double-decoding
     // Also handle cases where entities are already escaped by Handlebars (e.g., &amp;#x60;)
-    Handlebars.registerHelper("decodeHtml", (str: string) => {
-      if (typeof str !== "string") return str;
+    Handlebars.registerHelper('decodeHtml', (str: string) => {
+      if (typeof str !== 'string') return str;
       // First decode double-encoded entities (e.g., &amp;#x60; -> &#x60;)
       let decoded = str
-        .replace(/&amp;#x60;/g, "&#x60;")
-        .replace(/&amp;#96;/g, "&#96;")
-        .replace(/&amp;quot;/g, "&quot;")
-        .replace(/&amp;lt;/g, "&lt;")
-        .replace(/&amp;gt;/g, "&gt;");
+        .replace(/&amp;#x60;/g, '&#x60;')
+        .replace(/&amp;#96;/g, '&#96;')
+        .replace(/&amp;quot;/g, '&quot;')
+        .replace(/&amp;lt;/g, '&lt;')
+        .replace(/&amp;gt;/g, '&gt;');
       // Then decode all HTML entities
       decoded = decoded
         .replace(/&quot;/g, '"')
-        .replace(/&lt;/g, "<")
-        .replace(/&gt;/g, ">")
-        .replace(/&#x60;/g, "`")
-        .replace(/&#96;/g, "`")
-        .replace(/&amp;/g, "&");
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&#x60;/g, '`')
+        .replace(/&#96;/g, '`')
+        .replace(/&amp;/g, '&');
       // Return as SafeString to prevent Handlebars from escaping it again
       return new Handlebars.SafeString(decoded);
     });
-    Handlebars.registerHelper("quotePropName", (name: string) =>
+    Handlebars.registerHelper('quotePropName', (name: string) =>
       quoteTSPropertyName(name)
     );
-    Handlebars.registerHelper("zodSchema", (x: any, options: any) => {
-      // Use new schema converter (backward compatible name)
-      if (x && typeof x === "object" && "kind" in x) {
+    Handlebars.registerHelper('zodSchema', (x: any, options: any) => {
+      // Use zod schema converter for generating Zod schemas
+      if (x && typeof x === 'object' && 'kind' in x) {
         const modelDefs = options?.data?.root?.IR?.modelDefs || [];
-        // When generating schema.zod.ts, use local SchemaTypes namespace
+        // When generating schema.zod.ts, use local schema references (same file)
         // The template name is passed in the root context
         const useLocalSchemaTypes =
-          options?.data?.root?._templateName === "schema.zod.ts.hbs";
+          options?.data?.root?._templateName === 'schema.zod.ts.hbs';
         return new Handlebars.SafeString(
-          schemaToSchema(x, "", modelDefs, useLocalSchemaTypes)
+          schemaToZodSchema(x, '', modelDefs, useLocalSchemaTypes)
         );
       }
-      return "schema.unknown()";
+      return 'z.unknown()';
     });
     // Streaming helpers
-    Handlebars.registerHelper("isStreaming", (op: any) => {
+    Handlebars.registerHelper('isStreaming', (op: any) => {
       return isStreamingOperation(op);
     });
-    Handlebars.registerHelper("streamingItemType", (op: any) => {
+    Handlebars.registerHelper('streamingItemType', (op: any) => {
       return new Handlebars.SafeString(getStreamingItemType(op));
     });
   }
@@ -379,7 +394,7 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
         await fs.promises.access(overridePath, fs.constants.R_OK);
         const templateContent = await fs.promises.readFile(
           overridePath,
-          "utf-8"
+          'utf-8'
         );
         const template = Handlebars.compile(templateContent);
         // Add template name to context so helpers know which template is being rendered
@@ -388,7 +403,7 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
           _templateName: templateName,
         };
         const rendered = template(contextWithTemplate);
-        await fs.promises.writeFile(outputPath, rendered, "utf-8");
+        await fs.promises.writeFile(outputPath, rendered, 'utf-8');
         return;
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error);
@@ -407,12 +422,12 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
     // Note: When bundled by tsup, __dirname will be 'dist', so we need to look for templates
     // in dist/generator/typescript/templates/
     const possiblePaths = [
-      path.join(__dirname, "generator/typescript/templates", templateName), // Bundled: dist/generator/typescript/templates/
-      path.join(__dirname, "templates", templateName), // If __dirname is dist/generator/typescript/
-      path.join(__dirname, "../typescript/templates", templateName), // Fallback
+      path.join(__dirname, 'generator/typescript/templates', templateName), // Bundled: dist/generator/typescript/templates/
+      path.join(__dirname, 'templates', templateName), // If __dirname is dist/generator/typescript/
+      path.join(__dirname, '../typescript/templates', templateName), // Fallback
       path.join(
         process.cwd(),
-        "src/generator/typescript/templates",
+        'src/generator/typescript/templates',
         templateName
       ), // Development
     ];
@@ -432,12 +447,12 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
 
     if (!templatePath) {
       this.logger.error(`Template not found: ${templateName}`);
-      this.logger.error(`Checked paths: ${possiblePaths.join(", ")}`);
+      this.logger.error(`Checked paths: ${possiblePaths.join(', ')}`);
       this.logger.error(`__dirname: ${__dirname}`);
       throw new Error(`Template not found: ${templateName}`);
     }
 
-    const templateContent = await fs.promises.readFile(templatePath, "utf-8");
+    const templateContent = await fs.promises.readFile(templatePath, 'utf-8');
     const template = Handlebars.compile(templateContent);
     // Add template name to context so helpers know which template is being rendered
     const contextWithTemplate = {
@@ -445,7 +460,7 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
       _templateName: templateName,
     };
     const rendered = template(contextWithTemplate);
-    await fs.promises.writeFile(outputPath, rendered, "utf-8");
+    await fs.promises.writeFile(outputPath, rendered, 'utf-8');
   }
 
   private async generateClient(
@@ -453,13 +468,13 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
     ir: IR,
     srcDir: string
   ): Promise<void> {
-    const clientPath = path.join(srcDir, "client.ts");
+    const clientPath = path.join(srcDir, 'client.ts');
     if (this.configService.shouldExcludeFile(client, clientPath)) {
       return;
     }
     try {
       await this.renderTemplate(
-        "client.ts.hbs",
+        'client.ts.hbs',
         { Client: client, IR: ir },
         clientPath,
         client
@@ -471,7 +486,7 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
         `Template client.ts.hbs not found: ${errorMsg}, using placeholder`
       );
       const content = `// Generated client - template rendering to be implemented`;
-      await fs.promises.writeFile(clientPath, content, "utf-8");
+      await fs.promises.writeFile(clientPath, content, 'utf-8');
     }
   }
 
@@ -480,13 +495,13 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
     ir: IR,
     srcDir: string
   ): Promise<void> {
-    const indexPath = path.join(srcDir, "index.ts");
+    const indexPath = path.join(srcDir, 'index.ts');
     if (this.configService.shouldExcludeFile(client, indexPath)) {
       return;
     }
     try {
       await this.renderTemplate(
-        "index.ts.hbs",
+        'index.ts.hbs',
         { Client: client, IR: ir },
         indexPath,
         client
@@ -494,7 +509,7 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
     } catch (error) {
       this.logger.warn(`Template index.ts.hbs not found, using placeholder`);
       const content = `// Generated index - template rendering to be implemented`;
-      await fs.promises.writeFile(indexPath, content, "utf-8");
+      await fs.promises.writeFile(indexPath, content, 'utf-8');
     }
   }
 
@@ -503,13 +518,13 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
     ir: IR,
     srcDir: string
   ): Promise<void> {
-    const utilsPath = path.join(srcDir, "utils.ts");
+    const utilsPath = path.join(srcDir, 'utils.ts');
     if (this.configService.shouldExcludeFile(client, utilsPath)) {
       return;
     }
     try {
       await this.renderTemplate(
-        "utils.ts.hbs",
+        'utils.ts.hbs',
         { Client: client, IR: ir },
         utilsPath,
         client
@@ -517,7 +532,7 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
     } catch (error) {
       this.logger.warn(`Template utils.ts.hbs not found, using placeholder`);
       const content = `// Generated utils - template rendering to be implemented`;
-      await fs.promises.writeFile(utilsPath, content, "utf-8");
+      await fs.promises.writeFile(utilsPath, content, 'utf-8');
     }
   }
 
@@ -536,7 +551,7 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
       }
       try {
         await this.renderTemplate(
-          "service.ts.hbs",
+          'service.ts.hbs',
           {
             Client: client,
             Service: service,
@@ -552,7 +567,7 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
           `Template service.ts.hbs not found, using placeholder`
         );
         const content = `// Generated service ${service.tag} - template rendering to be implemented`;
-        await fs.promises.writeFile(servicePath, content, "utf-8");
+        await fs.promises.writeFile(servicePath, content, 'utf-8');
       }
     }
   }
@@ -562,13 +577,13 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
     ir: IR,
     srcDir: string
   ): Promise<void> {
-    const schemaPath = path.join(srcDir, "schema.ts");
+    const schemaPath = path.join(srcDir, 'schema.ts');
     if (this.configService.shouldExcludeFile(client, schemaPath)) {
       return;
     }
     try {
       await this.renderTemplate(
-        "schema.ts.hbs",
+        'schema.ts.hbs',
         {
           Client: client,
           IR: ir,
@@ -584,7 +599,7 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
         `Template schema.ts.hbs error: ${errorMsg}, using placeholder`
       );
       const content = `// Generated schema - template rendering to be implemented`;
-      await fs.promises.writeFile(schemaPath, content, "utf-8");
+      await fs.promises.writeFile(schemaPath, content, 'utf-8');
     }
   }
 
@@ -593,13 +608,13 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
     ir: IR,
     srcDir: string
   ): Promise<void> {
-    const zodSchemaPath = path.join(srcDir, "schema.zod.ts");
+    const zodSchemaPath = path.join(srcDir, 'schema.zod.ts');
     if (this.configService.shouldExcludeFile(client, zodSchemaPath)) {
       return;
     }
     try {
       await this.renderTemplate(
-        "schema.zod.ts.hbs",
+        'schema.zod.ts.hbs',
         { Client: client, IR: ir },
         zodSchemaPath,
         client
@@ -610,18 +625,18 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
         `Template schema.zod.ts.hbs error: ${errorMsg}, using placeholder`
       );
       const content = `// Generated Zod schemas - template rendering to be implemented`;
-      await fs.promises.writeFile(zodSchemaPath, content, "utf-8");
+      await fs.promises.writeFile(zodSchemaPath, content, 'utf-8');
     }
   }
 
   private async generatePackageJson(client: TypeScriptClient): Promise<void> {
-    const packageJsonPath = path.join(client.outDir, "package.json");
+    const packageJsonPath = path.join(client.outDir, 'package.json');
     if (this.configService.shouldExcludeFile(client, packageJsonPath)) {
       return;
     }
     try {
       await this.renderTemplate(
-        "package.json.hbs",
+        'package.json.hbs',
         { Client: client },
         packageJsonPath,
         client
@@ -631,25 +646,25 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
       const content = JSON.stringify(
         {
           name: client.packageName,
-          version: "0.0.1",
-          main: "dist/index.js",
-          types: "dist/index.d.ts",
+          version: '0.0.1',
+          main: 'dist/index.js',
+          types: 'dist/index.d.ts',
         },
         null,
         2
       );
-      await fs.promises.writeFile(packageJsonPath, content, "utf-8");
+      await fs.promises.writeFile(packageJsonPath, content, 'utf-8');
     }
   }
 
   private async generateTsConfig(client: TypeScriptClient): Promise<void> {
-    const tsConfigPath = path.join(client.outDir, "tsconfig.json");
+    const tsConfigPath = path.join(client.outDir, 'tsconfig.json');
     if (this.configService.shouldExcludeFile(client, tsConfigPath)) {
       return;
     }
     try {
       await this.renderTemplate(
-        "tsconfig.json.hbs",
+        'tsconfig.json.hbs',
         { Client: client },
         tsConfigPath,
         client
@@ -659,23 +674,57 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
       const content = JSON.stringify(
         {
           compilerOptions: {
-            target: "ES2020",
-            module: "commonjs",
-            lib: ["ES2020"],
+            target: 'ES2020',
+            module: 'commonjs',
+            lib: ['ES2020'],
             declaration: true,
-            outDir: "./dist",
-            rootDir: "./src",
+            outDir: './dist',
+            rootDir: './src',
             strict: true,
             esModuleInterop: true,
             skipLibCheck: true,
             forceConsistentCasingInFileNames: true,
           },
-          include: ["src/**/*"],
+          include: ['src/**/*'],
         },
         null,
         2
       );
-      await fs.promises.writeFile(tsConfigPath, content, "utf-8");
+      await fs.promises.writeFile(tsConfigPath, content, 'utf-8');
+    }
+  }
+
+  private async generateTsupConfig(client: TypeScriptClient): Promise<void> {
+    const tsupConfigPath = path.join(client.outDir, 'tsup.config.ts');
+    if (this.configService.shouldExcludeFile(client, tsupConfigPath)) {
+      return;
+    }
+    try {
+      await this.renderTemplate(
+        'tsup.config.ts.hbs',
+        { Client: client },
+        tsupConfigPath,
+        client
+      );
+    } catch (error) {
+      this.logger.warn(`Template tsup.config.ts.hbs not found, using fallback`);
+      const content = `import { defineConfig } from "tsup";
+
+export default defineConfig({
+  entry: ["src/**/*.ts"],
+  format: ["cjs", "esm"],
+  dts: {
+    resolve: true,
+  },
+  splitting: false,
+  sourcemap: true,
+  clean: true,
+  outDir: "dist",
+  tsconfig: "./tsconfig.json",
+  external: [],
+});
+`;
+      await fs.promises.writeFile(tsupConfigPath, content, 'utf-8');
     }
   }
 
@@ -683,13 +732,13 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
     client: TypeScriptClient,
     ir: IR
   ): Promise<void> {
-    const readmePath = path.join(client.outDir, "README.md");
+    const readmePath = path.join(client.outDir, 'README.md');
     if (this.configService.shouldExcludeFile(client, readmePath)) {
       return;
     }
     try {
       await this.renderTemplate(
-        "README.md.hbs",
+        'README.md.hbs',
         { Client: client, IR: ir },
         readmePath,
         client
@@ -697,7 +746,39 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
     } catch (error) {
       this.logger.warn(`Template README.md.hbs not found, using fallback`);
       const content = `# ${client.name}\n\nGenerated SDK from OpenAPI specification.`;
-      await fs.promises.writeFile(readmePath, content, "utf-8");
+      await fs.promises.writeFile(readmePath, content, 'utf-8');
+    }
+  }
+
+  private async generatePrettierConfig(
+    client: TypeScriptClient
+  ): Promise<void> {
+    const prettierConfigPath = path.join(client.outDir, '.prettierrc');
+    if (this.configService.shouldExcludeFile(client, prettierConfigPath)) {
+      return;
+    }
+    try {
+      await this.renderTemplate(
+        '.prettierrc.hbs',
+        { Client: client },
+        prettierConfigPath,
+        client
+      );
+    } catch (error) {
+      this.logger.warn(`Template .prettierrc.hbs not found, using fallback`);
+      const content = JSON.stringify(
+        {
+          semi: true,
+          trailingComma: 'es5',
+          singleQuote: true,
+          printWidth: 80,
+          tabWidth: 2,
+          useTabs: false,
+        },
+        null,
+        2
+      );
+      await fs.promises.writeFile(prettierConfigPath, content, 'utf-8');
     }
   }
 }

@@ -38,23 +38,7 @@ export class {{serviceName Service.tag}} {
       query,
       {{/if}}
       {{#if requestBody}}
-      {{#if (eq requestBody.contentType "application/json")}}
-      headers: {
-        ...(init?.headers || {}),
-        "content-type": "application/json",
-      },
-      body: JSON.stringify(body),
-      {{else if (eq requestBody.contentType "multipart/form-data")}}
-      body: (body as any),
-      {{else if (eq requestBody.contentType "application/x-www-form-urlencoded")}}
-      headers: {
-        ...(init?.headers || {}),
-        "content-type": "application/x-www-form-urlencoded",
-      },
-      body: (body as any),
-      {{else}}
-      body: (body as any),
-      {{/if}}
+      body: body as any,
       {{/if}}
       contentType: "{{response.contentType}}",
       streamingFormat: "{{response.streamingFormat}}",
@@ -74,23 +58,7 @@ export class {{serviceName Service.tag}} {
       query,
       {{/if}}
       {{#if requestBody}}
-      {{#if (eq requestBody.contentType "application/json")}}
-      headers: {
-        ...(init?.headers || {}),
-        "content-type": "application/json",
-      },
-      body: JSON.stringify(body),
-      {{else if (eq requestBody.contentType "multipart/form-data")}}
-      body: (body as any),
-      {{else if (eq requestBody.contentType "application/x-www-form-urlencoded")}}
-      headers: {
-        ...(init?.headers || {}),
-        "content-type": "application/x-www-form-urlencoded",
-      },
-      body: (body as any),
-      {{else}}
-      body: (body as any),
-      {{/if}}
+      body: body as any,
       {{/if}}
       ...(init || {}),
     });

@@ -40,12 +40,38 @@ export function buildUrl(
   query?: Record<string, any>
 ): URL {
   // Normalize path - remove trailing slash if present (except for root)
-  let normalizedPath = path || "";
-  if (normalizedPath.length > 1 && normalizedPath.endsWith("/")) {
+  let normalizedPath = path || '';
+  if (normalizedPath.length > 1 && normalizedPath.endsWith('/')) {
     normalizedPath = normalizedPath.slice(0, -1);
   }
 
-  const url = new URL(normalizedPath, baseUrl);
+  // Normalize baseURL to ensure it has a trailing slash if it has a path component
+  // This is needed because new URL('path', 'https://example.com/base') creates
+  // 'https://example.com/path' (treats base as a file), but
+  // new URL('path', 'https://example.com/base/') creates 'https://example.com/base/path' (correct)
+  let normalizedBaseUrl = baseUrl || '';
+  if (normalizedBaseUrl) {
+    try {
+      const baseUrlObj = new URL(normalizedBaseUrl);
+      // If baseURL has a path component and doesn't end with /, add it
+      if (
+        baseUrlObj.pathname &&
+        baseUrlObj.pathname !== '/' &&
+        !normalizedBaseUrl.endsWith('/')
+      ) {
+        normalizedBaseUrl = normalizedBaseUrl + '/';
+      }
+    } catch {
+      // If baseUrl is not a valid URL, proceed as-is
+    }
+  }
+
+  // If path starts with /, strip it so it appends to baseURL instead of replacing it
+  if (normalizedPath.startsWith('/')) {
+    normalizedPath = normalizedPath.slice(1);
+  }
+
+  const url = new URL(normalizedPath, normalizedBaseUrl);
 
   if (query) {
     const params = serializeQueryParams(query);
@@ -81,21 +107,21 @@ export function getContentType(body: unknown): string | undefined {
   }
 
   if (body instanceof URLSearchParams) {
-    return "application/x-www-form-urlencoded";
+    return 'application/x-www-form-urlencoded';
   }
 
-  if (typeof body === "string") {
+  if (typeof body === 'string') {
     // Try to detect if it's JSON
     try {
       JSON.parse(body);
-      return "application/json";
+      return 'application/json';
     } catch {
-      return "text/plain";
+      return 'text/plain';
     }
   }
 
-  if (typeof body === "object") {
-    return "application/json";
+  if (typeof body === 'object') {
+    return 'application/json';
   }
 
   return undefined;
@@ -104,27 +130,54 @@ export function getContentType(body: unknown): string | undefined {
 /**
  * Serializes a request body based on its type
  * @param body - Request body to serialize
+ * @param contentType - Optional content type hint to guide serialization
  * @returns Serialized body (string, FormData, Blob, ArrayBuffer, etc.)
  */
-export function serializeBody(body: unknown): RequestInit["body"] | null {
+export function serializeBody(
+  body: unknown,
+  contentType?: string
+): RequestInit['body'] | null {
   if (body === null || body === undefined) {
     return null;
   }
 
   // If it's already a valid body type, return as-is
   if (
-    typeof body === "string" ||
+    typeof body === 'string' ||
     body instanceof FormData ||
     body instanceof URLSearchParams ||
     body instanceof Blob ||
     body instanceof ArrayBuffer ||
     ArrayBuffer.isView(body)
   ) {
-    return body as RequestInit["body"];
+    return body as RequestInit['body'];
   }
 
-  // For objects, serialize to JSON
-  if (typeof body === "object") {
+  // Handle form-urlencoded: convert object to URLSearchParams
+  if (
+    contentType === 'application/x-www-form-urlencoded' &&
+    typeof body === 'object' &&
+    body !== null &&
+    !Array.isArray(body)
+  ) {
+    const params = new URLSearchParams();
+    for (const [key, value] of Object.entries(body)) {
+      if (value !== null && value !== undefined) {
+        if (Array.isArray(value)) {
+          // Handle array values (multiple params with same key)
+          for (const item of value) {
+            params.append(key, String(item));
+          }
+        } else {
+          params.append(key, String(value));
+        }
+      }
+    }
+    return params;
+  }
+
+  // For objects, serialize to JSON (default)
+  if (typeof body === 'object') {
     return JSON.stringify(body);
   }
 

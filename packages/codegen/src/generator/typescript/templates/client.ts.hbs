@@ -4,7 +4,7 @@ export type ClientOption = FetchClientConfig & {
   {{~#each IR.securitySchemes~}}
   {{~#if (eq this.type "http")~}}
     {{~#if (eq this.scheme "bearer")~}}
-  {{camel this.key}}?: string;
+  {{camel this.key}}?: string | (() => string | undefined | Promise<string | undefined>);
     {{~else if (eq this.scheme "basic")~}}
   {{camel this.key}}?: { username: string; password: string };
     {{~/if~}}
@@ -18,20 +18,41 @@ export type ClientOption = FetchClientConfig & {
 export { FetchError };
 
 export class CoreClient extends FetchClient {
-  constructor(private cfg: ClientOption = {}) {
+  constructor(cfg: ClientOption = {}) {
     // Build auth strategies from OpenAPI security schemes
     const authStrategies: AuthStrategy[] = [];
+
+    // Extract auth and security scheme properties to avoid passing them to FetchClient
+    const { 
+      auth: _existingAuth{{~#each IR.securitySchemes~}},
+      {{camel this.key}}{{~/each~}},
+      ...restCfg 
+    } = cfg;
     
     {{~#each IR.securitySchemes~}}
     {{~#if (eq this.type "http")~}}
       {{~#if (eq this.scheme "bearer")~}}
     if (cfg.{{camel this.key}}) {
-      authStrategies.push({
-        type: "bearer",
-        token: () => this.cfg.{{camel this.key}},
-      });
+      const {{camel this.key}}Value = cfg.{{camel this.key}};
+      if (typeof {{camel this.key}}Value === "string") {
+        authStrategies.push({
+          type: "bearer",
+          token: () => {{camel this.key}}Value,
+        });
+      } else if (typeof {{camel this.key}}Value === "function") {
+        authStrategies.push({
+          type: "bearer",
+          token: {{camel this.key}}Value as () => string | undefined | Promise<string | undefined>,
+        });
+      }
     }
-      {{~else if (eq this.scheme "basic")~}}
+      {{~/if~}}
+    {{~/if~}}
+    {{~/each~}}
+    
+    {{~#each IR.securitySchemes~}}
+    {{~#if (eq this.type "http")~}}
+      {{~#if (eq this.scheme "basic")~}}
     if (cfg.{{camel this.key}}) {
       authStrategies.push({
         type: "basic",
@@ -40,30 +61,33 @@ export class CoreClient extends FetchClient {
       });
     }
       {{~/if~}}
-    {{~else if (eq this.type "apiKey")~}}
+      {{~else if (eq this.type "apiKey")~}}
       {{~#if (eq this.in "header")~}}
     if (cfg?.{{camel this.key}}) {
+      const {{camel this.key}}Value = cfg.{{camel this.key}};
       authStrategies.push({
         type: "apiKey",
-        key: () => this.cfg?.{{camel this.key}},
+        key: () => {{camel this.key}}Value,
         location: "header",
         name: "{{this.name}}",
       });
     }
       {{~else if (eq this.in "query")~}}
     if (cfg?.{{camel this.key}}) {
+      const {{camel this.key}}Value = cfg.{{camel this.key}};
       authStrategies.push({
         type: "apiKey",
-        key: () => this.cfg?.{{camel this.key}},
+        key: () => {{camel this.key}}Value,
         location: "query",
         name: "{{this.name}}",
       });
     }
       {{~else if (eq this.in "cookie")~}}
     if (cfg?.{{camel this.key}}) {
+      const {{camel this.key}}Value = cfg.{{camel this.key}};
       authStrategies.push({
         type: "apiKey",
-        key: () => this.cfg?.{{camel this.key}},
+        key: () => {{camel this.key}}Value,
         location: "cookie",
         name: "{{this.name}}",
       });
@@ -72,15 +96,27 @@ export class CoreClient extends FetchClient {
     {{~/if~}}
     {{~/each~}}
 
+
+    // Build final auth config (merge existing with new strategies)
+    const finalAuthStrategies = [
+      ...(_existingAuth?.strategies || []),
+      ...authStrategies,
+    ];
+
+    // Build fetchConfig, ensuring auth comes after restCfg spread to override any existing auth
     const fetchConfig: FetchClientConfig = {
-      ...cfg,
+      ...restCfg,
       baseURL: cfg.baseURL ?? "{{Client.defaultBaseURL}}",
-      // Add auth strategies if any were found
-      ...(authStrategies.length > 0 ? {
-        auth: {
-          strategies: authStrategies,
-        },
-      } : {}),
+      // Explicitly set auth after restCfg to ensure it's not overwritten
+      // (restCfg might have an auth property that we want to replace)
+      ...(finalAuthStrategies.length > 0
+        ? {
+            auth: {
+              strategies: finalAuthStrategies,
+            },
+          }
+        : {}),
+      // Hooks are passed through directly from FetchClientConfig (no mapping needed)
     };
 
     super(fetchConfig);

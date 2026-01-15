@@ -12,6 +12,7 @@ export default defineConfig({
     testTimeout: 30000, // Longer timeout for SDK generation
     hookTimeout: 30000,
     teardownTimeout: 10000,
+    setupFiles: ["./src/__tests__/integration/setup.ts"],
   },
   resolve: {
     alias: {

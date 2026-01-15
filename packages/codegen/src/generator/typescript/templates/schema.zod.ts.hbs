@@ -1,8 +1,8 @@
-// Generated @blimu/schema schemas from OpenAPI components.schemas
+// Generated zod schemas from OpenAPI components.schemas
 // Use these schemas for runtime validation in forms, API requests, etc.
 
-import { schema } from "@blimu/schema";
-import * as Schema from "./schema";
+import { z } from 'zod';
+import * as Schema from './schema';
 
 {{! Simple types: generate as regular Zod schema exports (not in namespace) }}
 {{#each IR.modelDefs}}
@@ -28,7 +28,7 @@ import * as Schema from "./schema";
  * {{decodeHtml (replace this.annotations.description "*/" "*\\/")}}
 {{~/if~}}
  */
-export const {{this.name}}Schema = schema.enum([
+export const {{this.name}}Schema = z.enum([
   {{~#each this.schema.enumValues as |v|~}}
   {{#if (or (eq v "true") (eq v "false"))}}{{v}}{{else if (reMatch "^-?[0-9]+(\\.[0-9]+)?$" v)}}{{v}}{{else}}{{json v}}{{/if}}{{#unless @last}},{{/unless}}
   {{~/each~}}
@@ -41,7 +41,7 @@ export const {{this.name}}Schema = schema.enum([
  * {{decodeHtml (replace this.annotations.description "*/" "*\\/")}}
 {{~/if~}}
  */
-export const {{this.name}}Schema = schema.object({
+export const {{this.name}}Schema = z.object({
   {{~#each this.schema.properties~}}
   {{~#if this.annotations.description~}}
   /** {{decodeHtml (replace this.annotations.description "*/" "*\\/")}} */
@@ -63,7 +63,7 @@ export const {{this.name}}Schema = Schema.{{this.schema.ref}}Schema;
  * {{decodeHtml (replace this.annotations.description "*/" "*\\/")}}
 {{~/if~}}
  */
-export const {{this.name}}Schema = schema.union([
+export const {{this.name}}Schema = z.union([
   {{~#each this.schema.oneOf as |opt|~}}
   {{zodSchema opt}}{{#unless @last}},{{/unless}}
   {{~/each~}}
@@ -76,7 +76,7 @@ export const {{this.name}}Schema = schema.union([
  * {{decodeHtml (replace this.annotations.description "*/" "*\\/")}}
 {{~/if~}}
  */
-export const {{this.name}}Schema = schema.union([
+export const {{this.name}}Schema = z.union([
   {{~#each this.schema.anyOf as |opt|~}}
   {{zodSchema opt}}{{#unless @last}},{{/unless}}
   {{~/each~}}
@@ -98,7 +98,7 @@ export const {{this.name}}Schema = {{#each this.schema.allOf}}{{#if @first}}{{zo
  * {{decodeHtml (replace this.annotations.description "*/" "*\\/")}}
 {{~/if~}}
  */
-export const {{this.name}}Schema = schema.array({{#if this.schema.items}}{{zodSchema this.schema.items}}{{else}}schema.unknown(){{/if}});
+export const {{this.name}}Schema = z.array({{#if this.schema.items}}{{zodSchema this.schema.items}}{{else}}z.unknown(){{/if}});
 
   {{~else~}}
 /**
@@ -127,7 +127,7 @@ export const {{this.name}}Schema = {{zodSchema this.schema}};
  * {{decodeHtml (replace this.description "*/" "*\\/")}}
 {{~/if~}}
  */
-export const {{pascal ../tag}}{{pascal (methodName this)}}QuerySchema = schema.object({
+export const {{pascal ../tag}}{{pascal (methodName this)}}QuerySchema = z.object({
   {{~#each this.queryParams~}}
   {{~#if this.description~}}
   /** {{decodeHtml (replace this.description "*/" "*\\/")}} */

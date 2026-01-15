@@ -1,29 +1,29 @@
-import { createFetchError, FetchError } from "./errors";
-import { HookRegistry } from "./hooks";
-import { calculateRetryDelay } from "./retry";
+import { createFetchError, FetchError } from './errors';
+import { HookRegistry } from './hooks';
+import { calculateRetryDelay } from './retry';
 import {
   parseSSEStream,
   parseNDJSONStream,
   parseChunkedStream,
-} from "./streaming";
+} from './streaming';
 import type {
   FetchClientConfig,
   RequestOptions,
   StreamingRequestOptions,
   AuthStrategy,
-} from "./types";
+} from './types';
 import {
   buildUrl,
   serializeBody,
   getContentType,
   parseResponse,
   isSuccessResponse,
-} from "./utils";
+} from './utils';
 import {
   isFetchAvailable,
   getFetchErrorMessage,
   encodeBase64,
-} from "./utils/environment";
+} from './utils/environment';
 
 /**
  * Universal HTTP fetch client with hooks, retries, and streaming support
@@ -37,7 +37,7 @@ export class FetchClient {
 
     // Set default base URL if not provided
     if (!this.cfg.baseURL) {
-      this.cfg.baseURL = "";
+      this.cfg.baseURL = '';
     }
 
     // Initialize hook registry
@@ -93,27 +93,43 @@ export class FetchClient {
    * Make an HTTP request
    */
   async request<T = any>(init: RequestOptions): Promise<T> {
-    let url = buildUrl(this.cfg.baseURL || "", init.path, init.query);
-    const headers = new Headers({
-      ...(this.cfg.headers || {}),
-      ...(init.headers as any),
-    });
+    let url = buildUrl(this.cfg.baseURL || '', init.path, init.query);
+    // Create headers, handling both plain objects and Headers instances
+    const headers = new Headers(this.cfg.headers || {});
+    if (init.headers) {
+      if (init.headers instanceof Headers) {
+        // Copy from Headers object
+        init.headers.forEach((value, key) => {
+          headers.set(key, value);
+        });
+      } else {
+        // Merge from plain object
+        Object.entries(init.headers).forEach(([key, value]) => {
+          headers.set(key, String(value));
+        });
+      }
+    }
 
     // Apply authentication (may modify URL for query-based auth)
     await this.applyAuthentication(headers, url);
 
-    // Set content type if body is provided
+    // Set content type if body is provided (check before serialization)
+    let bodyContentType: string | undefined;
     if (init.body !== undefined) {
-      const contentType = getContentType(init.body);
-      if (contentType && !headers.has("Content-Type")) {
-        headers.set("Content-Type", contentType);
+      // Check if Content-Type is already set in headers
+      bodyContentType = headers.get('Content-Type') || undefined;
+      if (!bodyContentType) {
+        bodyContentType = getContentType(init.body);
+        if (bodyContentType) {
+          headers.set('Content-Type', bodyContentType);
+        }
       }
     }
 
     const retries = this.cfg.retry?.retries ?? 0;
     const baseBackoff = this.cfg.retry?.backoffMs ?? 300;
     const retryOn = this.cfg.retry?.retryOn ?? [429, 500, 502, 503, 504];
-    const retryStrategy = this.cfg.retry?.strategy ?? "exponential";
+    const retryStrategy = this.cfg.retry?.strategy ?? 'exponential';
 
     let lastError: unknown;
 
@@ -121,7 +137,7 @@ export class FetchClient {
       try {
         // Rebuild URL for each attempt (in case query params were modified by auth)
         let attemptUrl = buildUrl(
-          this.cfg.baseURL || "",
+          this.cfg.baseURL || '',
           init.path,
           init.query
         );
@@ -133,7 +149,8 @@ export class FetchClient {
           attemptUrl,
           init,
           attemptHeaders,
-          attempt
+          attempt,
+          bodyContentType
         );
       } catch (err: any) {
         lastError = err;
@@ -143,8 +160,8 @@ export class FetchClient {
 
         if (shouldRetry) {
           // Execute beforeRetry hook
-          if (this.hookRegistry.has("beforeRetry")) {
-            await this.hookRegistry.execute("beforeRetry", {
+          if (this.hookRegistry.has('beforeRetry')) {
+            await this.hookRegistry.execute('beforeRetry', {
               url: url.toString(),
               init: { ...init, headers },
               attempt,
@@ -162,8 +179,8 @@ export class FetchClient {
           await new Promise((resolve) => setTimeout(resolve, delay));
 
           // Execute afterRetry hook
-          if (this.hookRegistry.has("afterRetry")) {
-            await this.hookRegistry.execute("afterRetry", {
+          if (this.hookRegistry.has('afterRetry')) {
+            await this.hookRegistry.execute('afterRetry', {
               url: url.toString(),
               init: { ...init, headers },
               attempt,
@@ -190,18 +207,32 @@ export class FetchClient {
   async *requestStream<T = any>(
     init: StreamingRequestOptions
   ): AsyncGenerator<T, void, unknown> {
-    let url = buildUrl(this.cfg.baseURL || "", init.path, init.query);
-    const headers = new Headers({
-      ...(this.cfg.headers || {}),
-      ...(init.headers as any),
-    });
+    let url = buildUrl(this.cfg.baseURL || '', init.path, init.query);
+    // Create headers, handling both plain objects and Headers instances
+    const headers = new Headers(this.cfg.headers || {});
+    if (init.headers) {
+      if (init.headers instanceof Headers) {
+        // Copy from Headers object
+        init.headers.forEach((value, key) => {
+          headers.set(key, value);
+        });
+      } else {
+        // Merge from plain object
+        Object.entries(init.headers).forEach(([key, value]) => {
+          headers.set(key, String(value));
+        });
+      }
+    }
 
     // Apply authentication (may modify URL for query-based auth)
     await this.applyAuthentication(headers, url);
 
-    // Set content type
-    if (init.contentType && !headers.has("Content-Type")) {
-      headers.set("Content-Type", init.contentType);
+    // Determine content type for body serialization
+    let bodyContentType: string | undefined =
+      headers.get('Content-Type') || undefined;
+    if (init.contentType && !bodyContentType) {
+      bodyContentType = init.contentType;
+      headers.set('Content-Type', bodyContentType);
     }
 
     const fetchInit: RequestInit & {
@@ -212,6 +243,7 @@ export class FetchClient {
     } = {
       ...init,
       headers,
+      body: serializeBody(init.body, bodyContentType),
     };
 
     // Set credentials from config if provided
@@ -220,8 +252,8 @@ export class FetchClient {
     }
 
     // Execute beforeRequest hook
-    if (this.hookRegistry.has("beforeRequest")) {
-      await this.hookRegistry.execute("beforeRequest", {
+    if (this.hookRegistry.has('beforeRequest')) {
+      await this.hookRegistry.execute('beforeRequest', {
         url: url.toString(),
         init: fetchInit,
         attempt: 0,
@@ -233,13 +265,13 @@ export class FetchClient {
     const existingSignal = fetchInit.signal;
 
     // Setup timeout
-    if (this.cfg.timeoutMs && typeof AbortController !== "undefined") {
+    if (this.cfg.timeoutMs && typeof AbortController !== 'undefined') {
       controller = new AbortController();
       if (existingSignal) {
         if (existingSignal.aborted) {
           controller.abort();
         } else {
-          existingSignal.addEventListener("abort", () => {
+          existingSignal.addEventListener('abort', () => {
             controller?.abort();
           });
         }
@@ -248,8 +280,8 @@ export class FetchClient {
       timeoutId = setTimeout(() => {
         controller?.abort();
         // Execute onTimeout hook
-        if (this.hookRegistry.has("onTimeout")) {
-          this.hookRegistry.execute("onTimeout", {
+        if (this.hookRegistry.has('onTimeout')) {
+          this.hookRegistry.execute('onTimeout', {
             url: url.toString(),
             init: fetchInit,
             attempt: 0,
@@ -264,8 +296,8 @@ export class FetchClient {
       const res = await fetchFn(url.toString(), fetchInit);
 
       // Execute afterRequest hook
-      if (this.hookRegistry.has("afterRequest")) {
-        await this.hookRegistry.execute("afterRequest", {
+      if (this.hookRegistry.has('afterRequest')) {
+        await this.hookRegistry.execute('afterRequest', {
           url: url.toString(),
           init: fetchInit,
           attempt: 0,
@@ -283,8 +315,8 @@ export class FetchClient {
         );
 
         // Execute onError hook
-        if (this.hookRegistry.has("onError")) {
-          await this.hookRegistry.execute("onError", {
+        if (this.hookRegistry.has('onError')) {
+          await this.hookRegistry.execute('onError', {
             url: url.toString(),
             init: fetchInit,
             attempt: 0,
@@ -296,8 +328,8 @@ export class FetchClient {
       }
 
       // Execute onStreamStart hook
-      if (this.hookRegistry.has("onStreamStart")) {
-        await this.hookRegistry.execute("onStreamStart", {
+      if (this.hookRegistry.has('onStreamStart')) {
+        await this.hookRegistry.execute('onStreamStart', {
           url: url.toString(),
           init: fetchInit,
           attempt: 0,
@@ -306,14 +338,14 @@ export class FetchClient {
       }
 
       // Route to appropriate parser based on streaming format
-      const streamingFormat = init.streamingFormat || "chunked";
+      const streamingFormat = init.streamingFormat || 'chunked';
 
-      if (streamingFormat === "sse") {
+      if (streamingFormat === 'sse') {
         for await (const chunk of parseSSEStream(res)) {
           let transformedChunk = chunk;
           // Execute onStreamChunk hook if present
-          if (this.hookRegistry.has("onStreamChunk")) {
-            await this.hookRegistry.execute("onStreamChunk", {
+          if (this.hookRegistry.has('onStreamChunk')) {
+            await this.hookRegistry.execute('onStreamChunk', {
               url: url.toString(),
               init: fetchInit,
               attempt: 0,
@@ -322,12 +354,12 @@ export class FetchClient {
           }
           yield transformedChunk as T;
         }
-      } else if (streamingFormat === "ndjson") {
+      } else if (streamingFormat === 'ndjson') {
         for await (const chunk of parseNDJSONStream<T>(res)) {
           let transformedChunk = chunk;
           // Execute onStreamChunk hook if present
-          if (this.hookRegistry.has("onStreamChunk")) {
-            await this.hookRegistry.execute("onStreamChunk", {
+          if (this.hookRegistry.has('onStreamChunk')) {
+            await this.hookRegistry.execute('onStreamChunk', {
               url: url.toString(),
               init: fetchInit,
               attempt: 0,
@@ -341,8 +373,8 @@ export class FetchClient {
         for await (const chunk of parseChunkedStream<T>(res)) {
           let transformedChunk = chunk;
           // Execute onStreamChunk hook if present
-          if (this.hookRegistry.has("onStreamChunk")) {
-            await this.hookRegistry.execute("onStreamChunk", {
+          if (this.hookRegistry.has('onStreamChunk')) {
+            await this.hookRegistry.execute('onStreamChunk', {
               url: url.toString(),
               init: fetchInit,
               attempt: 0,
@@ -354,8 +386,8 @@ export class FetchClient {
       }
 
       // Execute onStreamEnd hook
-      if (this.hookRegistry.has("onStreamEnd")) {
-        await this.hookRegistry.execute("onStreamEnd", {
+      if (this.hookRegistry.has('onStreamEnd')) {
+        await this.hookRegistry.execute('onStreamEnd', {
           url: url.toString(),
           init: fetchInit,
           attempt: 0,
@@ -364,8 +396,8 @@ export class FetchClient {
       }
     } catch (err) {
       // Execute onError hook
-      if (this.hookRegistry.has("onError")) {
-        await this.hookRegistry.execute("onError", {
+      if (this.hookRegistry.has('onError')) {
+        await this.hookRegistry.execute('onError', {
           url: url.toString(),
           init: fetchInit,
           attempt: 0,
@@ -387,7 +419,8 @@ export class FetchClient {
     url: URL,
     init: RequestOptions,
     baseHeaders: Headers,
-    attempt: number
+    attempt: number,
+    contentType?: string
   ): Promise<T> {
     // Headers are already cloned and auth is already applied
     const requestHeaders = baseHeaders;
@@ -400,7 +433,7 @@ export class FetchClient {
     } = {
       ...init,
       headers: requestHeaders,
-      body: serializeBody(init.body),
+      body: serializeBody(init.body, contentType),
     };
 
     // Set credentials from config if provided
@@ -409,8 +442,8 @@ export class FetchClient {
     }
 
     // Execute beforeRequest hook
-    if (this.hookRegistry.has("beforeRequest")) {
-      await this.hookRegistry.execute("beforeRequest", {
+    if (this.hookRegistry.has('beforeRequest')) {
+      await this.hookRegistry.execute('beforeRequest', {
         url: url.toString(),
         init: fetchInit,
         attempt,
@@ -422,13 +455,13 @@ export class FetchClient {
     const existingSignal = fetchInit.signal;
 
     // Setup timeout
-    if (this.cfg.timeoutMs && typeof AbortController !== "undefined") {
+    if (this.cfg.timeoutMs && typeof AbortController !== 'undefined') {
       controller = new AbortController();
       if (existingSignal) {
         if (existingSignal.aborted) {
           controller.abort();
         } else {
-          existingSignal.addEventListener("abort", () => {
+          existingSignal.addEventListener('abort', () => {
             controller?.abort();
           });
         }
@@ -437,8 +470,8 @@ export class FetchClient {
       timeoutId = setTimeout(() => {
         controller?.abort();
         // Execute onTimeout hook
-        if (this.hookRegistry.has("onTimeout")) {
-          this.hookRegistry.execute("onTimeout", {
+        if (this.hookRegistry.has('onTimeout')) {
+          this.hookRegistry.execute('onTimeout', {
             url: url.toString(),
             init: fetchInit,
             attempt,
@@ -453,8 +486,8 @@ export class FetchClient {
       const res = await fetchFn(url.toString(), fetchInit);
 
       // Execute afterRequest hook
-      if (this.hookRegistry.has("afterRequest")) {
-        await this.hookRegistry.execute("afterRequest", {
+      if (this.hookRegistry.has('afterRequest')) {
+        await this.hookRegistry.execute('afterRequest', {
           url: url.toString(),
           init: fetchInit,
           attempt,
@@ -465,8 +498,8 @@ export class FetchClient {
       const parsed = await parseResponse(res);
 
       // Execute afterResponse hook
-      if (this.hookRegistry.has("afterResponse")) {
-        await this.hookRegistry.execute("afterResponse", {
+      if (this.hookRegistry.has('afterResponse')) {
+        await this.hookRegistry.execute('afterResponse', {
           url: url.toString(),
           init: fetchInit,
           attempt,
@@ -484,8 +517,8 @@ export class FetchClient {
         );
 
         // Execute onError hook
-        if (this.hookRegistry.has("onError")) {
-          await this.hookRegistry.execute("onError", {
+        if (this.hookRegistry.has('onError')) {
+          await this.hookRegistry.execute('onError', {
             url: url.toString(),
             init: fetchInit,
             attempt,
@@ -499,8 +532,8 @@ export class FetchClient {
       return parsed as T;
     } catch (err) {
       // Execute onError hook
-      if (this.hookRegistry.has("onError")) {
-        await this.hookRegistry.execute("onError", {
+      if (this.hookRegistry.has('onError')) {
+        await this.hookRegistry.execute('onError', {
           url: url.toString(),
           init: fetchInit,
           attempt,
@@ -518,13 +551,13 @@ export class FetchClient {
 
       // For network errors, try to extract status if available
       const status = (err as any)?.status as number | undefined;
-      const statusCode = typeof status === "number" ? status : 0;
-      if (typeof err === "string") {
+      const statusCode = typeof status === 'number' ? status : 0;
+      if (typeof err === 'string') {
         throw createFetchError(statusCode, err);
       }
       throw createFetchError(
         statusCode,
-        (err as Error)?.message || "Network error"
+        (err as Error)?.message || 'Network error'
       );
     } finally {
       if (timeoutId) {
@@ -555,48 +588,48 @@ export class FetchClient {
     url: URL
   ): Promise<void> {
     switch (strategy.type) {
-      case "bearer": {
+      case 'bearer': {
         const token =
-          typeof strategy.token === "function"
+          typeof strategy.token === 'function'
             ? await strategy.token()
             : strategy.token;
         if (token != null) {
-          const headerName = strategy.headerName || "Authorization";
+          const headerName = strategy.headerName || 'Authorization';
           headers.set(headerName, `Bearer ${String(token)}`);
         }
         break;
       }
 
-      case "basic": {
+      case 'basic': {
         const encoded = encodeBase64(
           `${strategy.username}:${strategy.password}`
         );
-        headers.set("Authorization", `Basic ${encoded}`);
+        headers.set('Authorization', `Basic ${encoded}`);
         break;
       }
 
-      case "apiKey": {
+      case 'apiKey': {
         const key =
-          typeof strategy.key === "function"
+          typeof strategy.key === 'function'
             ? await strategy.key()
             : strategy.key;
         if (key != null) {
           switch (strategy.location) {
-            case "header":
+            case 'header':
               headers.set(strategy.name, String(key));
               break;
-            case "query":
+            case 'query':
               url.searchParams.set(strategy.name, String(key));
               break;
-            case "cookie":
-              headers.set("Cookie", `${strategy.name}=${String(key)}`);
+            case 'cookie':
+              headers.set('Cookie', `${strategy.name}=${String(key)}`);
               break;
           }
         }
         break;
       }
 
-      case "custom":
+      case 'custom':
         await strategy.apply(headers, url);
         break;
     }
