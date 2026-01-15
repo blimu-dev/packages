@@ -2,7 +2,6 @@
 // Use these schemas for runtime validation in forms, API requests, etc.
 
 import { z } from 'zod';
-import * as Schema from './schema';
 
 {{! Simple types: generate as regular Zod schema exports (not in namespace) }}
 {{#each IR.modelDefs}}
@@ -54,7 +53,7 @@ export const {{this.name}}Schema = z.object({
 /**
  * Zod schema for {{this.name}}
  */
-export const {{this.name}}Schema = Schema.{{this.schema.ref}}Schema;
+export const {{this.name}}Schema = {{zodSchema this.schema}};
 
   {{~else if (eq this.schema.kind "oneOf")~}}
 /**

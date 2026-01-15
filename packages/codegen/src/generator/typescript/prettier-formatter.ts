@@ -53,26 +53,21 @@ export async function formatWithPrettier(
       return;
     }
 
-    log.debug?.(`Formatting TypeScript files in ${srcDir}...`);
-
     // Use Prettier to format all TypeScript files
     // Prettier will use the .prettierrc file in the outDir if it exists
+    // Use --loglevel=error to suppress informational output (only show errors)
     const { stdout, stderr } = await execAsync(
-      'npx --yes prettier --write "src/**/*.{ts,tsx}"',
+      'npx --yes prettier --write --loglevel=error "src/**/*.{ts,tsx}"',
       {
         cwd: outDir,
         maxBuffer: 10 * 1024 * 1024, // 10MB buffer
       }
     );
 
-    if (stdout) {
-      log.debug?.(stdout);
-    }
+    // Only log stderr (errors), stdout is suppressed by --loglevel=error
     if (stderr && !stderr.includes('warning')) {
       log.warn?.(stderr);
     }
-
-    log.debug?.('Code formatting completed successfully.');
   } catch (error) {
     // Don't fail generation if formatting fails - just log a warning
     const errorMessage = error instanceof Error ? error.message : String(error);
