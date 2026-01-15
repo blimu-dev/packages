@@ -1,6 +1,5 @@
 
 import { CoreClient, FetchError, type ClientOption } from "./client";
-import { FetchError as VertzFetchError } from "@blimu/fetch";
 {{~#each IR.services~}}
 import { {{serviceName tag}} } from "./services/{{fileBase tag}}";
 {{~/each~}}
