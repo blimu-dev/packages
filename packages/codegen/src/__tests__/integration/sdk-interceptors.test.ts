@@ -3,6 +3,7 @@ import {
   generateTestSDK,
   importGeneratedSDK,
   cleanupTestSDK,
+  typecheckGeneratedSDK,
 } from './helpers/sdk-generator';
 import { setupMSW, teardownMSW } from './helpers/msw-setup';
 import { handlers } from './helpers/msw-handlers';
@@ -13,6 +14,7 @@ describe('Generated SDK - Interceptors', () => {
 
   beforeAll(async () => {
     sdkPath = await generateTestSDK('test-api-3.0.json');
+    typecheckGeneratedSDK(sdkPath);
     SDK = await importGeneratedSDK(sdkPath);
     setupMSW(handlers);
   }, 30000);

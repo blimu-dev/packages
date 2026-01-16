@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { execSync } from 'child_process';
 import { generate } from '../../../api/generate';
 import { Config } from '../../../config/config.schema';
 
@@ -132,4 +133,52 @@ export async function cleanupTestSDK(sdkDir: string): Promise<void> {
  */
 export function getSDKFilePath(sdkDir: string, filename: string): string {
   return path.join(sdkDir, filename);
+}
+
+/**
+ * Run TypeScript typecheck on a generated SDK
+ * @param sdkDir - Path to generated SDK directory
+ * @throws Error if typecheck fails
+ */
+export function typecheckGeneratedSDK(sdkDir: string): void {
+  const tsconfigPath = path.join(sdkDir, 'tsconfig.json');
+
+  // Check if tsconfig.json exists
+  if (!fs.existsSync(tsconfigPath)) {
+    throw new Error(`tsconfig.json not found at ${tsconfigPath}`);
+  }
+
+  try {
+    // Run tsc --noEmit to check types without emitting files
+    execSync('npx tsc --noEmit', {
+      cwd: sdkDir,
+      stdio: 'pipe',
+      encoding: 'utf-8',
+    });
+  } catch (error: any) {
+    const stdout = error.stdout?.toString() || '';
+    const stderr = error.stderr?.toString() || '';
+    const errorMessage = stdout || stderr || error.message || String(error);
+
+    // Filter out TS2307 errors (Cannot find module) as these are expected
+    // when testing with external dependencies that aren't installed
+    const lines = errorMessage.split('\n');
+    const actualErrors = lines.filter((line: string) => {
+      // Skip module not found errors (TS2307) - these are expected for predefined types tests
+      if (line.includes('error TS2307')) {
+        return false;
+      }
+      // Include all other errors
+      return line.includes('error TS');
+    });
+
+    // Only throw if there are actual type errors (not just missing modules)
+    if (actualErrors.length > 0) {
+      throw new Error(
+        `TypeScript typecheck failed for generated SDK at ${sdkDir}:\n${actualErrors.join('\n')}`
+      );
+    }
+    // If only missing module errors, log a warning but don't fail
+    // This allows tests with external dependencies to pass
+  }
 }

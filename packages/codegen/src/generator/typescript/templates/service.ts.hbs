@@ -1,5 +1,7 @@
 import { FetchClient } from '@blimu/fetch';
+{{#if (serviceUsesSchema Service)}}
 import * as Schema from "../schema";
+{{/if}}
 {{#if Client.includeQueryKeys}}
 import { isNotUndefined } from "../utils";
 {{/if}}

@@ -3,6 +3,7 @@ import {
   generateTestSDK,
   importGeneratedSDK,
   cleanupTestSDK,
+  typecheckGeneratedSDK,
 } from './helpers/sdk-generator';
 import { setupMSW, teardownMSW, resetMSWHandlers } from './helpers/msw-setup';
 import { http, HttpResponse } from 'msw';
@@ -13,6 +14,7 @@ describe('Generated SDK - Error Handling', () => {
 
   beforeAll(async () => {
     sdkPath = await generateTestSDK('test-api-3.0.json');
+    typecheckGeneratedSDK(sdkPath);
     SDK = await importGeneratedSDK(sdkPath);
     setupMSW([]);
   }, 30000);

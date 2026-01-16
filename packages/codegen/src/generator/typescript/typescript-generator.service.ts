@@ -381,6 +381,56 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
       if (!Array.isArray(schemes)) return false;
       return schemes.some((s) => s.type === 'apiKey');
     });
+    Handlebars.registerHelper('serviceUsesSchema', (service: any) => {
+      if (
+        !service ||
+        !service.operations ||
+        !Array.isArray(service.operations)
+      ) {
+        return false;
+      }
+      // Check if any operation uses Schema types
+      // Schema is used when:
+      // 1. Response schema is a ref (uses Schema.TypeName)
+      // 2. Request body schema is a ref (uses Schema.TypeName)
+      // 3. Query params exist (uses Schema.QueryType interfaces)
+      // 4. Any schema that's not a primitive type
+      return service.operations.some((op: any) => {
+        // Check response schema - if it's a ref or complex type, it uses Schema
+        if (op.response?.schema) {
+          const schema = op.response.schema;
+          if (
+            schema.kind === 'ref' ||
+            schema.kind === 'object' ||
+            schema.kind === 'array' ||
+            schema.kind === 'oneOf' ||
+            schema.kind === 'anyOf' ||
+            schema.kind === 'allOf'
+          ) {
+            return true;
+          }
+        }
+        // Check request body schema
+        if (op.requestBody?.schema) {
+          const schema = op.requestBody.schema;
+          if (
+            schema.kind === 'ref' ||
+            schema.kind === 'object' ||
+            schema.kind === 'array' ||
+            schema.kind === 'oneOf' ||
+            schema.kind === 'anyOf' ||
+            schema.kind === 'allOf'
+          ) {
+            return true;
+          }
+        }
+        // Check query params (they always use Schema.QueryType interfaces)
+        if (op.queryParams && op.queryParams.length > 0) {
+          return true;
+        }
+        return false;
+      });
+    });
     Handlebars.registerHelper('streamingItemType', (op: any) => {
       return new Handlebars.SafeString(getStreamingItemType(op));
     });

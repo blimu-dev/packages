@@ -9,6 +9,7 @@ import { buildAuthStrategies } from './auth-strategies';
 import { {{serviceName tag}} } from './services/{{fileBase tag}}';
 {{~/each~}}
 
+
 export type ClientOption = FetchClientConfig & {
   {{~#each IR.securitySchemes~}}
   {{~#if (eq this.type "http")~}}

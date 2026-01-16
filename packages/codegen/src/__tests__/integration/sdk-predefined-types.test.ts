@@ -5,6 +5,7 @@ import {
   generateTestSDK,
   cleanupTestSDK,
   getSDKFilePath,
+  typecheckGeneratedSDK,
 } from './helpers/sdk-generator';
 
 describe('Generated SDK - Predefined Types', () => {
@@ -41,6 +42,9 @@ describe('Generated SDK - Predefined Types', () => {
       'backend-api-with-simple-types.json',
       config
     );
+
+    // Typecheck the generated SDK
+    typecheckGeneratedSDK(sdkPath);
 
     // Read the generated schema.ts file
     const schemaPath = getSDKFilePath(sdkPath, 'src/schema.ts');

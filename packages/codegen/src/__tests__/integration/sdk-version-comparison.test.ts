@@ -3,6 +3,7 @@ import {
   generateTestSDK,
   importGeneratedSDK,
   cleanupTestSDK,
+  typecheckGeneratedSDK,
 } from "./helpers/sdk-generator";
 import { setupMSW, teardownMSW } from "./helpers/msw-setup";
 import { handlers } from "./helpers/msw-handlers";
@@ -17,6 +18,8 @@ describe("Generated SDK - OpenAPI 3.0 vs 3.1 Comparison", () => {
     // Generate SDKs from both versions
     sdkPath30 = await generateTestSDK("test-api-3.0.json");
     sdkPath31 = await generateTestSDK("test-api-3.1.json");
+    typecheckGeneratedSDK(sdkPath30);
+    typecheckGeneratedSDK(sdkPath31);
     SDK30 = await importGeneratedSDK(sdkPath30);
     SDK31 = await importGeneratedSDK(sdkPath31);
     setupMSW(handlers);
