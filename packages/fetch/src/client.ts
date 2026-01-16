@@ -53,18 +53,18 @@ export class FetchClient {
    * Add an authentication strategy
    */
   addAuthStrategy(strategy: AuthStrategy): void {
-    if (!this.cfg.auth) {
-      this.cfg.auth = { strategies: [] };
+    if (!this.cfg.authStrategies) {
+      this.cfg.authStrategies = [];
     }
-    this.cfg.auth.strategies.push(strategy);
+    this.cfg.authStrategies.push(strategy);
   }
 
   /**
    * Remove all authentication strategies
    */
   clearAuthStrategies(): void {
-    if (this.cfg.auth) {
-      this.cfg.auth.strategies = [];
+    if (this.cfg.authStrategies) {
+      this.cfg.authStrategies = [];
     }
   }
 
@@ -570,11 +570,11 @@ export class FetchClient {
    * Apply authentication strategies
    */
   private async applyAuthentication(headers: Headers, url: URL): Promise<void> {
-    if (!this.cfg.auth?.strategies) {
+    if (!this.cfg.authStrategies) {
       return;
     }
 
-    for (const strategy of this.cfg.auth.strategies) {
+    for (const strategy of this.cfg.authStrategies) {
       await this.applyAuthStrategy(strategy, headers, url);
     }
   }

@@ -59,6 +59,7 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
 
     // Generate files
     await this.generateClient(client, processedIR, srcDir);
+    await this.generateAuthStrategies(client, processedIR, srcDir);
     await this.generateIndex(client, processedIR, srcDir);
     await this.generateUtils(client, processedIR, srcDir);
     await this.generateServices(client, processedIR, servicesDir);
@@ -371,6 +372,15 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
     Handlebars.registerHelper('isStreaming', (op: any) => {
       return isStreamingOperation(op);
     });
+    // Security scheme helpers
+    Handlebars.registerHelper('hasBearerScheme', (schemes: any[]) => {
+      if (!Array.isArray(schemes)) return false;
+      return schemes.some((s) => s.type === 'http' && s.scheme === 'bearer');
+    });
+    Handlebars.registerHelper('hasApiKeyScheme', (schemes: any[]) => {
+      if (!Array.isArray(schemes)) return false;
+      return schemes.some((s) => s.type === 'apiKey');
+    });
     Handlebars.registerHelper('streamingItemType', (op: any) => {
       return new Handlebars.SafeString(getStreamingItemType(op));
     });
@@ -490,6 +500,31 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
     }
   }
 
+  private async generateAuthStrategies(
+    client: TypeScriptClient,
+    ir: IR,
+    srcDir: string
+  ): Promise<void> {
+    const authStrategiesPath = path.join(srcDir, 'auth-strategies.ts');
+    if (this.configService.shouldExcludeFile(client, authStrategiesPath)) {
+      return;
+    }
+    try {
+      await this.renderTemplate(
+        'auth-strategies.ts.hbs',
+        { Client: client, IR: ir },
+        authStrategiesPath,
+        client
+      );
+    } catch (error) {
+      this.logger.warn(
+        `Template auth-strategies.ts.hbs not found, using placeholder`
+      );
+      const content = `// Generated auth-strategies - template rendering to be implemented`;
+      await fs.promises.writeFile(authStrategiesPath, content, 'utf-8');
+    }
+  }
+
   private async generateIndex(
     client: TypeScriptClient,
     ir: IR,
@@ -499,6 +534,18 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
     if (this.configService.shouldExcludeFile(client, indexPath)) {
       return;
     }
+
+    // Skip generation if index.ts already exists (allows user customization)
+    try {
+      await fs.promises.access(indexPath);
+      this.logger.debug(
+        `index.ts already exists at ${indexPath}, skipping generation to preserve customizations`
+      );
+      return;
+    } catch (error) {
+      // File doesn't exist, proceed with generation
+    }
+
     try {
       await this.renderTemplate(
         'index.ts.hbs',

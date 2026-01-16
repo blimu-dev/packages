@@ -1,0 +1,68 @@
+import type {
+  AuthStrategy{{~#if (hasBearerScheme IR.securitySchemes)}}, 
+  BearerAuthStrategy{{~/if~}}{{~#if (hasApiKeyScheme IR.securitySchemes)}}, 
+  ApiKeyAuthStrategy{{~/if~}}
+} from '@blimu/fetch';
+import type { ClientOption } from './client';
+
+export function buildAuthStrategies(cfg: ClientOption): AuthStrategy[] {
+  const authStrategies: AuthStrategy[] = [...(cfg?.authStrategies || [])];
+  
+  {{~#each IR.securitySchemes~}}
+  {{~#if (eq this.type "http")~}}
+    {{~#if (eq this.scheme "bearer")~}}
+  if (cfg.{{camel this.key}}) {
+    authStrategies.push({
+      type: 'bearer',
+      token: cfg.{{camel this.key}},
+    });
+  }
+    {{~/if~}}
+  {{~/if~}}
+  {{~/each~}}
+  
+  {{~#each IR.securitySchemes~}}
+  {{~#if (eq this.type "http")~}}
+    {{~#if (eq this.scheme "basic")~}}
+  if (cfg.{{camel this.key}}) {
+    authStrategies.push({
+      type: 'basic',
+      username: cfg.{{camel this.key}}.username,
+      password: cfg.{{camel this.key}}.password,
+    });
+  }
+    {{~/if~}}
+    {{~else if (eq this.type "apiKey")~}}
+    {{~#if (eq this.in "header")~}}
+  if (cfg.{{camel this.key}}) {
+    authStrategies.push({
+      type: 'apiKey',
+      key: cfg.{{camel this.key}},
+      location: 'header',
+      name: '{{this.name}}',
+    });
+  }
+    {{~else if (eq this.in "query")~}}
+  if (cfg.{{camel this.key}}) {
+    authStrategies.push({
+      type: 'apiKey',
+      key: cfg.{{camel this.key}},
+      location: 'query',
+      name: '{{this.name}}',
+    });
+  }
+    {{~else if (eq this.in "cookie")~}}
+  if (cfg.{{camel this.key}}) {
+    authStrategies.push({
+      type: 'apiKey',
+      key: cfg.{{camel this.key}},
+      location: 'cookie',
+      name: '{{this.name}}',
+    });
+  }
+    {{~/if~}}
+  {{~/if~}}
+  {{~/each~}}
+
+  return authStrategies;
+}

@@ -25,19 +25,19 @@ pnpm add @blimu/fetch
 ## Quick Start
 
 ```typescript
-import { FetchClient } from "@blimu/fetch";
+import { FetchClient } from '@blimu/fetch';
 
 const client = new FetchClient({
-  baseURL: "https://api.example.com",
+  baseURL: 'https://api.example.com',
   headers: {
-    "Content-Type": "application/json",
+    'Content-Type': 'application/json',
   },
 });
 
 // Make a request
 const data = await client.request({
-  path: "/users",
-  method: "GET",
+  path: '/users',
+  method: 'GET',
 });
 ```
 
@@ -47,128 +47,114 @@ const data = await client.request({
 
 ```typescript
 const client = new FetchClient({
-  baseURL: "https://api.example.com",
+  baseURL: 'https://api.example.com',
   headers: {
-    "X-Custom-Header": "value",
+    'X-Custom-Header': 'value',
   },
   timeoutMs: 5000,
-  credentials: "include",
+  credentials: 'include',
 });
 ```
 
 ### Authentication
 
-Authentication is configured using the `auth` option with strategies:
+Authentication is configured using the `authStrategies` option:
 
 ```typescript
 // Bearer token authentication
 const client = new FetchClient({
-  baseURL: "https://api.example.com",
-  auth: {
-    strategies: [
-      {
-        type: "bearer",
-        token: "your-token-here",
-      },
-    ],
-  },
+  baseURL: 'https://api.example.com',
+  authStrategies: [
+    {
+      type: 'bearer',
+      token: 'your-token-here',
+    },
+  ],
 });
 
 // Dynamic bearer token
 const client = new FetchClient({
-  baseURL: "https://api.example.com",
-  auth: {
-    strategies: [
-      {
-        type: "bearer",
-        token: async () => {
-          // Fetch or refresh token
-          return await getToken();
-        },
-        headerName: "Authorization", // Optional, defaults to "Authorization"
+  baseURL: 'https://api.example.com',
+  authStrategies: [
+    {
+      type: 'bearer',
+      token: async () => {
+        // Fetch or refresh token
+        return await getToken();
       },
-    ],
-  },
+      headerName: 'Authorization', // Optional, defaults to "Authorization"
+    },
+  ],
 });
 
 // Basic authentication
 const client = new FetchClient({
-  baseURL: "https://api.example.com",
-  auth: {
-    strategies: [
-      {
-        type: "basic",
-        username: "user",
-        password: "pass",
-      },
-    ],
-  },
+  baseURL: 'https://api.example.com',
+  authStrategies: [
+    {
+      type: 'basic',
+      username: 'user',
+      password: 'pass',
+    },
+  ],
 });
 
 // API key in header
 const client = new FetchClient({
-  baseURL: "https://api.example.com",
-  auth: {
-    strategies: [
-      {
-        type: "apiKey",
-        key: "your-api-key",
-        location: "header",
-        name: "X-API-Key",
-      },
-    ],
-  },
+  baseURL: 'https://api.example.com',
+  authStrategies: [
+    {
+      type: 'apiKey',
+      key: 'your-api-key',
+      location: 'header',
+      name: 'X-API-Key',
+    },
+  ],
 });
 
 // API key in query parameter
 const client = new FetchClient({
-  baseURL: "https://api.example.com",
-  auth: {
-    strategies: [
-      {
-        type: "apiKey",
-        key: "your-api-key",
-        location: "query",
-        name: "api_key",
-      },
-    ],
-  },
+  baseURL: 'https://api.example.com',
+  authStrategies: [
+    {
+      type: 'apiKey',
+      key: 'your-api-key',
+      location: 'query',
+      name: 'api_key',
+    },
+  ],
 });
 
 // Multiple authentication strategies
 const client = new FetchClient({
-  baseURL: "https://api.example.com",
-  auth: {
-    strategies: [
-      {
-        type: "bearer",
-        token: "token",
-      },
-      {
-        type: "apiKey",
-        key: "api-key",
-        location: "header",
-        name: "X-API-Key",
-      },
-    ],
-  },
+  baseURL: 'https://api.example.com',
+  authStrategies: [
+    {
+      type: 'bearer',
+      token: 'token',
+    },
+    {
+      type: 'apiKey',
+      key: 'api-key',
+      location: 'header',
+      name: 'X-API-Key',
+    },
+  ],
 });
 
 // Custom authentication strategy
 const client = new FetchClient({
-  baseURL: "https://api.example.com",
-  auth: {
-    strategies: [
-      {
-        type: "custom",
-        apply: async (headers, url) => {
-          // Custom authentication logic
-          const token = await getCustomToken();
-          headers.set("X-Custom-Auth", token);
-        },
+  baseURL: 'https://api.example.com',
+  authStrategies: [
+    {
+      type: 'custom',
+      apply: async (headers, url) => {
+        // Custom authentication logic
+        const token = await getCustomToken();
+        headers.set('X-Custom-Auth', token);
       },
-    ],
-  },
+    },
+  ],
 });
 ```
 
@@ -193,29 +179,29 @@ The hooks system allows you to intercept and modify requests at different lifecy
 
 ```typescript
 const client = new FetchClient({
-  baseURL: "https://api.example.com",
+  baseURL: 'https://api.example.com',
   hooks: {
     beforeRequest: [
       (ctx) => {
         // Add custom header
-        ctx.init.headers.set("X-Request-ID", generateId());
+        ctx.init.headers.set('X-Request-ID', generateId());
       },
       async (ctx) => {
         // Refresh token if needed
         const token = await refreshToken();
-        ctx.init.headers.set("Authorization", `Bearer ${token}`);
+        ctx.init.headers.set('Authorization', `Bearer ${token}`);
       },
     ],
     afterResponse: [
       (ctx) => {
         // Log response
-        console.log("Response:", ctx.data);
+        console.log('Response:', ctx.data);
       },
     ],
     onError: [
       (ctx) => {
         // Log errors
-        console.error("Request failed:", ctx.error);
+        console.error('Request failed:', ctx.error);
       },
     ],
   },
@@ -225,20 +211,20 @@ const client = new FetchClient({
 ### Dynamic Hook Registration
 
 ```typescript
-const client = new FetchClient({ baseURL: "https://api.example.com" });
+const client = new FetchClient({ baseURL: 'https://api.example.com' });
 
 // Register a hook
-client.useHook("beforeRequest", (ctx) => {
-  console.log("Making request to:", ctx.url);
+client.useHook('beforeRequest', (ctx) => {
+  console.log('Making request to:', ctx.url);
 });
 
 // Remove a hook
 const hook = (ctx) => console.log(ctx);
-client.useHook("beforeRequest", hook);
-client.removeHook("beforeRequest", hook);
+client.useHook('beforeRequest', hook);
+client.removeHook('beforeRequest', hook);
 
 // Clear all hooks for a stage
-client.clearHooks("beforeRequest");
+client.clearHooks('beforeRequest');
 
 // Clear all hooks
 client.clearHooks();
@@ -250,10 +236,10 @@ client.clearHooks();
 
 ```typescript
 const client = new FetchClient({
-  baseURL: "https://api.example.com",
+  baseURL: 'https://api.example.com',
   retry: {
     retries: 3,
-    strategy: "exponential",
+    strategy: 'exponential',
     backoffMs: 100,
     retryOn: [429, 500, 502, 503, 504],
   },
@@ -264,10 +250,10 @@ const client = new FetchClient({
 
 ```typescript
 const client = new FetchClient({
-  baseURL: "https://api.example.com",
+  baseURL: 'https://api.example.com',
   retry: {
     retries: 3,
-    strategy: "linear",
+    strategy: 'linear',
     backoffMs: 200,
     retryOn: [500, 502, 503],
   },
@@ -278,7 +264,7 @@ const client = new FetchClient({
 
 ```typescript
 const client = new FetchClient({
-  baseURL: "https://api.example.com",
+  baseURL: 'https://api.example.com',
   retry: {
     retries: 3,
     strategy: (attempt, baseBackoff) => {
@@ -300,12 +286,12 @@ const client = new FetchClient({
 
 ```typescript
 for await (const chunk of client.requestStream({
-  path: "/events",
-  method: "GET",
-  contentType: "text/event-stream",
-  streamingFormat: "sse",
+  path: '/events',
+  method: 'GET',
+  contentType: 'text/event-stream',
+  streamingFormat: 'sse',
 })) {
-  console.log("Event:", chunk);
+  console.log('Event:', chunk);
 }
 ```
 
@@ -313,12 +299,12 @@ for await (const chunk of client.requestStream({
 
 ```typescript
 for await (const item of client.requestStream({
-  path: "/items",
-  method: "GET",
-  contentType: "application/x-ndjson",
-  streamingFormat: "ndjson",
+  path: '/items',
+  method: 'GET',
+  contentType: 'application/x-ndjson',
+  streamingFormat: 'ndjson',
 })) {
-  console.log("Item:", item);
+  console.log('Item:', item);
 }
 ```
 
@@ -326,12 +312,12 @@ for await (const item of client.requestStream({
 
 ```typescript
 for await (const chunk of client.requestStream({
-  path: "/stream",
-  method: "GET",
-  contentType: "application/octet-stream",
-  streamingFormat: "chunked",
+  path: '/stream',
+  method: 'GET',
+  contentType: 'application/octet-stream',
+  streamingFormat: 'chunked',
 })) {
-  console.log("Chunk:", chunk);
+  console.log('Chunk:', chunk);
 }
 ```
 
@@ -369,23 +355,23 @@ import {
   NotFoundError,
   UnauthorizedError,
   ServerError,
-} from "@blimu/fetch";
+} from '@blimu/fetch';
 
 try {
-  await client.request({ path: "/users/123", method: "GET" });
+  await client.request({ path: '/users/123', method: 'GET' });
 } catch (error) {
   if (error instanceof NotFoundError) {
     // Handle 404
-    console.log("User not found");
+    console.log('User not found');
   } else if (error instanceof UnauthorizedError) {
     // Handle 401
-    console.log("Unauthorized - refresh token");
+    console.log('Unauthorized - refresh token');
   } else if (error instanceof ServerError) {
     // Handle any 5xx
-    console.log("Server error:", error.status);
+    console.log('Server error:', error.status);
   } else {
     // Handle other errors
-    console.error("Unexpected error:", error);
+    console.error('Unexpected error:', error);
   }
 }
 ```
@@ -397,10 +383,10 @@ try {
 Works out of the box in modern browsers (Chrome 42+, Firefox 39+, Safari 10.1+, Edge 14+):
 
 ```typescript
-import { FetchClient } from "@blimu/fetch";
+import { FetchClient } from '@blimu/fetch';
 
 const client = new FetchClient({
-  baseURL: "https://api.example.com",
+  baseURL: 'https://api.example.com',
 });
 ```
 
@@ -411,11 +397,11 @@ const client = new FetchClient({
 **Node.js < 22**: Provide a custom fetch implementation:
 
 ```typescript
-import { FetchClient } from "@blimu/fetch";
-import { fetch } from "undici"; // or "node-fetch"
+import { FetchClient } from '@blimu/fetch';
+import { fetch } from 'undici'; // or "node-fetch"
 
 const client = new FetchClient({
-  baseURL: "https://api.example.com",
+  baseURL: 'https://api.example.com',
   fetch, // Provide custom fetch
 });
 ```
@@ -449,13 +435,9 @@ interface FetchClientConfig {
   timeoutMs?: number;
   retry?: RetryConfig;
   hooks?: HooksConfig;
-  auth?: AuthConfig;
+  authStrategies?: AuthStrategy[];
   fetch?: typeof fetch;
   credentials?: RequestCredentials;
-}
-
-interface AuthConfig {
-  strategies: AuthStrategy[];
 }
 
 type AuthStrategy =
@@ -472,7 +454,7 @@ interface RequestOptions extends RequestInit {
 
 interface StreamingRequestOptions extends RequestOptions {
   contentType: string;
-  streamingFormat?: "sse" | "ndjson" | "chunked";
+  streamingFormat?: 'sse' | 'ndjson' | 'chunked';
 }
 ```
 

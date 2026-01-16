@@ -32,5 +32,13 @@ export async function listAll<T>(
   return out;
 }
 
+/**
+ * Filters out undefined values from an array while preserving type safety
+ * Useful for query keys where optional parameters might be undefined
+ */
+export function isNotUndefined<T>(arr: readonly (T | undefined)[]): T[] {
+  return arr.filter((item): item is T => item !== undefined);
+}
+
 // Re-export streaming parsers from @blimu/fetch
 export { parseSSEStream, parseNDJSONStream };

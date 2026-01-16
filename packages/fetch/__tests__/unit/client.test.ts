@@ -134,20 +134,74 @@ describe('FetchClient', () => {
 
       const client = new FetchClient({
         baseURL: 'https://api.example.com',
-        auth: {
-          strategies: [
-            {
-              type: 'bearer',
-              token: 'token123',
-            },
-          ],
-        },
+        authStrategies: [
+          {
+            type: 'bearer',
+            token: 'token123',
+          },
+        ],
       });
       await client.request({ path: '/users', method: 'GET' });
 
       const call = mockFetch.mock.calls[0];
       const headers = call[1].headers as Headers;
       expect(headers.get('Authorization')).toBe('Bearer token123');
+    });
+
+    it('should set Cookie header for cookie-based API key authentication', async () => {
+      mockFetch.mockResolvedValueOnce(
+        new Response(JSON.stringify({}), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        })
+      );
+
+      const client = new FetchClient({
+        baseURL: 'https://api.example.com',
+        authStrategies: [
+          {
+            type: 'apiKey',
+            key: 'my-api-key-value',
+            location: 'cookie',
+            name: 'sessionId',
+          },
+        ],
+      });
+      await client.request({ path: '/users', method: 'GET' });
+
+      const call = mockFetch.mock.calls[0];
+      const headers = call[1].headers as Headers;
+      expect(headers.get('Cookie')).toBe('sessionId=my-api-key-value');
+    });
+
+    it('should set Cookie header with credentials include for cookie-based auth', async () => {
+      mockFetch.mockResolvedValueOnce(
+        new Response(JSON.stringify({}), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        })
+      );
+
+      const client = new FetchClient({
+        baseURL: 'https://api.example.com',
+        credentials: 'include',
+        authStrategies: [
+          {
+            type: 'apiKey',
+            key: 'my-api-key-value',
+            location: 'cookie',
+            name: 'sessionId',
+          },
+        ],
+      });
+      await client.request({ path: '/users', method: 'GET' });
+
+      const call = mockFetch.mock.calls[0];
+      const headers = call[1].headers as Headers;
+      // Verify Cookie header is set
+      expect(headers.get('Cookie')).toBe('sessionId=my-api-key-value');
+      // Verify credentials option is also set
+      expect(call[1].credentials).toBe('include');
     });
 
     it('should support dynamic access token', async () => {
@@ -161,14 +215,12 @@ describe('FetchClient', () => {
       const getToken = vi.fn(() => 'dynamic-token');
       const client = new FetchClient({
         baseURL: 'https://api.example.com',
-        auth: {
-          strategies: [
-            {
-              type: 'bearer',
-              token: getToken,
-            },
-          ],
-        },
+        authStrategies: [
+          {
+            type: 'bearer',
+            token: getToken,
+          },
+        ],
       });
       await client.request({ path: '/users', method: 'GET' });
 
@@ -188,14 +240,12 @@ describe('FetchClient', () => {
 
       const client = new FetchClient({
         baseURL: 'https://api.example.com',
-        auth: {
-          strategies: [
-            {
-              type: 'bearer',
-              token: 'token123',
-            },
-          ],
-        },
+        authStrategies: [
+          {
+            type: 'bearer',
+            token: 'token123',
+          },
+        ],
       });
 
       const customHeaders = new Headers();
@@ -223,14 +273,12 @@ describe('FetchClient', () => {
 
       const client = new FetchClient({
         baseURL: 'https://api.example.com',
-        auth: {
-          strategies: [
-            {
-              type: 'bearer',
-              token: 'token456',
-            },
-          ],
-        },
+        authStrategies: [
+          {
+            type: 'bearer',
+            token: 'token456',
+          },
+        ],
       });
 
       await client.request({
@@ -349,14 +397,12 @@ describe('FetchClient', () => {
         headers: {
           'X-API-Version': 'v1',
         },
-        auth: {
-          strategies: [
-            {
-              type: 'bearer',
-              token: 'token123',
-            },
-          ],
-        },
+        authStrategies: [
+          {
+            type: 'bearer',
+            token: 'token123',
+          },
+        ],
       });
 
       await client.request({
@@ -710,6 +756,117 @@ describe('FetchClient', () => {
       await client.request({ path: '/users', method: 'GET' });
 
       expect(hook).toHaveBeenCalled();
+    });
+  });
+
+  describe('credentials', () => {
+    it('should set credentials to "include" when configured', async () => {
+      mockFetch.mockResolvedValueOnce(
+        new Response(JSON.stringify({ data: 'test' }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        })
+      );
+
+      const client = new FetchClient({
+        baseURL: 'https://api.example.com',
+        credentials: 'include',
+      });
+
+      await client.request({ path: '/users', method: 'GET' });
+
+      const call = mockFetch.mock.calls[0];
+      expect(call[1].credentials).toBe('include');
+    });
+
+    it('should set credentials to "same-origin" when configured', async () => {
+      mockFetch.mockResolvedValueOnce(
+        new Response(JSON.stringify({ data: 'test' }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        })
+      );
+
+      const client = new FetchClient({
+        baseURL: 'https://api.example.com',
+        credentials: 'same-origin',
+      });
+
+      await client.request({ path: '/users', method: 'GET' });
+
+      const call = mockFetch.mock.calls[0];
+      expect(call[1].credentials).toBe('same-origin');
+    });
+
+    it('should set credentials to "omit" when configured', async () => {
+      mockFetch.mockResolvedValueOnce(
+        new Response(JSON.stringify({ data: 'test' }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        })
+      );
+
+      const client = new FetchClient({
+        baseURL: 'https://api.example.com',
+        credentials: 'omit',
+      });
+
+      await client.request({ path: '/users', method: 'GET' });
+
+      const call = mockFetch.mock.calls[0];
+      expect(call[1].credentials).toBe('omit');
+    });
+
+    it('should not set credentials when not configured', async () => {
+      mockFetch.mockResolvedValueOnce(
+        new Response(JSON.stringify({ data: 'test' }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        })
+      );
+
+      const client = new FetchClient({
+        baseURL: 'https://api.example.com',
+      });
+
+      await client.request({ path: '/users', method: 'GET' });
+
+      const call = mockFetch.mock.calls[0];
+      expect(call[1].credentials).toBeUndefined();
+    });
+
+    it('should set credentials for streaming requests', async () => {
+      const mockStream = new ReadableStream({
+        start(controller) {
+          controller.enqueue(new TextEncoder().encode('data: test\n\n'));
+          controller.close();
+        },
+      });
+      const mockResponse = new Response(mockStream, {
+        status: 200,
+        headers: { 'Content-Type': 'text/event-stream' },
+      });
+      mockFetch.mockResolvedValueOnce(mockResponse);
+
+      const client = new FetchClient({
+        baseURL: 'https://api.example.com',
+        credentials: 'include',
+      });
+
+      const stream = client.requestStream({
+        path: '/events',
+        method: 'GET',
+        contentType: 'text/event-stream',
+        streamingFormat: 'sse',
+      });
+
+      // Consume the stream to trigger the request
+      for await (const _ of stream) {
+        // Consume at least one chunk
+      }
+
+      const call = mockFetch.mock.calls[0];
+      expect(call[1].credentials).toBe('include');
     });
   });
 });

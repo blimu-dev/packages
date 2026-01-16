@@ -1,146 +1,88 @@
-import { FetchClient, FetchError, type FetchClientConfig, type AuthStrategy } from "@blimu/fetch";
+import { FetchClient, FetchError } from '@blimu/fetch';
+import {
+  type FetchClientConfig{{~#if (hasBearerScheme IR.securitySchemes)}}, 
+  type BearerAuthStrategy{{~/if~}}{{~#if (hasApiKeyScheme IR.securitySchemes)}},
+  type ApiKeyAuthStrategy{{~/if~}}
+} from '@blimu/fetch';
+import { buildAuthStrategies } from './auth-strategies';
+{{~#each IR.services~}}
+import { {{serviceName tag}} } from './services/{{fileBase tag}}';
+{{~/each~}}
 
 export type ClientOption = FetchClientConfig & {
   {{~#each IR.securitySchemes~}}
   {{~#if (eq this.type "http")~}}
     {{~#if (eq this.scheme "bearer")~}}
-  {{camel this.key}}?: string | (() => string | undefined | Promise<string | undefined>);
+  {{camel this.key}}?: BearerAuthStrategy['token'];
     {{~else if (eq this.scheme "basic")~}}
   {{camel this.key}}?: { username: string; password: string };
     {{~/if~}}
-  {{~else if (eq this.type "apiKey")~}}
-  {{camel this.key}}?: string;
+    {{~else if (eq this.type "apiKey")~}}
+  {{camel this.key}}?: ApiKeyAuthStrategy['key'];
   {{~/if~}}
   {{~/each~}}
 };
 
-// Re-export FetchError for backward compatibility
-export { FetchError };
+{{~setVar "grouped" (groupByNamespace IR.services)~}}
 
-export class CoreClient extends FetchClient {
-  constructor(cfg: ClientOption = {}) {
-    // Build auth strategies from OpenAPI security schemes
-    const authStrategies: AuthStrategy[] = [];
-
-    // Extract auth and security scheme properties to avoid passing them to FetchClient
-    const { 
-      auth: _existingAuth{{~#each IR.securitySchemes~}},
-      {{camel this.key}}{{~/each~}},
-      ...restCfg 
-    } = cfg;
-    
-    {{~#each IR.securitySchemes~}}
-    {{~#if (eq this.type "http")~}}
-      {{~#if (eq this.scheme "bearer")~}}
-    if (cfg.{{camel this.key}}) {
-      const {{camel this.key}}Value = cfg.{{camel this.key}};
-      if (typeof {{camel this.key}}Value === "string") {
-        authStrategies.push({
-          type: "bearer",
-          token: () => {{camel this.key}}Value,
-        });
-      } else if (typeof {{camel this.key}}Value === "function") {
-        authStrategies.push({
-          type: "bearer",
-          token: {{camel this.key}}Value as () => string | undefined | Promise<string | undefined>,
-        });
-      }
-    }
-      {{~/if~}}
-    {{~/if~}}
-    {{~/each~}}
-    
-    {{~#each IR.securitySchemes~}}
-    {{~#if (eq this.type "http")~}}
-      {{~#if (eq this.scheme "basic")~}}
-    if (cfg.{{camel this.key}}) {
-      authStrategies.push({
-        type: "basic",
-        username: cfg.{{camel this.key}}.username,
-        password: cfg.{{camel this.key}}.password,
-      });
-    }
-      {{~/if~}}
-      {{~else if (eq this.type "apiKey")~}}
-      {{~#if (eq this.in "header")~}}
-    if (cfg?.{{camel this.key}}) {
-      const {{camel this.key}}Value = cfg.{{camel this.key}};
-      authStrategies.push({
-        type: "apiKey",
-        key: () => {{camel this.key}}Value,
-        location: "header",
-        name: "{{this.name}}",
-      });
-    }
-      {{~else if (eq this.in "query")~}}
-    if (cfg?.{{camel this.key}}) {
-      const {{camel this.key}}Value = cfg.{{camel this.key}};
-      authStrategies.push({
-        type: "apiKey",
-        key: () => {{camel this.key}}Value,
-        location: "query",
-        name: "{{this.name}}",
-      });
-    }
-      {{~else if (eq this.in "cookie")~}}
-    if (cfg?.{{camel this.key}}) {
-      const {{camel this.key}}Value = cfg.{{camel this.key}};
-      authStrategies.push({
-        type: "apiKey",
-        key: () => {{camel this.key}}Value,
-        location: "cookie",
-        name: "{{this.name}}",
-      });
-    }
-      {{~/if~}}
-    {{~/if~}}
+{{~! Generate namespace classes for non-root services ~}}
+{{~#each (groupByNamespace IR.services) as |services namespace|~}}
+  {{~#if (ne namespace "")~}}
+class {{pascal namespace}}Namespace {
+    {{~#each services~}}
+  readonly {{serviceProp (getServiceName tag)}}: {{serviceName tag}};
     {{~/each~}}
 
-
-    // Build final auth config (merge existing with new strategies)
-    const finalAuthStrategies = [
-      ...(_existingAuth?.strategies || []),
-      ...authStrategies,
-    ];
-
-    // Build fetchConfig, ensuring auth comes after restCfg spread to override any existing auth
-    const fetchConfig: FetchClientConfig = {
-      ...restCfg,
-      baseURL: cfg.baseURL ?? "{{Client.defaultBaseURL}}",
-      // Explicitly set auth after restCfg to ensure it's not overwritten
-      // (restCfg might have an auth property that we want to replace)
-      ...(finalAuthStrategies.length > 0
-        ? {
-            auth: {
-              strategies: finalAuthStrategies,
-            },
-          }
-        : {}),
-      // Hooks are passed through directly from FetchClientConfig (no mapping needed)
-    };
-
-    super(fetchConfig);
-  }
-
-  async request(
-    init: RequestInit & {
-      path: string;
-      method: string;
-      query?: Record<string, any>;
-    }
-  ) {
-    return await super.request(init);
-  }
-
-  async *requestStream<T = any>(
-    init: RequestInit & {
-      path: string;
-      method: string;
-      query?: Record<string, any>;
-      contentType: string;
-      streamingFormat?: "sse" | "ndjson" | "chunked";
-    }
-  ): AsyncGenerator<T, void, unknown> {
-    yield* super.requestStream(init);
+  constructor(core: FetchClient) {
+    {{~#each services~}}
+    this.{{serviceProp (getServiceName tag)}} = new {{serviceName tag}}(core);
+    {{~/each~}}
   }
 }
+
+  {{~/if~}}
+{{~/each~}}
+
+export class {{Client.name}} {
+  {{~! Root level services (no namespace) ~}}
+  {{~#each (getRootServices IR.services)~}}
+  readonly {{serviceProp tag}}: {{serviceName tag}};
+  {{~/each~}}
+  {{~! Namespace properties ~}}
+  {{~#each (groupByNamespace IR.services) as |services namespace|~}}
+    {{~#if (ne namespace "")~}}
+  readonly {{serviceProp namespace}}: {{pascal namespace}}Namespace;
+    {{~/if~}}
+  {{~/each~}}
+
+  constructor(options?: ClientOption) {
+    const { 
+      {{~#each IR.securitySchemes~}}
+      {{camel this.key}},{{~/each~}}
+      ...restCfg 
+    } = options || {};
+
+    const authStrategies = buildAuthStrategies(options || {});
+    
+    const core = new FetchClient({
+      ...restCfg,
+      baseURL: options?.baseURL ?? '{{Client.defaultBaseURL}}',
+      ...(authStrategies.length > 0 ? { authStrategies } : {}),
+    });
+    
+    {{~! Initialize root services ~}}
+    {{~#each (getRootServices IR.services)~}}
+    this.{{serviceProp tag}} = new {{serviceName tag}}(core);
+    {{~/each~}}
+    {{~! Initialize namespaces ~}}
+    {{~#each (groupByNamespace IR.services) as |services namespace|~}}
+      {{~#if (ne namespace "")~}}
+    this.{{serviceProp namespace}} = new {{pascal namespace}}Namespace(core);
+      {{~/if~}}
+    {{~/each~}}
+  }
+}
+
+// Re-export FetchError for backward compatibility
+export { FetchError };
+export const {{Client.name}}Error = FetchError;

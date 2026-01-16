@@ -1,5 +1,8 @@
-import { CoreClient } from "../client";
+import { FetchClient } from '@blimu/fetch';
 import * as Schema from "../schema";
+{{#if Client.includeQueryKeys}}
+import { isNotUndefined } from "../utils";
+{{/if}}
 {{! Generate import statements for predefined types used in this specific service }}
 {{#if (getServicePredefinedTypes Service)}}
 {{#each (groupByPackage (getServicePredefinedTypes Service))}}
@@ -8,7 +11,7 @@ import type { {{joinTypes this.types}} } from '{{this.package}}';
 {{/if}}
 
 export class {{serviceName Service.tag}} {
-  constructor(private core: CoreClient) {}
+  constructor(private core: FetchClient) {}
   {{#each Service.operations}}
 
   /**
@@ -38,7 +41,7 @@ export class {{serviceName Service.tag}} {
       query,
       {{/if}}
       {{#if requestBody}}
-      body: body as any,
+      body,
       {{/if}}
       contentType: "{{response.contentType}}",
       streamingFormat: "{{response.streamingFormat}}",
@@ -58,7 +61,7 @@ export class {{serviceName Service.tag}} {
       query,
       {{/if}}
       {{#if requestBody}}
-      body: body as any,
+      body,
       {{/if}}
       ...(init || {}),
     });
@@ -74,7 +77,8 @@ export class {{serviceName Service.tag}} {
     {{param}}{{#unless @last}},{{/unless}}
     {{~/each~}}
   ) {
-    return [{{queryKeyBase this}}{{#each (queryKeyArgs this)}}, {{this}}{{/each}}] as const;
+    const keys = [{{queryKeyBase this}}{{#each (queryKeyArgs this)}}, {{this}}{{/each}}] as const;
+    return isNotUndefined(keys);
   }
   {{/if}}
   {{/each}}

@@ -1,69 +1,19 @@
+/**
+ * This file is generated only once. If it already exists, it will not be overwritten.
+ * You can safely add custom exports, re-exports, or any other code here as needed.
+ * Your customizations will be preserved across SDK regenerations.
+ */
 
-import { CoreClient, FetchError, type ClientOption } from "./client";
-{{~#each IR.services~}}
-import { {{serviceName tag}} } from "./services/{{fileBase tag}}";
-{{~/each~}}
+// Re-export everything from client
+export * from './client';
 
-{{~setVar "grouped" (groupByNamespace IR.services)~}}
-
-{{~! Generate namespace classes for non-root services ~}}
-{{~#each (groupByNamespace IR.services) as |services namespace|~}}
-  {{~#if (ne namespace "")~}}
-class {{pascal namespace}}Namespace {
-    {{~#each services~}}
-  readonly {{serviceProp (getServiceName tag)}}: {{serviceName tag}};
-    {{~/each~}}
-
-  constructor(core: CoreClient) {
-    {{~#each services~}}
-    this.{{serviceProp (getServiceName tag)}} = new {{serviceName tag}}(core);
-    {{~/each~}}
-  }
-}
-
-  {{~/if~}}
-{{~/each~}}
-
-export class {{Client.name}} {
-  {{~! Root level services (no namespace) ~}}
-  {{~#each (getRootServices IR.services)~}}
-  readonly {{serviceProp tag}}: {{serviceName tag}};
-  {{~/each~}}
-  {{~! Namespace properties ~}}
-  {{~#each (groupByNamespace IR.services) as |services namespace|~}}
-    {{~#if (ne namespace "")~}}
-  readonly {{serviceProp namespace}}: {{pascal namespace}}Namespace;
-    {{~/if~}}
-  {{~/each~}}
-
-  constructor(options?: ClientOption) {
-    const core = new CoreClient(options);
-    
-    {{~! Initialize root services ~}}
-    {{~#each (getRootServices IR.services)~}}
-    this.{{serviceProp tag}} = new {{serviceName tag}}(core);
-    {{~/each~}}
-    {{~! Initialize namespaces ~}}
-    {{~#each (groupByNamespace IR.services) as |services namespace|~}}
-      {{~#if (ne namespace "")~}}
-    this.{{serviceProp namespace}} = new {{pascal namespace}}Namespace(core);
-      {{~/if~}}
-    {{~/each~}}
-  }
-}
-
-export type { ClientOption };
-
-// Export FetchError and CoreClient for error handling and advanced usage
-export { FetchError, CoreClient };
 // Re-export all error types from @blimu/fetch for instanceof checks
-export * from "@blimu/fetch";
-export const {{Client.name}}Error = FetchError;
+export * from '@blimu/fetch';
 
 // Re-exports for better ergonomics
-export * from "./utils";
-export * as Schema from "./schema";
-export * as ZodSchema from "./schema.zod";
+export * from './utils';
+export * as Schema from './schema';
+export * as ZodSchema from './schema.zod';
 {{~#each IR.services~}}
-export { {{serviceName tag}} } from "./services/{{fileBase tag}}";
+export { {{serviceName tag}} } from './services/{{fileBase tag}}';
 {{~/each~}}

@@ -117,9 +117,9 @@ export async function cleanupTestSDK(sdkDir: string): Promise<void> {
       parentDir.includes('test-sdk-') ||
       path.basename(parentDir).startsWith('test-sdk-')
     ) {
-      fs.rmSync(parentDir, { recursive: true, force: true });
+      // fs.rmSync(parentDir, { recursive: true, force: true });
     } else {
-      fs.rmSync(sdkDir, { recursive: true, force: true });
+      // fs.rmSync(sdkDir, { recursive: true, force: true });
     }
   }
 }

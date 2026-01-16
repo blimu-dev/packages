@@ -1,12 +1,12 @@
-import type { HooksConfig } from "./hooks";
-import type { RetryConfig } from "./retry";
-import type { StreamingFormat } from "./streaming";
+import type { HooksConfig } from './hooks';
+import type { RetryConfig } from './retry';
+import type { StreamingFormat } from './streaming';
 
 /**
  * Bearer token authentication strategy
  */
 export interface BearerAuthStrategy {
-  type: "bearer";
+  type: 'bearer';
   token: string | (() => string | undefined | Promise<string | undefined>);
   headerName?: string; // Default: "Authorization"
 }
@@ -15,7 +15,7 @@ export interface BearerAuthStrategy {
  * Basic authentication strategy
  */
 export interface BasicAuthStrategy {
-  type: "basic";
+  type: 'basic';
   username: string;
   password: string;
 }
@@ -24,9 +24,9 @@ export interface BasicAuthStrategy {
  * API key authentication strategy
  */
 export interface ApiKeyAuthStrategy {
-  type: "apiKey";
+  type: 'apiKey';
   key: string | (() => string | undefined | Promise<string | undefined>);
-  location: "header" | "query" | "cookie";
+  location: 'header' | 'query' | 'cookie';
   name: string; // Header name, query param name, or cookie name
 }
 
@@ -34,7 +34,7 @@ export interface ApiKeyAuthStrategy {
  * Custom authentication strategy
  */
 export interface CustomAuthStrategy {
-  type: "custom";
+  type: 'custom';
   apply: (headers: Headers, url: URL) => void | Promise<void>;
 }
 
@@ -46,10 +46,6 @@ export type AuthStrategy =
   | BasicAuthStrategy
   | ApiKeyAuthStrategy
   | CustomAuthStrategy;
-
-export interface AuthConfig {
-  strategies: AuthStrategy[];
-}
 
 /**
  * Main configuration interface for FetchClient
@@ -76,9 +72,9 @@ export interface FetchClientConfig {
    */
   hooks?: HooksConfig;
   /**
-   * Authentication configuration
+   * Authentication strategies
    */
-  auth?: AuthConfig;
+  authStrategies?: AuthStrategy[];
   /**
    * Custom fetch implementation (useful for polyfills or testing)
    */
@@ -86,13 +82,24 @@ export interface FetchClientConfig {
   /**
    * Request credentials
    */
-  credentials?: RequestInit["credentials"];
+  credentials?: RequestInit['credentials'];
 }
+
+/**
+ * Body type that can be serialized by the fetch client
+ * Includes standard BodyInit types plus plain objects/arrays that will be JSON serialized
+ */
+export type SerializableBody =
+  | RequestInit['body']
+  | Record<string, any>
+  | any[]
+  | null
+  | undefined;
 
 /**
  * Request options for a single request
  */
-export interface RequestOptions extends RequestInit {
+export interface RequestOptions extends Omit<RequestInit, 'body'> {
   /**
    * Request path (will be appended to baseURL)
    */
@@ -105,6 +112,10 @@ export interface RequestOptions extends RequestInit {
    * Query parameters
    */
   query?: Record<string, any>;
+  /**
+   * Request body - can be BodyInit, plain object/array (will be JSON serialized), or null/undefined
+   */
+  body?: SerializableBody;
 }
 
 /**
