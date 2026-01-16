@@ -1,6 +1,6 @@
 {
   "name": "@blimu/codegen",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "publisher": "blimu-dev",
   "description": "Generate type-safe SDKs from OpenAPI specifications",
   "author": "",

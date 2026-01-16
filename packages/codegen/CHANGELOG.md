@@ -1,5 +1,15 @@
 # @blimu/codegen
 
+## 0.3.1
+
+### Patch Changes
+
+- Fix typecheck in integration tests to handle missing external dependencies gracefully.
+  - Made typecheck filter out TS2307 errors (module not found) for external dependencies
+  - Allows predefined-types tests to pass when external packages aren't installed
+  - Still catches actual type errors in generated code
+  - All integration tests now run typecheck on generated SDKs
+
 ## 0.3.0
 
 ### Minor Changes
