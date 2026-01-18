@@ -45,7 +45,7 @@ describe("schemaToTSType with predefined types", () => {
     };
 
     const result = schemaToTSType(schema, predefinedTypes);
-    expect(result).toBe("Array<ResourceType>");
+    expect(result).toBe("ResourceType[]");
   });
 
   it("should handle predefined types in object properties", () => {

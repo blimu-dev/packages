@@ -580,7 +580,7 @@ export class IrBuilderService {
     if (schema.kind === IRSchemaKind.Ref && schema.ref) {
       return schema.ref;
     }
-    // Handle arrays of refs (e.g., Array<SomeModel>)
+    // Handle arrays of refs (e.g., SomeModel[])
     if (schema.kind === IRSchemaKind.Array && schema.items) {
       if (schema.items.kind === IRSchemaKind.Ref && schema.items.ref) {
         return schema.items.ref;

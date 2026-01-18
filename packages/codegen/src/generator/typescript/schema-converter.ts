@@ -9,7 +9,7 @@ import { quoteTSPropertyName } from "./helpers";
 export function schemaToSchema(
   s: IRSchema,
   indent: string = "",
-  modelDefs?: Array<{ name: string; schema: IRSchema }>,
+  modelDefs?: { name: string; schema: IRSchema }[],
   useLocalSchemaTypes: boolean = false
 ): string {
   const nextIndent = indent + "  ";

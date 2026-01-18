@@ -233,7 +233,7 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
           isSameFile
         );
         // Strip ALL occurrences of Schema. prefix (including nested ones in inline objects)
-        // For inline objects like Array<({ type: Schema.ResourceType })>, we need to strip all Schema. references
+        // For inline objects like ({ type: Schema.ResourceType }[]), we need to strip all Schema. references
         const stripped = typeStr.replace(/Schema\./g, '');
         // Return as SafeString to prevent Handlebars HTML escaping
         return new Handlebars.SafeString(stripped);

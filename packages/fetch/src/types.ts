@@ -111,11 +111,11 @@ export interface RequestOptions extends Omit<RequestInit, 'body'> {
   /**
    * Query parameters
    */
-  query?: Record<string, any>;
+  query?: Record<string, any> | undefined;
   /**
    * Request body - can be BodyInit, plain object/array (will be JSON serialized), or null/undefined
    */
-  body?: SerializableBody;
+  body?: SerializableBody | undefined;
 }
 
 /**

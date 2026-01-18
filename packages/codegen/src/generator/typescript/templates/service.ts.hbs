@@ -47,7 +47,7 @@ export class {{serviceName Service.tag}} {
       {{/if}}
       contentType: "{{response.contentType}}",
       streamingFormat: "{{response.streamingFormat}}",
-      ...(init || {}),
+      ...(init ?? {}),
     });
   }
   {{else}}
@@ -65,7 +65,7 @@ export class {{serviceName Service.tag}} {
       {{#if requestBody}}
       body,
       {{/if}}
-      ...(init || {}),
+      ...(init ?? {}),
     });
   }
   {{/if}}

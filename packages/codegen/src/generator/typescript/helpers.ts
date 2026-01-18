@@ -20,8 +20,8 @@ function decodeHtmlEntities(str: string): string {
 
 export function schemaToTSType(
   s: IRSchema,
-  predefinedTypes?: Array<{ type: string; package: string }>,
-  modelDefs?: Array<{ name: string; schema: IRSchema }>,
+  predefinedTypes?: { type: string; package: string }[],
+  modelDefs?: { name: string; schema: IRSchema }[],
   isSameFile: boolean = false
 ): string {
   // Base type string without nullability; append null later
@@ -71,14 +71,14 @@ export function schemaToTSType(
     case IRSchemaKind.Array:
       if (s.items) {
         const inner = schemaToTSType(s.items, predefinedTypes, modelDefs);
-        // Wrap unions/intersections in parentheses inside Array<>
+        // Wrap unions/intersections in parentheses inside Array[]  
         if (inner.includes(' | ') || inner.includes(' & ')) {
-          t = `Array<(${inner})>`;
+          t = `(${inner})[]`;
         } else {
-          t = `Array<${inner}>`;
+          t = `${inner}[]`;
         }
       } else {
-        t = 'Array<unknown>';
+        t = 'unknown[]';
       }
       break;
     case IRSchemaKind.OneOf:
@@ -335,8 +335,8 @@ export function orderPathParams(op: IROperation) {
  */
 export function schemaToTSTypeWithSimpleTypes(
   s: IRSchema,
-  modelDefs?: Array<{ name: string; schema: IRSchema }>,
-  predefinedTypes?: Array<{ type: string; package: string }>,
+  modelDefs?: { name: string; schema: IRSchema }[],
+  predefinedTypes?: { type: string; package: string }[],
   isSameFile: boolean = false
 ): string {
   // Use schemaToTSType with predefined types and modelDefs
@@ -347,8 +347,8 @@ export function schemaToTSTypeWithSimpleTypes(
 export function buildMethodSignature(
   op: IROperation,
   methodName: string,
-  modelDefs?: Array<{ name: string; schema: IRSchema }>,
-  predefinedTypes?: Array<{ type: string; package: string }>,
+  modelDefs?: { name: string; schema: IRSchema }[],
+  predefinedTypes?: { type: string; package: string }[],
   isSameFile: boolean = false
 ): string[] {
   const parts: string[] = [];
@@ -382,9 +382,9 @@ export function buildMethodSignature(
  * Checks all model definitions (interfaces, types, etc.) to find which predefined types are referenced
  */
 export function collectPredefinedTypesUsedInSchema(
-  modelDefs: Array<{ name: string; schema: IRSchema }>,
-  predefinedTypes?: Array<{ type: string; package: string }>
-): Array<{ type: string; package: string }> {
+  modelDefs: { name: string; schema: IRSchema }[],
+  predefinedTypes?: { type: string; package: string }[]
+): { type: string; package: string }[] {
   if (!predefinedTypes || predefinedTypes.length === 0) {
     return [];
   }
@@ -447,9 +447,9 @@ export function collectPredefinedTypesUsedInSchema(
  */
 export function collectPredefinedTypesUsedInService(
   service: { operations: IROperation[] },
-  predefinedTypes?: Array<{ type: string; package: string }>,
-  modelDefs?: Array<{ name: string; schema: IRSchema }>
-): Array<{ type: string; package: string }> {
+  predefinedTypes?: { type: string; package: string }[],
+  modelDefs?: { name: string; schema: IRSchema }[]
+): { type: string; package: string }[] {
   if (!predefinedTypes || predefinedTypes.length === 0) {
     return [];
   }
@@ -636,8 +636,8 @@ function extractRefDependencies(
  * @returns Sorted array of model definitions
  */
 export function sortModelDefsByDependencies(
-  modelDefs: Array<{ name: string; schema: IRSchema }>
-): Array<{ name: string; schema: IRSchema }> {
+  modelDefs: { name: string; schema: IRSchema }[]
+): { name: string; schema: IRSchema }[] {
   // Build a map for quick lookup
   const modelDefMap = new Map<string, { name: string; schema: IRSchema }>();
   for (const md of modelDefs) {
@@ -659,7 +659,7 @@ export function sortModelDefsByDependencies(
   }
 
   // Topological sort using Kahn's algorithm
-  const sorted: Array<{ name: string; schema: IRSchema }> = [];
+  const sorted: { name: string; schema: IRSchema }[] = [];
   const inDegree = new Map<string, number>();
   const queue: string[] = [];
 
