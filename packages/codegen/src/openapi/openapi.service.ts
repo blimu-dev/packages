@@ -2,9 +2,8 @@ import { Injectable, Logger } from "@nestjs/common";
 import SwaggerParser from "@apidevtools/swagger-parser";
 import * as fs from "fs";
 import * as path from "path";
-import { OpenAPIV3, OpenAPIV3_1 } from "openapi-types";
+import type { OpenAPIDocument } from "./openapi-version.utils";
 import {
-  OpenAPIDocument,
   detectOpenAPIVersion,
   isSupportedVersion,
 } from "./openapi-version.utils";

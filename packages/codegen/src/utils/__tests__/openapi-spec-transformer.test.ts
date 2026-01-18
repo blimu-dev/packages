@@ -3,8 +3,8 @@ import {
   transformSpecForTypes,
   findSimpleTypeSchemas,
 } from "../openapi-spec-transformer";
-import { ExtractedTypes } from "../type-extractor";
-import { OpenAPIDocument } from "../../openapi/openapi.types";
+import type { ExtractedTypes } from "../type-extractor";
+import type { OpenAPIDocument } from "../../openapi/openapi.types";
 
 describe("openapi-spec-transformer", () => {
   describe("transformSpecForTypes", () => {

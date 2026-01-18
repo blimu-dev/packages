@@ -1,4 +1,4 @@
-import { OpenAPIV3, OpenAPIV3_1 } from "openapi-types";
+import type { OpenAPIV3, OpenAPIV3_1 } from "openapi-types";
 
 /**
  * Helper to create mock OpenAPI documents for testing

@@ -1,7 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import * as fs from "fs";
 import * as path from "path";
-import { Config, ConfigSchema, Client } from "./config.schema";
+import type { Config, Client } from "./config.schema";
 import { loadMjsConfig } from "./mjs-config-loader";
 
 @Injectable()

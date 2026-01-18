@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 import { generate } from '../../api/generate';
-import { Config } from '../../config/config.schema';
+import type { Config } from '../../config/config.schema';
 import { generateTestSDK, cleanupTestSDK } from './helpers/sdk-generator';
 
 describe('Post-Command Execution', () => {

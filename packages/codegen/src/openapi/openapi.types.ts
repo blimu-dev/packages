@@ -1,6 +1,6 @@
-import { OpenAPIV3, OpenAPIV3_1 } from "openapi-types";
+import type { OpenAPIV3, OpenAPIV3_1 } from "openapi-types";
 import {
-  OpenAPIDocument,
+  type OpenAPIDocument,
   isOpenAPI31,
   isOpenAPI30,
 } from "./openapi-version.utils";
@@ -17,8 +17,8 @@ export interface NormalizedOpenAPIDocument {
   openapi: string;
   info: OpenAPIV3.InfoObject | OpenAPIV3_1.InfoObject;
   paths: OpenAPIV3.PathsObject | OpenAPIV3_1.PathsObject | undefined;
-  components?: OpenAPIV3.ComponentsObject | OpenAPIV3_1.ComponentsObject;
-  servers?: (OpenAPIV3.ServerObject | OpenAPIV3_1.ServerObject)[];
+  components?: OpenAPIV3.ComponentsObject | OpenAPIV3_1.ComponentsObject | undefined;
+  servers?: (OpenAPIV3.ServerObject | OpenAPIV3_1.ServerObject)[] | undefined;
 }
 
 /**

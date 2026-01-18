@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { schemaToTSType } from "../helpers";
-import { IRSchema, IRSchemaKind } from "../../../ir/ir.types";
+import type { IRSchema } from "../../../ir/ir.types";
+import { IRSchemaKind } from "../../../ir/ir.types";
 
 describe("schemaToTSType with predefined types", () => {
   const predefinedTypes = [

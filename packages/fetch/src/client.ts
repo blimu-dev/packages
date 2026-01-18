@@ -235,11 +235,12 @@ export class FetchClient {
       headers.set('Content-Type', bodyContentType);
     }
 
-    const fetchInit: RequestInit & {
+    const fetchInit: Omit<RequestInit, 'body'> & {
       path: string;
       method: string;
-      query?: Record<string, any>;
+      query?: Record<string, any> | undefined;
       headers: Headers;
+      body: RequestInit['body'] | undefined;
     } = {
       ...init,
       headers,
@@ -293,7 +294,7 @@ export class FetchClient {
 
     try {
       const fetchFn = this.cfg.fetch || fetch;
-      const res = await fetchFn(url.toString(), fetchInit);
+      const res = await fetchFn(url.toString(), fetchInit as RequestInit);
 
       // Execute afterRequest hook
       if (this.hookRegistry.has('afterRequest')) {
@@ -425,11 +426,12 @@ export class FetchClient {
     // Headers are already cloned and auth is already applied
     const requestHeaders = baseHeaders;
 
-    const fetchInit: RequestInit & {
+    const fetchInit: Omit<RequestInit, 'body'> & {
       path: string;
       method: string;
-      query?: Record<string, any>;
+      query?: Record<string, any> | undefined;
       headers: Headers;
+      body: RequestInit['body'] | undefined;
     } = {
       ...init,
       headers: requestHeaders,
@@ -483,7 +485,7 @@ export class FetchClient {
 
     try {
       const fetchFn = this.cfg.fetch || fetch;
-      const res = await fetchFn(url.toString(), fetchInit);
+      const res = await fetchFn(url.toString(), fetchInit as RequestInit);
 
       // Execute afterRequest hook
       if (this.hookRegistry.has('afterRequest')) {

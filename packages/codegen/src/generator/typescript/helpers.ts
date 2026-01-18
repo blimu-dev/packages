@@ -1,5 +1,6 @@
-import { IROperation, IRSchema, IRSchemaKind } from '../../ir/ir.types';
-import { Client } from '../../config/config.schema';
+import type { IROperation, IRSchema } from '../../ir/ir.types';
+import { IRSchemaKind } from '../../ir/ir.types';
+import type { Client } from '../../config/config.schema';
 import { toPascalCase, toCamelCase } from '../../utils/string.utils';
 
 /**

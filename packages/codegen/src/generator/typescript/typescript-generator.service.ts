@@ -2,9 +2,9 @@ import { Injectable, Logger } from '@nestjs/common';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as Handlebars from 'handlebars';
-import { IR } from '../../ir/ir.types';
-import { TypeScriptClient } from '../../config/config.schema';
-import { Generator } from '../generator.interface';
+import type { IR } from '../../ir/ir.types';
+import type { TypeScriptClient } from '../../config/config.schema';
+import type { Generator } from '../generator.interface';
 import { ConfigService } from '../../config/config.service';
 import { registerCommonHandlebarsHelpers } from '../handlebars-helpers';
 import {
@@ -280,7 +280,7 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
         if (!grouped[pt.package]) {
           grouped[pt.package] = { package: pt.package, types: [] };
         }
-        grouped[pt.package].types.push(pt.type);
+        grouped[pt.package]?.types.push(pt.type);
       }
       return Object.values(grouped);
     });

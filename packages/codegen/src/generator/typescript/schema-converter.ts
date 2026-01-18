@@ -1,4 +1,5 @@
-import { IRSchema, IRSchemaKind } from "../../ir/ir.types";
+import type { IRSchema } from "../../ir/ir.types";
+import { IRSchemaKind } from "../../ir/ir.types";
 import { quoteTSPropertyName } from "./helpers";
 
 /**

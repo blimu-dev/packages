@@ -4,8 +4,8 @@ import {
   TypeScriptClientSchema,
   ClientSchema,
   TYPESCRIPT_TEMPLATE_NAMES,
-  TypeScriptTemplateName,
 } from "../config.schema";
+import type { TypeScriptTemplateName } from "../config.schema";
 
 describe("ConfigSchema", () => {
   describe("TypeScript Client Schema", () => {

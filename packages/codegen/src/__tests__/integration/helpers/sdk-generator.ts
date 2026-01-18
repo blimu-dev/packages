@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { execSync } from 'child_process';
 import { generate } from '../../../api/generate';
-import { Config } from '../../../config/config.schema';
+import type { Config } from '../../../config/config.schema';
 
 /**
  * Generate a test SDK from an OpenAPI spec file

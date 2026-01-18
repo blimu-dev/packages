@@ -1,4 +1,4 @@
-import { OpenAPIV3, OpenAPIV3_1 } from "openapi-types";
+import type { OpenAPIV3, OpenAPIV3_1 } from "openapi-types";
 
 export type OpenAPIVersion = "3.0" | "3.1" | "unknown";
 

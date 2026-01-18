@@ -28,7 +28,7 @@ describe('FetchClient', () => {
 
     it('should throw if fetch is not available', () => {
       const originalFetch = global.fetch;
-      // @ts-ignore
+      // @ts-expect-error - Intentionally deleting fetch to test error handling
       delete global.fetch;
       expect(() => new FetchClient()).toThrow();
       global.fetch = originalFetch;

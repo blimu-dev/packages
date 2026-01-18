@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
-import { OpenAPIV3, OpenAPIV3_1 } from "openapi-types";
-import {
+import type { OpenAPIV3, OpenAPIV3_1 } from "openapi-types";
+import type {
   IR,
   IRService,
   IROperation,
@@ -12,10 +12,10 @@ import {
   IRSchema,
 } from "../ir/ir.types";
 import { SchemaConverterService } from "./schema-converter.service";
-import { Client } from "../config/config.schema";
+import type { Client } from "../config/config.schema";
 import { toPascalCase, toCamelCase } from "../utils/string.utils";
 import { IRSchemaKind } from "../ir/ir.types";
-import { OpenAPIDocument } from "../openapi/openapi.types";
+import type { OpenAPIDocument } from "../openapi/openapi.types";
 
 @Injectable()
 export class IrBuilderService {
@@ -95,7 +95,11 @@ export class IrBuilderService {
     isStreaming: boolean;
     format?: "sse" | "ndjson" | "chunked";
   } {
-    const normalized = contentType.toLowerCase().split(";")[0].trim();
+    const normalized = contentType.toLowerCase().split(";")[0]?.trim();
+
+    if (!normalized) {
+      return { isStreaming: false };
+    }
 
     if (normalized === "text/event-stream") {
       return { isStreaming: true, format: "sse" };
@@ -395,7 +399,9 @@ export class IrBuilderService {
       switch (scheme.type) {
         case "http":
           sc.scheme = scheme.scheme;
-          sc.bearerFormat = scheme.bearerFormat;
+          if (scheme.bearerFormat) {
+            sc.bearerFormat = scheme.bearerFormat;
+          }
           break;
         case "apiKey":
           sc.in = scheme.in;
@@ -745,7 +751,14 @@ export class IrBuilderService {
     // Fallback to the first available media type
     if (rb.content) {
       const firstContentType = Object.keys(rb.content)[0];
+      if (!firstContentType) {
+        return null;
+      }
+      
       const media = rb.content[firstContentType];
+      if (!media) {
+        return null;
+      }
       return {
         contentType: firstContentType,
         typeTS: "",
@@ -809,7 +822,7 @@ export class IrBuilderService {
                   description: resp.description || "",
                   isStreaming: true,
                   contentType,
-                  streamingFormat: streaming.format,
+                  ...(streaming.format && { streamingFormat: streaming.format }),
                 },
                 extractedTypes: [],
               };
@@ -895,7 +908,33 @@ export class IrBuilderService {
 
           // Fallback: use first content type
           const firstContentType = Object.keys(resp.content)[0];
+
+          if (!firstContentType) {
+            return {
+              response: {
+                typeTS: "unknown",
+                schema: { kind: IRSchemaKind.Unknown, nullable: false },
+                description: resp.description || "",
+                isStreaming: false,
+                contentType: "",
+              },
+              extractedTypes: [],
+            };
+          }
+
           const firstMedia = resp.content[firstContentType];
+          if (!firstMedia) { 
+            return {
+              response: {
+                typeTS: "unknown",
+                schema: { kind: IRSchemaKind.Unknown, nullable: false },
+                description: resp.description || "",
+                isStreaming: false,
+                contentType: "",
+              },
+              extractedTypes: [],
+            };
+          }
           const firstSchema = this.schemaConverter.schemaRefToIR(
             doc,
             firstMedia.schema
@@ -990,8 +1029,17 @@ export class IrBuilderService {
           }
 
           // Fallback to any content
-          const firstContentType = Object.keys(resp.content)[0];
-          const media = resp.content[firstContentType];
+          const [firstContentType, media] = Object.entries(resp.content)[0] ?? [];
+          if (!firstContentType || !media) {
+            // No content types available or media object is missing, return void response
+            return {
+              typeTS: "void",
+              schema: { kind: IRSchemaKind.Unknown, nullable: false },
+              description: resp.description || "",
+              isStreaming: false,
+              contentType: "",
+            };
+          }
           const streaming = this.detectStreamingContentType(firstContentType);
           return {
             typeTS: "",
@@ -1063,8 +1111,17 @@ export class IrBuilderService {
           }
 
           // Fallback to first content type
-          const firstContentType = Object.keys(resp.content)[0];
-          const media = resp.content[firstContentType];
+          const [firstContentType, media] = Object.entries(resp.content)[0] ?? [];
+          if (!firstContentType || !media) {
+            // No content types available or media object is missing, return void response
+            return {
+              typeTS: "void",
+              schema: { kind: IRSchemaKind.Unknown, nullable: false },
+              description: resp.description || "",
+              isStreaming: false,
+              contentType: "",
+            };
+          }
           const streaming = this.detectStreamingContentType(firstContentType);
           return {
             typeTS: "",

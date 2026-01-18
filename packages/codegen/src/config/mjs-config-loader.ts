@@ -1,6 +1,7 @@
 import { pathToFileURL } from "url";
 import * as path from "path";
-import { Config, ConfigSchema } from "./config.schema";
+import type { Config } from "./config.schema";
+import { ConfigSchema } from "./config.schema";
 
 /**
  * Load configuration from an MJS (ES Module) file.

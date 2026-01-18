@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { isStreamingOperation, getStreamingItemType } from "../helpers";
-import { IROperation, IRSchemaKind } from "../../../ir/ir.types";
+import type { IROperation } from "../../../ir/ir.types";
+import { IRSchemaKind } from "../../../ir/ir.types";
 
 describe("TypeScript Helpers - Streaming", () => {
   describe("isStreamingOperation", () => {

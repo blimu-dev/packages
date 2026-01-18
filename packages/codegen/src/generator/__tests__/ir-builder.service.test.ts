@@ -9,7 +9,7 @@ import {
   createMockDocumentWithStreaming30,
   createMockDocumentWithStreaming31,
 } from "../../__tests__/helpers/create-mock-document";
-import { Client } from "../../config/config.schema";
+import type { Client } from "../../config/config.schema";
 
 describe("IrBuilderService", () => {
   let service: IrBuilderService;

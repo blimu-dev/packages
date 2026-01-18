@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import * as fs from "fs";
 import * as path from "path";
-import { extractTypesFromConfig, ExtractedTypes } from "../type-extractor";
+import { extractTypesFromConfig } from "../type-extractor";
 
 describe("type-extractor", () => {
   const testDir = path.join(process.cwd(), ".tests", "type-extractor");

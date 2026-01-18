@@ -1,14 +1,14 @@
 import { Injectable } from "@nestjs/common";
-import { OpenAPIV3, OpenAPIV3_1 } from "openapi-types";
-import {
+import type { OpenAPIV3, OpenAPIV3_1 } from "openapi-types";
+import type {
   IRSchema,
-  IRSchemaKind,
   IRField,
   IRAnnotations,
   IRDiscriminator,
 } from "../ir/ir.types";
+import { IRSchemaKind } from "../ir/ir.types";
+import type { OpenAPIDocument } from "../openapi/openapi.types";
 import {
-  OpenAPIDocument,
   getSchemaFromRef,
   isSchemaNullable,
   getSchemaType,
