@@ -1,0 +1,245 @@
+# Git Conventions
+
+This guide defines the Git workflow conventions for the Blimu packages monorepo.
+
+## Repository Structure
+
+This is a monorepo containing open-source packages:
+- `@blimu/codegen` - Code generation tools
+- `@blimu/fetch` - Fetch client utilities
+
+## Branch Naming
+
+Branch names follow this pattern:
+
+```
+{devname}/{task-title-trimmed}
+```
+
+### Components
+
+1. **devname**: Developer's first name, lowercase
+   - Infer from `git log -1 --format='%an'` and extract first name
+   - Example: "Vinicius Dacal" → `vinicius`
+
+2. **task-title-trimmed**: Task description, lowercased and kebab-cased
+   - Trim to reasonable length (max ~50 chars)
+   - Remove special characters
+   - Example: "Add custom srcdir support" → `add-custom-srcdir-support`
+
+### Examples
+
+```bash
+# Good branch names
+vinicius/add-custom-srcdir-support
+vinicius/fix-streaming-parser
+vinicius/update-zod-schema-converter
+
+# Bad branch names
+feature/add-srcdir            # Missing dev name
+add-srcdir                    # Missing dev name
+```
+
+## Commit Messages
+
+Follow [Conventional Commits](https://www.conventionalcommits.org/).
+
+### Format
+
+```
+<type>(<scope>): <description>
+
+[optional body]
+
+[optional footer(s)]
+```
+
+### Types
+
+- `feat`: New feature
+- `fix`: Bug fix
+- `refactor`: Code change that neither fixes a bug nor adds a feature
+- `chore`: Changes to build process, dependencies, versioning, or auxiliary tools
+- `docs`: Documentation only changes
+- `style`: Code style changes (formatting, missing semicolons, etc.)
+- `test`: Adding or updating tests
+- `perf`: Performance improvements
+- `ci`: CI/CD configuration changes
+
+### Scope (optional)
+
+The scope should be the package or area affected:
+- `codegen` - @blimu/codegen package
+- `fetch` - @blimu/fetch package
+- No scope for root-level changes
+
+### Examples
+
+```bash
+# Good commit messages
+feat(codegen): add custom srcdir configuration option
+fix(fetch): handle retry on network timeout
+refactor(codegen): simplify zod schema converter
+chore: 0.3.0
+chore(codegen): update dependencies
+docs(fetch): update README with streaming examples
+test(codegen): add integration tests for streaming
+
+# Bad commit messages
+fixed stuff                           # No type
+feat: add feature                     # Too vague
+FEAT(codegen): add srcdir             # Type should be lowercase
+```
+
+### Multi-line Commits
+
+For complex changes, use a body to explain the "why":
+
+```bash
+git commit -m "$(cat <<'EOF'
+refactor(codegen): restructure typescript generator
+
+Separates concerns between schema conversion and file generation.
+This improves testability and makes it easier to add new output formats.
+
+BREAKING CHANGE: Generator API has changed.
+EOF
+)"
+```
+
+## Workflow Commands
+
+### Creating a Branch
+
+```bash
+# Get developer name (first name, lowercase)
+DEV_NAME=$(git log -1 --format='%an' | awk '{print tolower($1)}')
+
+# Create branch
+git checkout -b "${DEV_NAME}/task-description-here"
+```
+
+### Committing Changes
+
+```bash
+# Single line commit
+git commit -m "feat(codegen): description here"
+
+# Multi-line commit with HEREDOC
+git commit -m "$(cat <<'EOF'
+feat(codegen): description here
+
+Additional context about the change.
+EOF
+)"
+```
+
+## Changesets
+
+This repo uses [Changesets](https://github.com/changesets/changesets) for versioning and changelog generation.
+
+### When to Create a Changeset
+
+Create a changeset when your changes affect the **public API or behavior** of a package:
+
+- **DO create a changeset for:**
+  - New features (`minor` bump)
+  - Bug fixes (`patch` bump)
+  - Breaking changes (`major` bump)
+  - Performance improvements that users benefit from
+  - Documentation changes in package READMEs
+
+- **DON'T create a changeset for:**
+  - Internal refactoring with no API/behavior changes
+  - Test-only changes
+  - CI/CD configuration changes
+  - Root-level tooling changes
+  - Changes to `.cursor/` rules or dev tooling
+
+### Changeset Types (SemVer)
+
+- `patch` - Bug fixes, minor improvements (0.0.X)
+- `minor` - New features, non-breaking additions (0.X.0)
+- `major` - Breaking changes (X.0.0)
+
+### Creating a Changeset
+
+Changesets are markdown files in `.changeset/` that describe the change:
+
+```bash
+# Interactive CLI (prompts for packages and bump type)
+yarn changeset
+```
+
+Or create manually at `.changeset/<unique-name>.md`:
+
+```markdown
+---
+"@blimu/codegen": minor
+---
+
+Add custom srcdir configuration option for generated SDK output
+```
+
+### Changeset File Format
+
+```markdown
+---
+"@blimu/package-name": patch|minor|major
+---
+
+Description of the change (this becomes the changelog entry)
+```
+
+For changes affecting multiple packages:
+
+```markdown
+---
+"@blimu/codegen": minor
+"@blimu/fetch": patch
+---
+
+Add streaming support to codegen with fetch client improvements
+```
+
+### Workflow Commands
+
+```bash
+# Create a changeset for your changes
+yarn changeset
+
+# Version packages and update changelogs (maintainers)
+yarn changeset:version
+
+# Build and publish packages (maintainers)
+yarn release
+```
+
+### Release Process
+
+1. PRs include changeset files describing the changes
+2. When merged to `main`, changesets accumulate
+3. Maintainers run `yarn changeset:version` to:
+   - Bump versions based on changesets
+   - Update CHANGELOG.md files
+   - Remove consumed changeset files
+4. Commit version changes with `chore: X.Y.Z`
+5. Run `yarn release` to publish to npm
+
+## What Cursor Should Do
+
+When working on changes:
+
+1. **Creating branches**: Use the pattern `{devname}/{task-description}`
+   - Get dev name: `git log -1 --format='%an' | awk '{print tolower($1)}'`
+
+2. **Committing**: Use conventional commit format
+   - Include scope when changes are package-specific
+   - Keep descriptions concise but meaningful
+
+3. **Changesets**: Create a changeset when changes affect package users
+   - Use `yarn changeset` or create `.changeset/<name>.md` manually
+   - Choose appropriate bump type (patch/minor/major)
+   - Write a clear description for the changelog
+
+4. **Version bumps**: Use `chore: X.Y.Z` format for version commits

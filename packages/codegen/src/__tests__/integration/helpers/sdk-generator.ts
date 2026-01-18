@@ -62,12 +62,16 @@ export async function generateTestSDK(
 /**
  * Import a generated SDK from a directory
  * @param sdkDir - Path to generated SDK directory
+ * @param srcDir - Optional custom source directory path (defaults to "src")
  * @returns The SDK module
  */
-export async function importGeneratedSDK(sdkDir: string): Promise<any> {
-  // The generated SDK exports from src/index.ts (not directly from sdkDir)
-  const srcDir = path.join(sdkDir, 'src');
-  const indexPath = path.join(srcDir, 'index.ts');
+export async function importGeneratedSDK(
+  sdkDir: string,
+  srcDir: string = 'src'
+): Promise<any> {
+  // The generated SDK exports from src/index.ts (or custom srcDir/index.ts)
+  const srcDirPath = path.join(sdkDir, srcDir);
+  const indexPath = path.join(srcDirPath, 'index.ts');
 
   // Check if src/index.ts exists, otherwise try index.ts in root
   const actualIndexPath = fs.existsSync(indexPath)
@@ -76,8 +80,8 @@ export async function importGeneratedSDK(sdkDir: string): Promise<any> {
 
   if (!fs.existsSync(actualIndexPath)) {
     // List files to help debug
-    const files = fs.existsSync(srcDir)
-      ? fs.readdirSync(srcDir).join(', ')
+    const files = fs.existsSync(srcDirPath)
+      ? fs.readdirSync(srcDirPath).join(', ')
       : fs.readdirSync(sdkDir).join(', ');
     throw new Error(
       `SDK index file not found at ${actualIndexPath}. Available files: ${files}`
@@ -118,9 +122,9 @@ export async function cleanupTestSDK(sdkDir: string): Promise<void> {
       parentDir.includes('test-sdk-') ||
       path.basename(parentDir).startsWith('test-sdk-')
     ) {
-      // fs.rmSync(parentDir, { recursive: true, force: true });
+      fs.rmSync(parentDir, { recursive: true, force: true });
     } else {
-      // fs.rmSync(sdkDir, { recursive: true, force: true });
+      fs.rmSync(sdkDir, { recursive: true, force: true });
     }
   }
 }

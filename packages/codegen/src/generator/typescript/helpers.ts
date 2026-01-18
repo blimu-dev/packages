@@ -1,6 +1,6 @@
-import { IROperation, IRSchema, IRSchemaKind } from "../../ir/ir.types";
-import { Client } from "../../config/config.schema";
-import { toPascalCase, toCamelCase } from "../../utils/string.utils";
+import { IROperation, IRSchema, IRSchemaKind } from '../../ir/ir.types';
+import { Client } from '../../config/config.schema';
+import { toPascalCase, toCamelCase } from '../../utils/string.utils';
 
 /**
  * Convert an IR schema to TypeScript type string
@@ -11,11 +11,11 @@ import { toPascalCase, toCamelCase } from "../../utils/string.utils";
 function decodeHtmlEntities(str: string): string {
   return str
     .replace(/&quot;/g, '"')
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&#x60;/g, "`")
-    .replace(/&#96;/g, "`")
-    .replace(/&amp;/g, "&");
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&#x60;/g, '`')
+    .replace(/&#96;/g, '`')
+    .replace(/&amp;/g, '&');
 }
 
 export function schemaToTSType(
@@ -28,21 +28,21 @@ export function schemaToTSType(
   let t: string;
   switch (s.kind) {
     case IRSchemaKind.String:
-      if (s.format === "binary") {
-        t = "Blob";
+      if (s.format === 'binary') {
+        t = 'Blob';
       } else {
-        t = "string";
+        t = 'string';
       }
       break;
     case IRSchemaKind.Number:
     case IRSchemaKind.Integer:
-      t = "number";
+      t = 'number';
       break;
     case IRSchemaKind.Boolean:
-      t = "boolean";
+      t = 'boolean';
       break;
     case IRSchemaKind.Null:
-      t = "null";
+      t = 'null';
       break;
     case IRSchemaKind.Ref:
       if (s.ref) {
@@ -58,27 +58,27 @@ export function schemaToTSType(
             t = s.ref;
           } else {
             // Type is not defined locally, use Schema. prefix
-            t = "Schema." + s.ref;
+            t = 'Schema.' + s.ref;
           }
         } else {
           // Not in same file or no modelDefs, use Schema. prefix
-          t = "Schema." + s.ref;
+          t = 'Schema.' + s.ref;
         }
       } else {
-        t = "unknown";
+        t = 'unknown';
       }
       break;
     case IRSchemaKind.Array:
       if (s.items) {
         const inner = schemaToTSType(s.items, predefinedTypes, modelDefs);
         // Wrap unions/intersections in parentheses inside Array<>
-        if (inner.includes(" | ") || inner.includes(" & ")) {
+        if (inner.includes(' | ') || inner.includes(' & ')) {
           t = `Array<(${inner})>`;
         } else {
           t = `Array<${inner}>`;
         }
       } else {
-        t = "Array<unknown>";
+        t = 'Array<unknown>';
       }
       break;
     case IRSchemaKind.OneOf:
@@ -86,9 +86,9 @@ export function schemaToTSType(
         const parts = s.oneOf.map((sub) =>
           schemaToTSType(sub, predefinedTypes, modelDefs)
         );
-        t = parts.join(" | ");
+        t = parts.join(' | ');
       } else {
-        t = "unknown";
+        t = 'unknown';
       }
       break;
     case IRSchemaKind.AnyOf:
@@ -96,9 +96,9 @@ export function schemaToTSType(
         const parts = s.anyOf.map((sub) =>
           schemaToTSType(sub, predefinedTypes, modelDefs)
         );
-        t = parts.join(" | ");
+        t = parts.join(' | ');
       } else {
-        t = "unknown";
+        t = 'unknown';
       }
       break;
     case IRSchemaKind.AllOf:
@@ -106,9 +106,9 @@ export function schemaToTSType(
         const parts = s.allOf.map((sub) =>
           schemaToTSType(sub, predefinedTypes, modelDefs)
         );
-        t = parts.join(" & ");
+        t = parts.join(' & ');
       } else {
-        t = "unknown";
+        t = 'unknown';
       }
       break;
     case IRSchemaKind.Enum:
@@ -123,7 +123,7 @@ export function schemaToTSType(
             break;
           case IRSchemaKind.Boolean:
             for (const v of s.enumValues) {
-              if (v === "true" || v === "false") {
+              if (v === 'true' || v === 'false') {
                 vals.push(v);
               } else {
                 vals.push(`"${v}"`);
@@ -135,14 +135,14 @@ export function schemaToTSType(
               vals.push(`"${v}"`);
             }
         }
-        t = vals.join(" | ");
+        t = vals.join(' | ');
       } else {
-        t = "unknown";
+        t = 'unknown';
       }
       break;
     case IRSchemaKind.Object:
       if (!s.properties || s.properties.length === 0) {
-        t = "Record<string, unknown>";
+        t = 'Record<string, unknown>';
       } else {
         // Inline object shape for rare cases; nested ones should be refs
         const parts: string[] = [];
@@ -159,14 +159,14 @@ export function schemaToTSType(
             parts.push(`${f.name}?: ${ft}`);
           }
         }
-        t = "{ " + parts.join("; ") + " }";
+        t = '{ ' + parts.join('; ') + ' }';
       }
       break;
     default:
-      t = "unknown";
+      t = 'unknown';
   }
-  if (s.nullable && t !== "null") {
-    t += " | null";
+  if (s.nullable && t !== 'null') {
+    t += ' | null';
   }
   // Decode any HTML entities that might be in the type string
   return decodeHtmlEntities(t);
@@ -178,22 +178,22 @@ export function schemaToTSType(
 export function deriveMethodName(op: IROperation): string {
   // Basic REST-style heuristics
   const path = op.path;
-  const hasID = path.includes("{") && path.includes("}");
+  const hasID = path.includes('{') && path.includes('}');
 
   if (op.operationID) {
     return toCamelCase(op.operationID);
   }
 
   switch (op.method) {
-    case "GET":
-      return hasID ? "get" : "list";
-    case "POST":
-      return "create";
-    case "PUT":
-    case "PATCH":
-      return "update";
-    case "DELETE":
-      return "delete";
+    case 'GET':
+      return hasID ? 'get' : 'list';
+    case 'POST':
+      return 'create';
+    case 'PUT':
+    case 'PATCH':
+      return 'update';
+    case 'DELETE':
+      return 'delete';
     default:
       return op.method.toLowerCase();
   }
@@ -236,12 +236,12 @@ export async function resolveMethodName(
  */
 function defaultParseOperationID(opID: string): string {
   if (!opID) {
-    return "";
+    return '';
   }
   // Strip any prefix up to and including "Controller_"
-  const idx = opID.indexOf("Controller_");
+  const idx = opID.indexOf('Controller_');
   if (idx >= 0) {
-    return opID.substring(idx + "Controller_".length);
+    return opID.substring(idx + 'Controller_'.length);
   }
   return opID;
 }
@@ -252,12 +252,12 @@ function defaultParseOperationID(opID: string): string {
 export function buildPathTemplate(op: IROperation): string {
   // Convert /foo/{id}/bar/{slug} -> `/foo/${encodeURIComponent(id)}/bar/${encodeURIComponent(slug)}`
   let path = op.path;
-  let result = "`";
+  let result = '`';
   for (let i = 0; i < path.length; i++) {
-    if (path[i] === "{") {
+    if (path[i] === '{') {
       // read name
       let j = i + 1;
-      while (j < path.length && path[j] !== "}") {
+      while (j < path.length && path[j] !== '}') {
         j++;
       }
       if (j < path.length) {
@@ -269,7 +269,7 @@ export function buildPathTemplate(op: IROperation): string {
     }
     result += path[i];
   }
-  result += "`";
+  result += '`';
   return result;
 }
 
@@ -279,19 +279,19 @@ export function buildPathTemplate(op: IROperation): string {
 export function buildQueryKeyBase(op: IROperation): string {
   const path = op.path;
   // Split by '/'; skip parameter placeholders like {id}
-  const parts = path.split("/");
+  const parts = path.split('/');
   const baseParts: string[] = [];
   for (const p of parts) {
-    if (p === "") {
+    if (p === '') {
       // leading slash
       continue;
     }
-    if (p.startsWith("{") && p.endsWith("}")) {
+    if (p.startsWith('{') && p.endsWith('}')) {
       continue;
     }
     baseParts.push(p);
   }
-  const base = baseParts.join("/");
+  const base = baseParts.join('/');
   return `'${base}'`;
 }
 
@@ -306,9 +306,9 @@ export function orderPathParams(op: IROperation) {
   }
   const path = op.path;
   for (let i = 0; i < path.length; i++) {
-    if (path[i] === "{") {
+    if (path[i] === '{') {
       let j = i + 1;
-      while (j < path.length && path[j] !== "}") {
+      while (j < path.length && path[j] !== '}') {
         j++;
       }
       if (j < path.length) {
@@ -361,12 +361,12 @@ export function buildMethodSignature(
   // query object
   if (op.queryParams.length > 0) {
     // Reference named interface defined in schema.ts
-    const queryType = toPascalCase(op.tag) + toPascalCase(methodName) + "Query";
+    const queryType = toPascalCase(op.tag) + toPascalCase(methodName) + 'Query';
     parts.push(`query?: Schema.${queryType}`);
   }
   // body
   if (op.requestBody) {
-    const opt = op.requestBody.required === true ? "" : "?";
+    const opt = op.requestBody.required === true ? '' : '?';
     parts.push(
       `body${opt}: ${schemaToTSTypeWithSimpleTypes(op.requestBody.schema, modelDefs, predefinedTypes, isSameFile)}`
     );
@@ -399,7 +399,7 @@ export function collectPredefinedTypesUsedInSchema(
 
   // Helper to check if a schema uses a predefined type
   const checkSchema = (schema: IRSchema) => {
-    if (schema.kind === "ref" && schema.ref) {
+    if (schema.kind === 'ref' && schema.ref) {
       // Check if the ref itself is a predefined type
       const isPredefined = predefinedTypes.some((pt) => pt.type === schema.ref);
       if (isPredefined) {
@@ -411,21 +411,21 @@ export function collectPredefinedTypesUsedInSchema(
           checkSchema(resolved);
         }
       }
-    } else if (schema.kind === "array" && schema.items) {
+    } else if (schema.kind === 'array' && schema.items) {
       checkSchema(schema.items);
-    } else if (schema.kind === "object" && schema.properties) {
+    } else if (schema.kind === 'object' && schema.properties) {
       for (const prop of schema.properties) {
         checkSchema(prop.type);
       }
-    } else if (schema.kind === "oneOf" && schema.oneOf) {
+    } else if (schema.kind === 'oneOf' && schema.oneOf) {
       for (const sub of schema.oneOf) {
         checkSchema(sub);
       }
-    } else if (schema.kind === "anyOf" && schema.anyOf) {
+    } else if (schema.kind === 'anyOf' && schema.anyOf) {
       for (const sub of schema.anyOf) {
         checkSchema(sub);
       }
-    } else if (schema.kind === "allOf" && schema.allOf) {
+    } else if (schema.kind === 'allOf' && schema.allOf) {
       for (const sub of schema.allOf) {
         checkSchema(sub);
       }
@@ -465,7 +465,7 @@ export function collectPredefinedTypesUsedInService(
 
   // Helper to check if a schema uses a predefined type
   const checkSchema = (schema: IRSchema) => {
-    if (schema.kind === "ref" && schema.ref) {
+    if (schema.kind === 'ref' && schema.ref) {
       // Check if the ref itself is a predefined type
       const isPredefined = predefinedTypes.some((pt) => pt.type === schema.ref);
       if (isPredefined) {
@@ -477,21 +477,21 @@ export function collectPredefinedTypesUsedInService(
           checkSchema(resolved);
         }
       }
-    } else if (schema.kind === "array" && schema.items) {
+    } else if (schema.kind === 'array' && schema.items) {
       checkSchema(schema.items);
-    } else if (schema.kind === "object" && schema.properties) {
+    } else if (schema.kind === 'object' && schema.properties) {
       for (const prop of schema.properties) {
         checkSchema(prop.type);
       }
-    } else if (schema.kind === "oneOf" && schema.oneOf) {
+    } else if (schema.kind === 'oneOf' && schema.oneOf) {
       for (const sub of schema.oneOf) {
         checkSchema(sub);
       }
-    } else if (schema.kind === "anyOf" && schema.anyOf) {
+    } else if (schema.kind === 'anyOf' && schema.anyOf) {
       for (const sub of schema.anyOf) {
         checkSchema(sub);
       }
-    } else if (schema.kind === "allOf" && schema.allOf) {
+    } else if (schema.kind === 'allOf' && schema.allOf) {
       for (const sub of schema.allOf) {
         checkSchema(sub);
       }
@@ -530,10 +530,10 @@ export function queryKeyArgs(op: IROperation): string[] {
     out.push(p.name);
   }
   if (op.queryParams.length > 0) {
-    out.push("query");
+    out.push('query');
   }
   if (op.requestBody) {
-    out.push("body");
+    out.push('body');
   }
   return out;
 }
@@ -547,11 +547,11 @@ export function quoteTSPropertyName(name: string): string {
   for (const char of name) {
     if (
       !(
-        (char >= "a" && char <= "z") ||
-        (char >= "A" && char <= "Z") ||
-        (char >= "0" && char <= "9") ||
-        char === "_" ||
-        char === "$"
+        (char >= 'a' && char <= 'z') ||
+        (char >= 'A' && char <= 'Z') ||
+        (char >= '0' && char <= '9') ||
+        char === '_' ||
+        char === '$'
       )
     ) {
       needsQuoting = true;
@@ -560,7 +560,7 @@ export function quoteTSPropertyName(name: string): string {
   }
 
   // Also quote if the name starts with a number
-  if (name.length > 0 && name[0] >= "0" && name[0] <= "9") {
+  if (name.length > 0 && name[0] >= '0' && name[0] <= '9') {
     needsQuoting = true;
   }
 
@@ -571,7 +571,139 @@ export function quoteTSPropertyName(name: string): string {
 }
 
 // Re-export schemaToSchema from dedicated file (backward compatible)
-export { schemaToSchema, schemaToZodSchema } from "./schema-converter";
+export { schemaToSchema, schemaToZodSchema } from './schema-converter';
+
+/**
+ * Extract all ref dependencies from a schema recursively
+ * @param schema - The schema to extract dependencies from
+ * @param visited - Set to track visited refs (prevents infinite loops)
+ * @returns Set of ref names that this schema depends on
+ */
+function extractRefDependencies(
+  schema: IRSchema,
+  visited: Set<string> = new Set()
+): Set<string> {
+  const deps = new Set<string>();
+
+  if (schema.kind === 'ref' && schema.ref) {
+    const refName = schema.ref;
+    if (!visited.has(refName)) {
+      visited.add(refName);
+      deps.add(refName);
+    }
+  } else if (schema.kind === 'array' && schema.items) {
+    const itemDeps = extractRefDependencies(schema.items, visited);
+    itemDeps.forEach((dep) => deps.add(dep));
+  } else if (schema.kind === 'object' && schema.properties) {
+    for (const prop of schema.properties) {
+      const propDeps = extractRefDependencies(prop.type, visited);
+      propDeps.forEach((dep) => deps.add(dep));
+    }
+    if (schema.additionalProperties) {
+      const addlDeps = extractRefDependencies(
+        schema.additionalProperties,
+        visited
+      );
+      addlDeps.forEach((dep) => deps.add(dep));
+    }
+  } else if (schema.kind === 'oneOf' && schema.oneOf) {
+    for (const opt of schema.oneOf) {
+      const optDeps = extractRefDependencies(opt, visited);
+      optDeps.forEach((dep) => deps.add(dep));
+    }
+  } else if (schema.kind === 'anyOf' && schema.anyOf) {
+    for (const opt of schema.anyOf) {
+      const optDeps = extractRefDependencies(opt, visited);
+      optDeps.forEach((dep) => deps.add(dep));
+    }
+  } else if (schema.kind === 'allOf' && schema.allOf) {
+    for (const sch of schema.allOf) {
+      const schDeps = extractRefDependencies(sch, visited);
+      schDeps.forEach((dep) => deps.add(dep));
+    }
+  } else if (schema.kind === 'not' && schema.not) {
+    const notDeps = extractRefDependencies(schema.not, visited);
+    notDeps.forEach((dep) => deps.add(dep));
+  }
+
+  return deps;
+}
+
+/**
+ * Topologically sort model definitions so dependencies come before dependents
+ * This ensures that when using const declarations, all dependencies are defined before use
+ * @param modelDefs - Array of model definitions to sort
+ * @returns Sorted array of model definitions
+ */
+export function sortModelDefsByDependencies(
+  modelDefs: Array<{ name: string; schema: IRSchema }>
+): Array<{ name: string; schema: IRSchema }> {
+  // Build a map for quick lookup
+  const modelDefMap = new Map<string, { name: string; schema: IRSchema }>();
+  for (const md of modelDefs) {
+    modelDefMap.set(md.name, md);
+  }
+
+  // Build dependency graph
+  const dependencies = new Map<string, Set<string>>();
+  for (const md of modelDefs) {
+    const deps = extractRefDependencies(md.schema);
+    // Only include dependencies that are in our modelDefs
+    const validDeps = new Set<string>();
+    for (const dep of deps) {
+      if (modelDefMap.has(dep)) {
+        validDeps.add(dep);
+      }
+    }
+    dependencies.set(md.name, validDeps);
+  }
+
+  // Topological sort using Kahn's algorithm
+  const sorted: Array<{ name: string; schema: IRSchema }> = [];
+  const inDegree = new Map<string, number>();
+  const queue: string[] = [];
+
+  // Initialize in-degree (how many dependencies each node has)
+  for (const md of modelDefs) {
+    inDegree.set(md.name, dependencies.get(md.name)?.size || 0);
+    if (inDegree.get(md.name) === 0) {
+      queue.push(md.name);
+    }
+  }
+
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    const modelDef = modelDefMap.get(current);
+    if (modelDef) {
+      sorted.push(modelDef);
+    }
+
+    // Decrease in-degree for all nodes that depend on current
+    for (const md of modelDefs) {
+      const deps = dependencies.get(md.name);
+      if (deps?.has(current)) {
+        const newInDegree = (inDegree.get(md.name) || 0) - 1;
+        inDegree.set(md.name, newInDegree);
+        if (newInDegree === 0) {
+          queue.push(md.name);
+        }
+      }
+    }
+  }
+
+  // If we couldn't sort all nodes, there might be a cycle
+  // In that case, append the remaining nodes in their original order
+  if (sorted.length < modelDefs.length) {
+    const sortedNames = new Set(sorted.map((md) => md.name));
+    for (const md of modelDefs) {
+      if (!sortedNames.has(md.name)) {
+        sorted.push(md);
+      }
+    }
+  }
+
+  return sorted;
+}
 
 /**
  * Check if an operation has a streaming response
@@ -593,8 +725,8 @@ export function getStreamingItemType(op: IROperation): string {
   }
 
   // For SSE, the data field is typically a string
-  if (op.response.streamingFormat === "sse") {
-    return "string";
+  if (op.response.streamingFormat === 'sse') {
+    return 'string';
   }
 
   // Default: return the schema type itself

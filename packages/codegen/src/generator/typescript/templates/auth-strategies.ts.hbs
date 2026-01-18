@@ -3,8 +3,8 @@ import type { ClientOption } from './client';
 
 export function buildAuthStrategies(cfg: ClientOption): AuthStrategy[] {
   const authStrategies: AuthStrategy[] = [...(cfg?.authStrategies || [])];
-  
-  {{~#each IR.securitySchemes~}}
+
+  {{#each IR.securitySchemes~}}
   {{~#if (eq this.type "http")~}}
     {{~#if (eq this.scheme "bearer")~}}
   if (cfg.{{camel this.key}}) {
@@ -16,8 +16,8 @@ export function buildAuthStrategies(cfg: ClientOption): AuthStrategy[] {
     {{~/if~}}
   {{~/if~}}
   {{~/each~}}
-  
-  {{~#each IR.securitySchemes~}}
+
+  {{#each IR.securitySchemes~}}
   {{~#if (eq this.type "http")~}}
     {{~#if (eq this.scheme "basic")~}}
   if (cfg.{{camel this.key}}) {

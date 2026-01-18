@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "rootDir": "./src",
+    "rootDir": "./{{Client.srcDir}}",
     "module": "ES2022",
     "moduleResolution": "Bundler",
     "target": "ES2022",
@@ -12,7 +12,7 @@
     "allowSyntheticDefaultImports": true,
     "sourceMap": true,
     "outDir": "./dist",
-    "baseUrl": "./src",
+    "baseUrl": "./{{Client.srcDir}}",
     "incremental": true,
     "tsBuildInfoFile": "./dist/tsconfig.tsbuildinfo",
     "skipLibCheck": true,
@@ -23,6 +23,6 @@
     "noUnusedParameters": true,
     "useDefineForClassFields": true
   },
-  "include": ["src/**/*"],
+  "include": ["{{Client.srcDir}}/**/*"],
   "exclude": ["node_modules", "dist"]
 }

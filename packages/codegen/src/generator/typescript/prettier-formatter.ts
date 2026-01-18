@@ -19,11 +19,13 @@ interface SimpleLogger {
  * This function formats all .ts and .tsx files in the src directory.
  *
  * @param outDir - The output directory where the SDK was generated
+ * @param srcDir - The source directory path (e.g., "src" or "src/sdk"). Defaults to "src".
  * @param logger - Optional logger instance for logging formatting progress
  * @returns Promise that resolves when formatting is complete
  */
 export async function formatWithPrettier(
   outDir: string,
+  srcDir: string = 'src',
   logger?: Logger | SimpleLogger
 ): Promise<void> {
   const log = logger || console;
@@ -43,12 +45,12 @@ export async function formatWithPrettier(
     }
 
     // Format all TypeScript files in the src directory
-    const srcDir = path.join(outDir, 'src');
+    const srcDirPath = path.join(outDir, srcDir);
 
     // Check if src directory exists
-    if (!fs.existsSync(srcDir)) {
+    if (!fs.existsSync(srcDirPath)) {
       log.warn?.(
-        `Source directory not found at ${srcDir}. Skipping formatting.`
+        `Source directory not found at ${srcDirPath}. Skipping formatting.`
       );
       return;
     }
@@ -56,8 +58,10 @@ export async function formatWithPrettier(
     // Use Prettier to format all TypeScript files
     // Prettier will use the .prettierrc file in the outDir if it exists
     // Use --loglevel=error to suppress informational output (only show errors)
+    // Escape the srcDir path for use in the glob pattern
+    const escapedSrcDir = srcDir.replace(/\\/g, '/');
     const { stdout, stderr } = await execAsync(
-      'npx --yes prettier --write --loglevel=error "src/**/*.{ts,tsx}"',
+      `npx --yes prettier --write --log-level=error "${escapedSrcDir}/**/*.{ts,tsx}"`,
       {
         cwd: outDir,
         maxBuffer: 10 * 1024 * 1024, // 10MB buffer

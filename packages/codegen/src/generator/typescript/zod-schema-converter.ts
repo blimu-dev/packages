@@ -1,5 +1,5 @@
-import { IRSchema, IRSchemaKind } from "../../ir/ir.types";
-import { quoteTSPropertyName } from "./helpers";
+import { IRSchema, IRSchemaKind } from '../../ir/ir.types';
+import { quoteTSPropertyName } from './helpers';
 
 /**
  * Convert an IR schema to Zod schema string
@@ -8,37 +8,37 @@ import { quoteTSPropertyName } from "./helpers";
  */
 export function schemaToZodSchema(
   s: IRSchema,
-  indent: string = "",
+  indent: string = '',
   modelDefs?: Array<{ name: string; schema: IRSchema }>,
   useLocalSchemaTypes: boolean = false
 ): string {
-  const nextIndent = indent + "  ";
+  const nextIndent = indent + '  ';
   let zod: string;
 
   switch (s.kind) {
     case IRSchemaKind.String:
-      zod = "z.string()";
-      if (s.format === "date" || s.format === "date-time") {
-        zod += ".datetime()";
-      } else if (s.format === "email") {
-        zod += ".email()";
-      } else if (s.format === "uri" || s.format === "url") {
-        zod += ".url()";
-      } else if (s.format === "uuid") {
-        zod += ".uuid()";
+      zod = 'z.string()';
+      if (s.format === 'date' || s.format === 'date-time') {
+        zod = 'z.iso.datetime()';
+      } else if (s.format === 'email') {
+        zod = 'z.email()';
+      } else if (s.format === 'uri' || s.format === 'url') {
+        zod = 'z.url()';
+      } else if (s.format === 'uuid') {
+        zod = 'z.uuid()';
       }
       break;
     case IRSchemaKind.Number:
-      zod = "z.number()";
+      zod = 'z.number()';
       break;
     case IRSchemaKind.Integer:
-      zod = "z.number().int()";
+      zod = 'z.number().int()';
       break;
     case IRSchemaKind.Boolean:
-      zod = "z.boolean()";
+      zod = 'z.boolean()';
       break;
     case IRSchemaKind.Null:
-      zod = "z.null()";
+      zod = 'z.null()';
       break;
     case IRSchemaKind.Ref:
       if (s.ref) {
@@ -47,7 +47,7 @@ export function schemaToZodSchema(
         // Elsewhere, use Schema.TypeNameSchema
         zod = useLocalSchemaTypes ? `${s.ref}Schema` : `Schema.${s.ref}Schema`;
       } else {
-        zod = "z.unknown()";
+        zod = 'z.unknown()';
       }
       break;
     case IRSchemaKind.Array:
@@ -58,9 +58,9 @@ export function schemaToZodSchema(
           modelDefs,
           useLocalSchemaTypes
         );
-        zod = `z.array(${itemsZod})`;
+        zod = `${itemsZod}.array()`;
       } else {
-        zod = "z.array(z.unknown())";
+        zod = 'z.unknown().array()';
       }
       break;
     case IRSchemaKind.Object:
@@ -74,7 +74,7 @@ export function schemaToZodSchema(
           );
           zod = `z.record(z.string(), ${valueZod})`;
         } else {
-          zod = "z.record(z.string(), z.unknown())";
+          zod = 'z.record(z.string(), z.unknown())';
         }
       } else {
         const props: string[] = [];
@@ -92,7 +92,7 @@ export function schemaToZodSchema(
             props.push(`${nextIndent}${fieldName}: ${fieldZod}.optional()`);
           }
         }
-        const objectZod = `z.object({\n${props.join(",\n")}\n${indent}})`;
+        const objectZod = `z.object({\n${props.join(',\n')}\n${indent}})`;
         if (s.additionalProperties) {
           const valueZod = schemaToZodSchema(
             s.additionalProperties,
@@ -113,7 +113,7 @@ export function schemaToZodSchema(
         // Create enum from string literals
         const enumValues = s.enumValues.map((v) => {
           // Handle boolean and number strings
-          if (v === "true" || v === "false") {
+          if (v === 'true' || v === 'false') {
             return v;
           }
           if (/^-?[0-9]+(\.[0-9]+)?$/.test(v)) {
@@ -121,9 +121,9 @@ export function schemaToZodSchema(
           }
           return JSON.stringify(v);
         });
-        zod = `z.enum([${enumValues.join(", ")}])`;
+        zod = `z.enum([${enumValues.join(', ')}])`;
       } else {
-        zod = "z.string()";
+        zod = 'z.string()';
       }
       break;
     case IRSchemaKind.OneOf:
@@ -131,9 +131,9 @@ export function schemaToZodSchema(
         const options = s.oneOf.map((opt) =>
           schemaToZodSchema(opt, nextIndent, modelDefs, useLocalSchemaTypes)
         );
-        zod = `z.union([${options.join(", ")}])`;
+        zod = `z.union([${options.join(', ')}])`;
       } else {
-        zod = "z.unknown()";
+        zod = 'z.unknown()';
       }
       break;
     case IRSchemaKind.AnyOf:
@@ -141,9 +141,9 @@ export function schemaToZodSchema(
         const options = s.anyOf.map((opt) =>
           schemaToZodSchema(opt, nextIndent, modelDefs, useLocalSchemaTypes)
         );
-        zod = `z.union([${options.join(", ")}])`;
+        zod = `z.union([${options.join(', ')}])`;
       } else {
-        zod = "z.unknown()";
+        zod = 'z.unknown()';
       }
       break;
     case IRSchemaKind.AllOf:
@@ -152,17 +152,17 @@ export function schemaToZodSchema(
           schemaToZodSchema(sch, nextIndent, modelDefs, useLocalSchemaTypes)
         );
         // Zod doesn't have allOf, so we use intersection
-        zod = schemas.join(".and(") + ")".repeat(schemas.length - 1);
+        zod = schemas.join('.and(') + ')'.repeat(schemas.length - 1);
       } else {
-        zod = "z.unknown()";
+        zod = 'z.unknown()';
       }
       break;
     default:
-      zod = "z.unknown()";
+      zod = 'z.unknown()';
   }
 
   // Handle nullable
-  if (s.nullable && zod !== "z.null()") {
+  if (s.nullable && zod !== 'z.null()') {
     zod = `${zod}.nullable()`;
   }
 

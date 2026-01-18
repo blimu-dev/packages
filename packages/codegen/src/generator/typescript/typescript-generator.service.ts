@@ -21,8 +21,8 @@ import {
   isStreamingOperation,
   getStreamingItemType,
   collectPredefinedTypesUsedInService,
+  sortModelDefsByDependencies,
 } from './helpers';
-import { schemaToSchema } from './schema-converter';
 import { schemaToZodSchema } from './zod-schema-converter';
 import { toPascalCase, toSnakeCase } from '../../utils/string.utils';
 import { formatWithPrettier } from './prettier-formatter';
@@ -46,8 +46,14 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
       }
     }
 
+    // Set default srcDir if not specified (for template access)
+    if (!client.srcDir) {
+      client.srcDir = 'src';
+    }
+
     // Ensure directories
-    const srcDir = path.join(client.outDir, 'src');
+    const srcDirPath = client.srcDir;
+    const srcDir = path.join(client.outDir, srcDirPath);
     const servicesDir = path.join(srcDir, 'services');
     await fs.promises.mkdir(servicesDir, { recursive: true });
 
@@ -79,7 +85,7 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
       this.logger.debug(
         'Formatting generated TypeScript files with Prettier...'
       );
-      await formatWithPrettier(client.outDir, this.logger);
+      await formatWithPrettier(client.outDir, srcDirPath, this.logger);
     } else {
       this.logger.debug('Code formatting is disabled for this client.');
     }
@@ -497,7 +503,7 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
       try {
         await fs.promises.access(possiblePath);
         templatePath = possiblePath;
-        this.logger.debug(`Found template at: ${templatePath}`);
+
         break;
       } catch (error) {
         this.logger.debug(`Template not found at: ${possiblePath}`);
@@ -710,9 +716,15 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
       return;
     }
     try {
+      // Sort modelDefs by dependencies to ensure const declarations are in correct order
+      const sortedModelDefs = sortModelDefsByDependencies(ir.modelDefs);
+      const sortedIR = {
+        ...ir,
+        modelDefs: sortedModelDefs,
+      };
       await this.renderTemplate(
         'schema.zod.ts.hbs',
-        { Client: client, IR: ir },
+        { Client: client, IR: sortedIR },
         zodSchemaPath,
         client
       );
@@ -768,6 +780,7 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
       );
     } catch (error) {
       this.logger.warn(`Template tsconfig.json.hbs not found, using fallback`);
+      const srcDir = client.srcDir || 'src';
       const content = JSON.stringify(
         {
           compilerOptions: {
@@ -776,13 +789,13 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
             lib: ['ES2020'],
             declaration: true,
             outDir: './dist',
-            rootDir: './src',
+            rootDir: `./${srcDir}`,
             strict: true,
             esModuleInterop: true,
             skipLibCheck: true,
             forceConsistentCasingInFileNames: true,
           },
-          include: ['src/**/*'],
+          include: [`${srcDir}/**/*`],
         },
         null,
         2
@@ -805,10 +818,11 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
       );
     } catch (error) {
       this.logger.warn(`Template tsup.config.ts.hbs not found, using fallback`);
+      const srcDir = client.srcDir || 'src';
       const content = `import { defineConfig } from "tsup";
 
 export default defineConfig({
-  entry: ["src/**/*.ts"],
+  entry: ["${srcDir}/**/*.ts"],
   format: ["cjs", "esm"],
   dts: {
     resolve: true,

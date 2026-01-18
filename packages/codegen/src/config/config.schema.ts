@@ -77,6 +77,8 @@ export const TypeScriptClientSchema = BaseClientSchema.extend({
   type: z.literal('typescript'),
   packageName: z.string().min(1, 'PackageName is required'),
   moduleName: z.string().optional(),
+  // Source directory path (e.g., "src" or "src/sdk"). Defaults to "src" if not specified.
+  srcDir: z.string().optional(),
   // IncludeQueryKeys toggles generation of __queryKeys helper methods in services
   includeQueryKeys: z.boolean().optional(),
   // Pre-defined types to import from external packages instead of generating locally

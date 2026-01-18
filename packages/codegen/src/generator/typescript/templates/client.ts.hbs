@@ -1,67 +1,61 @@
 import { FetchClient, FetchError } from '@blimu/fetch';
 import {
-  type FetchClientConfig{{~#if (hasBearerScheme IR.securitySchemes)}}, 
-  type BearerAuthStrategy{{~/if~}}{{~#if (hasApiKeyScheme IR.securitySchemes)}},
-  type ApiKeyAuthStrategy{{~/if~}}
+  type FetchClientConfig{{#if (hasBearerScheme IR.securitySchemes)}},
+  type BearerAuthStrategy{{/if}}{{#if (hasApiKeyScheme IR.securitySchemes)}},
+  type ApiKeyAuthStrategy{{/if}}
 } from '@blimu/fetch';
 import { buildAuthStrategies } from './auth-strategies';
-{{~#each IR.services~}}
+{{#each IR.services}}
 import { {{serviceName tag}} } from './services/{{fileBase tag}}';
-{{~/each~}}
-
+{{/each}}
 
 export type ClientOption = FetchClientConfig & {
-  {{~#each IR.securitySchemes~}}
-  {{~#if (eq this.type "http")~}}
-    {{~#if (eq this.scheme "bearer")~}}
+  {{#each IR.securitySchemes}}
+  {{#if (eq this.type "http")}}
+  {{#if (eq this.scheme "bearer")}}
   {{camel this.key}}?: BearerAuthStrategy['token'];
-    {{~else if (eq this.scheme "basic")~}}
+  {{else if (eq this.scheme "basic")}}
   {{camel this.key}}?: { username: string; password: string };
-    {{~/if~}}
-    {{~else if (eq this.type "apiKey")~}}
+  {{/if}}
+  {{else if (eq this.type "apiKey")}}
   {{camel this.key}}?: ApiKeyAuthStrategy['key'];
-  {{~/if~}}
-  {{~/each~}}
+  {{/if}}
+  {{/each}}
 };
-
-{{~setVar "grouped" (groupByNamespace IR.services)~}}
-
-{{~! Generate namespace classes for non-root services ~}}
-{{~#each (groupByNamespace IR.services) as |services namespace|~}}
-  {{~#if (ne namespace "")~}}
+{{setVar "grouped" (groupByNamespace IR.services)}}
+{{! Generate namespace classes for non-root services }}
+{{#each (groupByNamespace IR.services) as |services namespace|}}
+  {{#if (ne namespace "")}}
 class {{pascal namespace}}Namespace {
-    {{~#each services~}}
+    {{#each services}}
   readonly {{serviceProp (getServiceName tag)}}: {{serviceName tag}};
-    {{~/each~}}
+    {{/each}}
 
   constructor(core: FetchClient) {
-    {{~#each services~}}
+    {{#each services}}
     this.{{serviceProp (getServiceName tag)}} = new {{serviceName tag}}(core);
-    {{~/each~}}
+    {{/each}}
   }
 }
-
-  {{~/if~}}
-{{~/each~}}
-
+  {{/if}}
+{{/each}}
 export class {{Client.name}} {
-  {{~! Root level services (no namespace) ~}}
-  {{~#each (getRootServices IR.services)~}}
+  {{! Root level services (no namespace) }}
+  {{#each (getRootServices IR.services)}}
   readonly {{serviceProp tag}}: {{serviceName tag}};
-  {{~/each~}}
-  {{~! Namespace properties ~}}
-  {{~#each (groupByNamespace IR.services) as |services namespace|~}}
-    {{~#if (ne namespace "")~}}
+  {{/each}}
+  {{! Namespace properties }}
+  {{#each (groupByNamespace IR.services) as |services namespace|}}
+    {{#if (ne namespace "")}}
   readonly {{serviceProp namespace}}: {{pascal namespace}}Namespace;
-    {{~/if~}}
-  {{~/each~}}
+    {{/if}}
+  {{/each}}
 
   constructor(options?: ClientOption) {
-    const { 
-      {{~#each IR.securitySchemes~}}
-      {{camel this.key}},{{~/each~}}
-      ...restCfg 
-    } = options || {};
+    const restCfg = { ...(options || {}) };
+    {{#each IR.securitySchemes}}
+    delete restCfg.{{camel this.key}};
+    {{/each}}
 
     const authStrategies = buildAuthStrategies(options || {});
     
@@ -71,16 +65,16 @@ export class {{Client.name}} {
       ...(authStrategies.length > 0 ? { authStrategies } : {}),
     });
     
-    {{~! Initialize root services ~}}
-    {{~#each (getRootServices IR.services)~}}
+    {{! Initialize root services }}
+    {{#each (getRootServices IR.services)}}
     this.{{serviceProp tag}} = new {{serviceName tag}}(core);
-    {{~/each~}}
-    {{~! Initialize namespaces ~}}
-    {{~#each (groupByNamespace IR.services) as |services namespace|~}}
-      {{~#if (ne namespace "")~}}
+    {{/each}}
+    {{! Initialize namespaces }}
+    {{#each (groupByNamespace IR.services) as |services namespace|}}
+      {{#if (ne namespace "")}}
     this.{{serviceProp namespace}} = new {{pascal namespace}}Namespace(core);
-      {{~/if~}}
-    {{~/each~}}
+      {{/if}}
+    {{/each}}
   }
 }
 
