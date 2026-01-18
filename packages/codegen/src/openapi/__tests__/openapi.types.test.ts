@@ -1,203 +1,204 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect } from 'vitest';
+import type { OpenAPIV3, OpenAPIV3_1 } from 'openapi-types';
 import {
   normalizeDocument,
   getSchemaFromRef,
   isSchemaNullable,
   getSchemaType,
-} from "../openapi.types";
+} from '../openapi.types';
 import {
   createMockOpenAPI30Document,
   createMockOpenAPI31Document,
-} from "../../__tests__/helpers/test-utils";
+} from '../../__tests__/helpers/test-utils';
 import {
   createNullableSchema30,
   createNullableSchema31,
   createObjectSchema30,
   createObjectSchema31,
-} from "../../__tests__/helpers/create-mock-schema";
+} from '../../__tests__/helpers/create-mock-schema';
 
-describe("openapi.types", () => {
-  describe("normalizeDocument", () => {
-    it("should normalize OpenAPI 3.0 document", () => {
+describe('openapi.types', () => {
+  describe('normalizeDocument', () => {
+    it('should normalize OpenAPI 3.0 document', () => {
       const doc = createMockOpenAPI30Document({
-        openapi: "3.0.0",
-        info: { title: "Test", version: "1.0.0" },
+        openapi: '3.0.0',
+        info: { title: 'Test', version: '1.0.0' },
         paths: {
-          "/test": {
+          '/test': {
             get: {
-              operationId: "test",
-              responses: { "200": { description: "OK" } },
+              operationId: 'test',
+              responses: { '200': { description: 'OK' } },
             },
           },
         },
       });
       const normalized = normalizeDocument(doc);
-      expect(normalized.openapi).toBe("3.0.0");
-      expect(normalized.info.title).toBe("Test");
+      expect(normalized.openapi).toBe('3.0.0');
+      expect(normalized.info.title).toBe('Test');
       expect(normalized.paths).toBeDefined();
     });
 
-    it("should normalize OpenAPI 3.1 document", () => {
+    it('should normalize OpenAPI 3.1 document', () => {
       const doc = createMockOpenAPI31Document({
-        openapi: "3.1.0",
-        info: { title: "Test", version: "1.0.0" },
+        openapi: '3.1.0',
+        info: { title: 'Test', version: '1.0.0' },
         paths: {
-          "/test": {
+          '/test': {
             get: {
-              operationId: "test",
-              responses: { "200": { description: "OK" } },
+              operationId: 'test',
+              responses: { '200': { description: 'OK' } },
             },
           },
         },
       });
       const normalized = normalizeDocument(doc);
-      expect(normalized.openapi).toBe("3.1.0");
-      expect(normalized.info.title).toBe("Test");
+      expect(normalized.openapi).toBe('3.1.0');
+      expect(normalized.info.title).toBe('Test');
       expect(normalized.paths).toBeDefined();
     });
 
-    it("should handle undefined paths", () => {
+    it('should handle undefined paths', () => {
       const doc = createMockOpenAPI30Document({
         paths: undefined,
-      });
+      } as OpenAPIV3.PathsObject);
       const normalized = normalizeDocument(doc);
       expect(normalized.paths).toBeUndefined();
     });
   });
 
-  describe("getSchemaFromRef", () => {
-    it("should resolve component schema reference", () => {
+  describe('getSchemaFromRef', () => {
+    it('should resolve component schema reference', () => {
       const doc = createMockOpenAPI30Document({
         components: {
           schemas: {
             User: {
-              type: "object",
+              type: 'object',
               properties: {
-                id: { type: "string" },
+                id: { type: 'string' },
               },
             },
           },
         },
       });
       const schema = getSchemaFromRef(doc, {
-        $ref: "#/components/schemas/User",
+        $ref: '#/components/schemas/User',
       });
       expect(schema).toBeDefined();
-      expect(schema?.type).toBe("object");
+      expect(schema?.type).toBe('object');
     });
 
-    it("should return undefined for non-existent reference", () => {
+    it('should return undefined for non-existent reference', () => {
       const doc = createMockOpenAPI30Document();
       const schema = getSchemaFromRef(doc, {
-        $ref: "#/components/schemas/NonExistent",
+        $ref: '#/components/schemas/NonExistent',
       });
       expect(schema).toBeUndefined();
     });
 
-    it("should return schema directly when not a reference", () => {
+    it('should return schema directly when not a reference', () => {
       const doc = createMockOpenAPI30Document();
-      const schemaObj = { type: "string" };
+      const schemaObj = { type: 'string' } as OpenAPIV3.SchemaObject;
       const schema = getSchemaFromRef(doc, schemaObj);
       expect(schema).toBe(schemaObj);
     });
 
-    it("should handle recursive references", () => {
+    it('should handle recursive references', () => {
       const doc = createMockOpenAPI30Document({
         components: {
           schemas: {
             User: {
-              $ref: "#/components/schemas/UserDetails",
+              $ref: '#/components/schemas/UserDetails',
             },
             UserDetails: {
-              type: "object",
+              type: 'object',
               properties: {
-                id: { type: "string" },
+                id: { type: 'string' },
               },
             },
           },
         },
       });
       const schema = getSchemaFromRef(doc, {
-        $ref: "#/components/schemas/User",
+        $ref: '#/components/schemas/User',
       });
       expect(schema).toBeDefined();
-      expect(schema?.type).toBe("object");
+      expect(schema?.type).toBe('object');
     });
 
-    it("should return undefined for invalid reference format", () => {
+    it('should return undefined for invalid reference format', () => {
       const doc = createMockOpenAPI30Document();
-      const schema = getSchemaFromRef(doc, { $ref: "invalid-ref" });
+      const schema = getSchemaFromRef(doc, { $ref: 'invalid-ref' });
       expect(schema).toBeUndefined();
     });
   });
 
-  describe("isSchemaNullable", () => {
-    it("should detect nullable in OpenAPI 3.0", () => {
-      const schema = createNullableSchema30("string");
+  describe('isSchemaNullable', () => {
+    it('should detect nullable in OpenAPI 3.0', () => {
+      const schema = createNullableSchema30('string');
       expect(isSchemaNullable(schema)).toBe(true);
     });
 
-    it("should detect nullable in OpenAPI 3.1 (type array with null)", () => {
-      const schema = createNullableSchema31("string");
+    it('should detect nullable in OpenAPI 3.1 (type array with null)', () => {
+      const schema = createNullableSchema31('string');
       expect(isSchemaNullable(schema)).toBe(true);
     });
 
-    it("should return false for non-nullable schema in 3.0", () => {
-      const schema = createObjectSchema30({ name: { type: "string" } });
+    it('should return false for non-nullable schema in 3.0', () => {
+      const schema = createObjectSchema30({ name: { type: 'string' } });
       expect(isSchemaNullable(schema)).toBe(false);
     });
 
-    it("should return false for non-nullable schema in 3.1", () => {
-      const schema = createObjectSchema31({ name: { type: "string" } });
+    it('should return false for non-nullable schema in 3.1', () => {
+      const schema = createObjectSchema31({ name: { type: 'string' } });
       expect(isSchemaNullable(schema)).toBe(false);
     });
 
-    it("should return false for undefined schema", () => {
+    it('should return false for undefined schema', () => {
       expect(isSchemaNullable(undefined)).toBe(false);
     });
 
-    it("should handle nullable number in 3.0", () => {
-      const schema = createNullableSchema30("number");
+    it('should handle nullable number in 3.0', () => {
+      const schema = createNullableSchema30('number');
       expect(isSchemaNullable(schema)).toBe(true);
     });
 
-    it("should handle nullable number in 3.1", () => {
-      const schema = createNullableSchema31("number");
+    it('should handle nullable number in 3.1', () => {
+      const schema = createNullableSchema31('number');
       expect(isSchemaNullable(schema)).toBe(true);
     });
   });
 
-  describe("getSchemaType", () => {
-    it("should return string type for string schema", () => {
-      const schema = { type: "string" };
-      expect(getSchemaType(schema)).toBe("string");
+  describe('getSchemaType', () => {
+    it('should return string type for string schema', () => {
+      const schema = { type: 'string' } as OpenAPIV3.SchemaObject;
+      expect(getSchemaType(schema)).toBe('string');
     });
 
-    it("should return array type for OpenAPI 3.1", () => {
-      const schema = { type: ["string", "null"] };
+    it('should return array type for OpenAPI 3.1', () => {
+      const schema = { type: ['string', 'null'] } as OpenAPIV3_1.SchemaObject;
       expect(getSchemaType(schema)).toBe(schema.type);
     });
 
-    it("should return undefined for schema without type", () => {
+    it('should return undefined for schema without type', () => {
       const schema = {};
       expect(getSchemaType(schema)).toBeUndefined();
     });
 
-    it("should return undefined for undefined schema", () => {
+    it('should return undefined for undefined schema', () => {
       expect(getSchemaType(undefined)).toBeUndefined();
     });
 
-    it("should handle number type", () => {
-      const schema = { type: "number" };
-      expect(getSchemaType(schema)).toBe("number");
+    it('should handle number type', () => {
+      const schema = { type: 'number' } as OpenAPIV3.SchemaObject;
+      expect(getSchemaType(schema)).toBe('number');
     });
 
-    it("should handle array type in 3.1", () => {
-      const schema = { type: ["number", "null"] };
+    it('should handle array type in 3.1', () => {
+      const schema = { type: ['number', 'null'] } as OpenAPIV3_1.SchemaObject;
       const result = getSchemaType(schema);
       expect(Array.isArray(result)).toBe(true);
-      expect(result).toContain("number");
-      expect(result).toContain("null");
+      expect(result).toContain('number');
+      expect(result).toContain('null');
     });
   });
 });

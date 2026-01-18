@@ -20,7 +20,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: '25'
 
       - name: Enable Corepack
         run: corepack enable
@@ -46,5 +46,14 @@ jobs:
       - name: Run tests
         run: yarn test
 
+      - name: Run integration tests
+        run: yarn workspace @blimu/codegen test:integration
+
       - name: Type check
         run: yarn typecheck
+
+      - name: Lint
+        run: yarn lint
+
+      - name: Check formatting
+        run: yarn format:check

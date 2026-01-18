@@ -1,6 +1,6 @@
-import type { IRSchema } from "../../ir/ir.types";
-import { IRSchemaKind } from "../../ir/ir.types";
-import { quoteTSPropertyName } from "./helpers";
+import type { IRSchema } from '../../ir/ir.types';
+import { IRSchemaKind } from '../../ir/ir.types';
+import { quoteTSPropertyName } from './helpers';
 
 /**
  * Convert an IR schema to @blimu/schema schema string
@@ -9,39 +9,39 @@ import { quoteTSPropertyName } from "./helpers";
  */
 export function schemaToSchema(
   s: IRSchema,
-  indent: string = "",
+  indent: string = '',
   modelDefs?: { name: string; schema: IRSchema }[],
   useLocalSchemaTypes: boolean = false
 ): string {
-  const nextIndent = indent + "  ";
+  const nextIndent = indent + '  ';
   let schemaCode: string;
 
   switch (s.kind) {
     case IRSchemaKind.String:
-      schemaCode = "schema.string()";
-      if (s.format === "date") {
-        schemaCode = "schema.iso.date()";
-      } else if (s.format === "date-time") {
-        schemaCode = "schema.iso.datetime()";
-      } else if (s.format === "email") {
-        schemaCode = "schema.email()";
-      } else if (s.format === "uri" || s.format === "url") {
-        schemaCode = "schema.string().url()";
-      } else if (s.format === "uuid") {
-        schemaCode = "schema.string().uuid()";
+      schemaCode = 'schema.string()';
+      if (s.format === 'date') {
+        schemaCode = 'schema.iso.date()';
+      } else if (s.format === 'date-time') {
+        schemaCode = 'schema.iso.datetime()';
+      } else if (s.format === 'email') {
+        schemaCode = 'schema.email()';
+      } else if (s.format === 'uri' || s.format === 'url') {
+        schemaCode = 'schema.string().url()';
+      } else if (s.format === 'uuid') {
+        schemaCode = 'schema.string().uuid()';
       }
       break;
     case IRSchemaKind.Number:
-      schemaCode = "schema.number()";
+      schemaCode = 'schema.number()';
       break;
     case IRSchemaKind.Integer:
-      schemaCode = "schema.number().int()";
+      schemaCode = 'schema.number().int()';
       break;
     case IRSchemaKind.Boolean:
-      schemaCode = "schema.boolean()";
+      schemaCode = 'schema.boolean()';
       break;
     case IRSchemaKind.Null:
-      schemaCode = "schema.null()";
+      schemaCode = 'schema.null()';
       break;
     case IRSchemaKind.Ref:
       if (s.ref) {
@@ -52,7 +52,7 @@ export function schemaToSchema(
           ? `${s.ref}Schema`
           : `Schema.${s.ref}Schema`;
       } else {
-        schemaCode = "schema.unknown()";
+        schemaCode = 'schema.unknown()';
       }
       break;
     case IRSchemaKind.Array:
@@ -65,7 +65,7 @@ export function schemaToSchema(
         );
         schemaCode = `schema.array(${itemsSchema})`;
       } else {
-        schemaCode = "schema.array(schema.unknown())";
+        schemaCode = 'schema.array(schema.unknown())';
       }
       break;
     case IRSchemaKind.Object:
@@ -79,7 +79,7 @@ export function schemaToSchema(
           );
           schemaCode = `schema.record(schema.string(), ${valueSchema})`;
         } else {
-          schemaCode = "schema.record(schema.string(), schema.unknown())";
+          schemaCode = 'schema.record(schema.string(), schema.unknown())';
         }
       } else {
         const props: string[] = [];
@@ -97,15 +97,11 @@ export function schemaToSchema(
             props.push(`${nextIndent}${fieldName}: ${fieldSchema}.optional()`);
           }
         }
-        const objectSchema = `schema.object({\n${props.join(",\n")}\n${indent}})`;
+        const objectSchema = `schema.object({\n${props.join(',\n')}\n${indent}})`;
         if (s.additionalProperties) {
-          const valueSchema = schemaToSchema(
-            s.additionalProperties,
-            nextIndent,
-            modelDefs,
-            useLocalSchemaTypes
-          );
           // Use passthrough() to allow additional properties
+          // Note: @blimu/schema's passthrough() allows any additional properties
+          // If type validation is needed, consider using a different approach
           schemaCode = `${objectSchema}.passthrough()`;
         } else {
           schemaCode = objectSchema;
@@ -117,7 +113,7 @@ export function schemaToSchema(
         // Create enum from string literals
         const enumValues = s.enumValues.map((v) => {
           // Handle boolean and number strings
-          if (v === "true" || v === "false") {
+          if (v === 'true' || v === 'false') {
             return v;
           }
           if (/^-?[0-9]+(\.[0-9]+)?$/.test(v)) {
@@ -125,9 +121,9 @@ export function schemaToSchema(
           }
           return JSON.stringify(v);
         });
-        schemaCode = `schema.enum([${enumValues.join(", ")}])`;
+        schemaCode = `schema.enum([${enumValues.join(', ')}])`;
       } else {
-        schemaCode = "schema.string()";
+        schemaCode = 'schema.string()';
       }
       break;
     case IRSchemaKind.OneOf:
@@ -135,9 +131,9 @@ export function schemaToSchema(
         const options = s.oneOf.map((opt) =>
           schemaToSchema(opt, nextIndent, modelDefs, useLocalSchemaTypes)
         );
-        schemaCode = `schema.union([${options.join(", ")}])`;
+        schemaCode = `schema.union([${options.join(', ')}])`;
       } else {
-        schemaCode = "schema.unknown()";
+        schemaCode = 'schema.unknown()';
       }
       break;
     case IRSchemaKind.AnyOf:
@@ -145,9 +141,9 @@ export function schemaToSchema(
         const options = s.anyOf.map((opt) =>
           schemaToSchema(opt, nextIndent, modelDefs, useLocalSchemaTypes)
         );
-        schemaCode = `schema.union([${options.join(", ")}])`;
+        schemaCode = `schema.union([${options.join(', ')}])`;
       } else {
-        schemaCode = "schema.unknown()";
+        schemaCode = 'schema.unknown()';
       }
       break;
     case IRSchemaKind.AllOf:
@@ -159,23 +155,31 @@ export function schemaToSchema(
         );
         // Use extend() to merge object schemas
         if (schemas.length > 1) {
-          schemaCode = schemas[0];
+          const firstSchema = schemas[0];
+          if (!firstSchema) {
+            schemaCode = 'schema.unknown()';
+            break;
+          }
+          schemaCode = firstSchema;
           for (let i = 1; i < schemas.length; i++) {
-            schemaCode = `${schemaCode}.extend(${schemas[i]}.shape)`;
+            const nextSchema = schemas[i];
+            if (nextSchema) {
+              schemaCode = `${schemaCode}.extend(${nextSchema}.shape)`;
+            }
           }
         } else {
-          schemaCode = schemas[0];
+          schemaCode = schemas[0] ?? 'schema.unknown()';
         }
       } else {
-        schemaCode = "schema.unknown()";
+        schemaCode = 'schema.unknown()';
       }
       break;
     default:
-      schemaCode = "schema.unknown()";
+      schemaCode = 'schema.unknown()';
   }
 
   // Handle nullable
-  if (s.nullable && schemaCode !== "schema.null()") {
+  if (s.nullable && schemaCode !== 'schema.null()') {
     schemaCode = `${schemaCode}.nullable()`;
   }
 

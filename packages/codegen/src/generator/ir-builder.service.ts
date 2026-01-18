@@ -1,5 +1,5 @@
-import { Injectable } from "@nestjs/common";
-import type { OpenAPIV3, OpenAPIV3_1 } from "openapi-types";
+import { Injectable } from '@nestjs/common';
+import type { OpenAPIV3, OpenAPIV3_1 } from 'openapi-types';
 import type {
   IR,
   IRService,
@@ -10,12 +10,12 @@ import type {
   IRSecurityScheme,
   IRModelDef,
   IRSchema,
-} from "../ir/ir.types";
-import { SchemaConverterService } from "./schema-converter.service";
-import type { Client } from "../config/config.schema";
-import { toPascalCase, toCamelCase } from "../utils/string.utils";
-import { IRSchemaKind } from "../ir/ir.types";
-import type { OpenAPIDocument } from "../openapi/openapi.types";
+} from '../ir/ir.types';
+import { SchemaConverterService } from './schema-converter.service';
+import type { Client } from '../config/config.schema';
+import { toPascalCase, toCamelCase } from '../utils/string.utils';
+import { IRSchemaKind } from '../ir/ir.types';
+import type { OpenAPIDocument } from '../openapi/openapi.types';
 
 @Injectable()
 export class IrBuilderService {
@@ -93,29 +93,29 @@ export class IrBuilderService {
    */
   private detectStreamingContentType(contentType: string): {
     isStreaming: boolean;
-    format?: "sse" | "ndjson" | "chunked";
+    format?: 'sse' | 'ndjson' | 'chunked';
   } {
-    const normalized = contentType.toLowerCase().split(";")[0]?.trim();
+    const normalized = contentType.toLowerCase().split(';')[0]?.trim();
 
     if (!normalized) {
       return { isStreaming: false };
     }
 
-    if (normalized === "text/event-stream") {
-      return { isStreaming: true, format: "sse" };
+    if (normalized === 'text/event-stream') {
+      return { isStreaming: true, format: 'sse' };
     }
 
     if (
-      normalized === "application/x-ndjson" ||
-      normalized === "application/x-jsonlines" ||
-      normalized === "application/jsonl"
+      normalized === 'application/x-ndjson' ||
+      normalized === 'application/x-jsonlines' ||
+      normalized === 'application/jsonl'
     ) {
-      return { isStreaming: true, format: "ndjson" };
+      return { isStreaming: true, format: 'ndjson' };
     }
 
     // Check for other streaming indicators
-    if (normalized.includes("stream") || normalized.includes("chunked")) {
-      return { isStreaming: true, format: "chunked" };
+    if (normalized.includes('stream') || normalized.includes('chunked')) {
+      return { isStreaming: true, format: 'chunked' };
     }
 
     return { isStreaming: false };
@@ -127,10 +127,10 @@ export class IrBuilderService {
   private collectTags(doc: OpenAPIDocument): string[] {
     const uniq = new Set<string>();
     // consider untagged as "misc"
-    uniq.add("misc");
+    uniq.add('misc');
 
     if (doc.paths) {
-      for (const [path, pathItem] of Object.entries(doc.paths)) {
+      for (const [_path, pathItem] of Object.entries(doc.paths)) {
         if (!pathItem) continue;
         const operations = [
           pathItem.get,
@@ -224,7 +224,7 @@ export class IrBuilderService {
   ): IR {
     const servicesMap: Record<string, IRService> = {};
     // Always prepare misc
-    servicesMap["misc"] = { tag: "misc", operations: [] };
+    servicesMap['misc'] = { tag: 'misc', operations: [] };
 
     // Collect extracted inline types from request bodies and responses
     const extractedTypes: IRModelDef[] = [];
@@ -246,7 +246,7 @@ export class IrBuilderService {
       if (!servicesMap[tag]) {
         servicesMap[tag] = { tag, operations: [] };
       }
-      const id = op.operationId || "";
+      const id = op.operationId || '';
       const { pathParams, queryParams } = this.collectParams(doc, op);
       const { requestBody: reqBody, extractedTypes: reqBodyTypes } =
         this.extractRequestBodyWithTypes(
@@ -264,7 +264,7 @@ export class IrBuilderService {
 
       // Copy original tags, defaulting to ["misc"] if no tags
       const originalTags =
-        op.tags && op.tags.length > 0 ? [...op.tags] : ["misc"];
+        op.tags && op.tags.length > 0 ? [...op.tags] : ['misc'];
 
       servicesMap[tag].operations.push({
         operationID: id,
@@ -272,8 +272,8 @@ export class IrBuilderService {
         path,
         tag,
         originalTags,
-        summary: op.summary || "",
-        description: op.description || "",
+        summary: op.summary || '',
+        description: op.description || '',
         deprecated: op.deprecated || false,
         pathParams,
         queryParams,
@@ -286,14 +286,14 @@ export class IrBuilderService {
       for (const [path, pathItem] of Object.entries(doc.paths)) {
         if (!pathItem) continue;
         const operations = [
-          { op: pathItem.get, method: "GET" },
-          { op: pathItem.post, method: "POST" },
-          { op: pathItem.put, method: "PUT" },
-          { op: pathItem.patch, method: "PATCH" },
-          { op: pathItem.delete, method: "DELETE" },
-          { op: pathItem.options, method: "OPTIONS" },
-          { op: pathItem.head, method: "HEAD" },
-          { op: pathItem.trace, method: "TRACE" },
+          { op: pathItem.get, method: 'GET' },
+          { op: pathItem.post, method: 'POST' },
+          { op: pathItem.put, method: 'PUT' },
+          { op: pathItem.patch, method: 'PATCH' },
+          { op: pathItem.delete, method: 'DELETE' },
+          { op: pathItem.options, method: 'OPTIONS' },
+          { op: pathItem.head, method: 'HEAD' },
+          { op: pathItem.trace, method: 'TRACE' },
         ];
 
         for (const { op, method } of operations) {
@@ -339,28 +339,28 @@ export class IrBuilderService {
   ): string {
     if (operationId) {
       // Strip any prefix up to and including "Controller_"
-      const idx = operationId.indexOf("Controller_");
+      const idx = operationId.indexOf('Controller_');
       const cleanedId =
         idx >= 0
-          ? operationId.substring(idx + "Controller_".length)
+          ? operationId.substring(idx + 'Controller_'.length)
           : operationId;
       // Convert to camelCase
       return toCamelCase(cleanedId);
     }
 
     // Basic REST-style heuristics
-    const hasID = path.includes("{") && path.includes("}");
+    const hasID = path.includes('{') && path.includes('}');
 
     switch (method) {
-      case "GET":
-        return hasID ? "get" : "list";
-      case "POST":
-        return "create";
-      case "PUT":
-      case "PATCH":
-        return "update";
-      case "DELETE":
-        return "delete";
+      case 'GET':
+        return hasID ? 'get' : 'list';
+      case 'POST':
+        return 'create';
+      case 'PUT':
+      case 'PATCH':
+        return 'update';
+      case 'DELETE':
+        return 'delete';
       default:
         return method.toLowerCase();
     }
@@ -375,10 +375,10 @@ export class IrBuilderService {
         return t;
       }
     }
-    if (tags.length === 0 && allowed["misc"]) {
-      return "misc";
+    if (tags.length === 0 && allowed['misc']) {
+      return 'misc';
     }
-    return "";
+    return '';
   }
 
   /**
@@ -393,22 +393,22 @@ export class IrBuilderService {
     const out: IRSecurityScheme[] = [];
     for (const name of names) {
       const scheme = doc.components.securitySchemes[name];
-      if (!scheme || "$ref" in scheme) continue;
+      if (!scheme || '$ref' in scheme) continue;
 
       const sc: IRSecurityScheme = { key: name, type: scheme.type };
       switch (scheme.type) {
-        case "http":
+        case 'http':
           sc.scheme = scheme.scheme;
           if (scheme.bearerFormat) {
             sc.bearerFormat = scheme.bearerFormat;
           }
           break;
-        case "apiKey":
+        case 'apiKey':
           sc.in = scheme.in;
           sc.name = scheme.name;
           break;
-        case "oauth2":
-        case "openIdConnect":
+        case 'oauth2':
+        case 'openIdConnect':
           // Keep minimal; flows are not modeled yet
           break;
       }
@@ -432,18 +432,18 @@ export class IrBuilderService {
 
     if (op.parameters) {
       for (const pr of op.parameters) {
-        if (!pr || "$ref" in pr) continue;
+        if (!pr || '$ref' in pr) continue;
         const p = pr as OpenAPIV3.ParameterObject | OpenAPIV3_1.ParameterObject;
         const schema = this.schemaConverter.schemaRefToIR(doc, p.schema);
         const param: IRParam = {
           name: p.name,
           required: p.required || false,
           schema,
-          description: p.description || "",
+          description: p.description || '',
         };
-        if (p.in === "path") {
+        if (p.in === 'path') {
           pathParams.push(param);
-        } else if (p.in === "query") {
+        } else if (p.in === 'query') {
           queryParams.push(param);
         }
       }
@@ -477,10 +477,10 @@ export class IrBuilderService {
     }
 
     // If it's still a $ref (not dereferenced), extract the name directly
-    if ("$ref" in schema && schema.$ref) {
+    if ('$ref' in schema && schema.$ref) {
       const ref = schema.$ref;
-      if (ref.startsWith("#/components/schemas/")) {
-        const name = ref.replace("#/components/schemas/", "");
+      if (ref.startsWith('#/components/schemas/')) {
+        const name = ref.replace('#/components/schemas/', '');
         if (doc.components.schemas[name]) {
           return name;
         }
@@ -605,7 +605,7 @@ export class IrBuilderService {
     operationId: string,
     method: string,
     path: string,
-    suffix: "RequestBody" | "Response"
+    suffix: 'RequestBody' | 'Response'
   ): string {
     // Try to use model name from schema reference first
     const modelName = this.extractModelNameFromSchema(schema);
@@ -628,7 +628,7 @@ export class IrBuilderService {
   ): { requestBody: IRRequestBody | null; extractedTypes: IRModelDef[] } {
     const extractedTypes: IRModelDef[] = [];
 
-    if (!op.requestBody || "$ref" in op.requestBody) {
+    if (!op.requestBody || '$ref' in op.requestBody) {
       return { requestBody: null, extractedTypes: [] };
     }
     const rb = op.requestBody as
@@ -636,8 +636,8 @@ export class IrBuilderService {
       | OpenAPIV3_1.RequestBodyObject;
 
     // Prefer application/json
-    if (rb.content?.["application/json"]) {
-      const media = rb.content["application/json"];
+    if (rb.content?.['application/json']) {
+      const media = rb.content['application/json'];
       const schema = this.schemaConverter.schemaRefToIR(doc, media.schema);
 
       // Check if this schema matches a component schema (even after dereferencing)
@@ -650,8 +650,8 @@ export class IrBuilderService {
         // Use the component schema name instead of generating a new one
         return {
           requestBody: {
-            contentType: "application/json",
-            typeTS: "",
+            contentType: 'application/json',
+            typeTS: '',
             schema: {
               kind: IRSchemaKind.Ref,
               ref: componentSchemaName,
@@ -670,7 +670,7 @@ export class IrBuilderService {
         operationId,
         method,
         (op as unknown as { path: string }).path,
-        "RequestBody"
+        'RequestBody'
       );
 
       // If schema is an inline object type, extract it
@@ -683,8 +683,8 @@ export class IrBuilderService {
         });
         return {
           requestBody: {
-            contentType: "application/json",
-            typeTS: "",
+            contentType: 'application/json',
+            typeTS: '',
             schema: { kind: IRSchemaKind.Ref, ref: typeName, nullable: false },
             required: rb.required || false,
           },
@@ -694,8 +694,8 @@ export class IrBuilderService {
 
       return {
         requestBody: {
-          contentType: "application/json",
-          typeTS: "",
+          contentType: 'application/json',
+          typeTS: '',
           schema,
           required: rb.required || false,
         },
@@ -715,36 +715,36 @@ export class IrBuilderService {
     doc: OpenAPIDocument,
     op: OpenAPIV3.OperationObject | OpenAPIV3_1.OperationObject
   ): IRRequestBody | null {
-    if (!op.requestBody || "$ref" in op.requestBody) {
+    if (!op.requestBody || '$ref' in op.requestBody) {
       return null;
     }
     const rb = op.requestBody as
       | OpenAPIV3.RequestBodyObject
       | OpenAPIV3_1.RequestBodyObject;
     // Prefer application/json
-    if (rb.content?.["application/json"]) {
-      const media = rb.content["application/json"];
+    if (rb.content?.['application/json']) {
+      const media = rb.content['application/json'];
       return {
-        contentType: "application/json",
-        typeTS: "",
+        contentType: 'application/json',
+        typeTS: '',
         schema: this.schemaConverter.schemaRefToIR(doc, media.schema),
         required: rb.required || false,
       };
     }
-    if (rb.content?.["application/x-www-form-urlencoded"]) {
-      const media = rb.content["application/x-www-form-urlencoded"];
+    if (rb.content?.['application/x-www-form-urlencoded']) {
+      const media = rb.content['application/x-www-form-urlencoded'];
       return {
-        contentType: "application/x-www-form-urlencoded",
-        typeTS: "",
+        contentType: 'application/x-www-form-urlencoded',
+        typeTS: '',
         schema: this.schemaConverter.schemaRefToIR(doc, media.schema),
         required: rb.required || false,
       };
     }
-    if (rb.content?.["multipart/form-data"]) {
+    if (rb.content?.['multipart/form-data']) {
       return {
-        contentType: "multipart/form-data",
-        typeTS: "",
-        schema: { kind: "unknown" as any, nullable: false },
+        contentType: 'multipart/form-data',
+        typeTS: '',
+        schema: { kind: IRSchemaKind.Unknown, nullable: false },
         required: rb.required || false,
       };
     }
@@ -754,14 +754,14 @@ export class IrBuilderService {
       if (!firstContentType) {
         return null;
       }
-      
+
       const media = rb.content[firstContentType];
       if (!media) {
         return null;
       }
       return {
         contentType: firstContentType,
-        typeTS: "",
+        typeTS: '',
         schema: this.schemaConverter.schemaRefToIR(doc, media.schema),
         required: rb.required || false,
       };
@@ -785,21 +785,21 @@ export class IrBuilderService {
     if (!op.responses) {
       return {
         response: {
-          typeTS: "unknown",
+          typeTS: 'unknown',
           schema: { kind: IRSchemaKind.Unknown, nullable: false },
-          description: "",
+          description: '',
           isStreaming: false,
-          contentType: "",
+          contentType: '',
         },
         extractedTypes: [],
       };
     }
 
     // Choose 200, 201, or any 2xx; 204 => void
-    const tryCodes = ["200", "201"];
+    const tryCodes = ['200', '201'];
     for (const code of tryCodes) {
       const response = op.responses[code];
-      if (response && !("$ref" in response)) {
+      if (response && !('$ref' in response)) {
         const resp = response as
           | OpenAPIV3.ResponseObject
           | OpenAPIV3_1.ResponseObject;
@@ -817,19 +817,21 @@ export class IrBuilderService {
             if (streaming.isStreaming) {
               return {
                 response: {
-                  typeTS: "",
+                  typeTS: '',
                   schema,
-                  description: resp.description || "",
+                  description: resp.description || '',
                   isStreaming: true,
                   contentType,
-                  ...(streaming.format && { streamingFormat: streaming.format }),
+                  ...(streaming.format && {
+                    streamingFormat: streaming.format,
+                  }),
                 },
                 extractedTypes: [],
               };
             }
 
             // For non-streaming JSON, check if we should extract inline types
-            if (contentType === "application/json") {
+            if (contentType === 'application/json') {
               // Check if this schema matches a component schema (even after dereferencing)
               const componentSchemaName = this.findMatchingComponentSchema(
                 doc,
@@ -840,13 +842,13 @@ export class IrBuilderService {
                 // Use the component schema name instead of generating a new one
                 return {
                   response: {
-                    typeTS: "",
+                    typeTS: '',
                     schema: {
                       kind: IRSchemaKind.Ref,
                       ref: componentSchemaName,
                       nullable: false,
                     },
-                    description: resp.description || "",
+                    description: resp.description || '',
                     isStreaming: false,
                     contentType,
                   },
@@ -861,7 +863,7 @@ export class IrBuilderService {
                 operationId,
                 method,
                 (op as unknown as { path: string }).path,
-                "Response"
+                'Response'
               );
 
               // If schema is an inline object type, extract it
@@ -879,13 +881,13 @@ export class IrBuilderService {
                 });
                 return {
                   response: {
-                    typeTS: "",
+                    typeTS: '',
                     schema: {
                       kind: IRSchemaKind.Ref,
                       ref: typeName,
                       nullable: false,
                     },
-                    description: resp.description || "",
+                    description: resp.description || '',
                     isStreaming: false,
                     contentType,
                   },
@@ -895,9 +897,9 @@ export class IrBuilderService {
 
               return {
                 response: {
-                  typeTS: "",
+                  typeTS: '',
                   schema,
-                  description: resp.description || "",
+                  description: resp.description || '',
                   isStreaming: false,
                   contentType,
                 },
@@ -912,25 +914,25 @@ export class IrBuilderService {
           if (!firstContentType) {
             return {
               response: {
-                typeTS: "unknown",
+                typeTS: 'unknown',
                 schema: { kind: IRSchemaKind.Unknown, nullable: false },
-                description: resp.description || "",
+                description: resp.description || '',
                 isStreaming: false,
-                contentType: "",
+                contentType: '',
               },
               extractedTypes: [],
             };
           }
 
           const firstMedia = resp.content[firstContentType];
-          if (!firstMedia) { 
+          if (!firstMedia) {
             return {
               response: {
-                typeTS: "unknown",
+                typeTS: 'unknown',
                 schema: { kind: IRSchemaKind.Unknown, nullable: false },
-                description: resp.description || "",
+                description: resp.description || '',
                 isStreaming: false,
-                contentType: "",
+                contentType: '',
               },
               extractedTypes: [],
             };
@@ -944,9 +946,9 @@ export class IrBuilderService {
 
           return {
             response: {
-              typeTS: "",
+              typeTS: '',
               schema: firstSchema,
-              description: resp.description || "",
+              description: resp.description || '',
               isStreaming: firstStreaming.isStreaming,
               contentType: firstContentType,
               streamingFormat: firstStreaming.format,
@@ -958,11 +960,11 @@ export class IrBuilderService {
         // No content
         return {
           response: {
-            typeTS: "void",
+            typeTS: 'void',
             schema: { kind: IRSchemaKind.Unknown, nullable: false },
-            description: resp.description || "",
+            description: resp.description || '',
             isStreaming: false,
-            contentType: "",
+            contentType: '',
           },
           extractedTypes: [],
         };
@@ -983,19 +985,19 @@ export class IrBuilderService {
   ): IRResponse {
     if (!op.responses) {
       return {
-        typeTS: "unknown",
+        typeTS: 'unknown',
         schema: { kind: IRSchemaKind.Unknown, nullable: false },
-        description: "",
+        description: '',
         isStreaming: false,
-        contentType: "",
+        contentType: '',
       };
     }
 
     // Choose 200, 201, or any 2xx; 204 => void
-    const tryCodes = ["200", "201"];
+    const tryCodes = ['200', '201'];
     for (const code of tryCodes) {
       const response = op.responses[code];
-      if (response && !("$ref" in response)) {
+      if (response && !('$ref' in response)) {
         const resp = response as
           | OpenAPIV3.ResponseObject
           | OpenAPIV3_1.ResponseObject;
@@ -1006,9 +1008,9 @@ export class IrBuilderService {
             const streaming = this.detectStreamingContentType(contentType);
             if (streaming.isStreaming) {
               return {
-                typeTS: "",
+                typeTS: '',
                 schema: this.schemaConverter.schemaRefToIR(doc, media.schema),
-                description: resp.description || "",
+                description: resp.description || '',
                 isStreaming: true,
                 contentType,
                 streamingFormat: streaming.format,
@@ -1017,34 +1019,35 @@ export class IrBuilderService {
           }
 
           // Non-streaming JSON
-          if (resp.content["application/json"]) {
-            const media = resp.content["application/json"];
+          if (resp.content['application/json']) {
+            const media = resp.content['application/json'];
             return {
-              typeTS: "",
+              typeTS: '',
               schema: this.schemaConverter.schemaRefToIR(doc, media.schema),
-              description: resp.description || "",
+              description: resp.description || '',
               isStreaming: false,
-              contentType: "application/json",
+              contentType: 'application/json',
             };
           }
 
           // Fallback to any content
-          const [firstContentType, media] = Object.entries(resp.content)[0] ?? [];
+          const [firstContentType, media] =
+            Object.entries(resp.content)[0] ?? [];
           if (!firstContentType || !media) {
             // No content types available or media object is missing, return void response
             return {
-              typeTS: "void",
+              typeTS: 'void',
               schema: { kind: IRSchemaKind.Unknown, nullable: false },
-              description: resp.description || "",
+              description: resp.description || '',
               isStreaming: false,
-              contentType: "",
+              contentType: '',
             };
           }
           const streaming = this.detectStreamingContentType(firstContentType);
           return {
-            typeTS: "",
+            typeTS: '',
             schema: this.schemaConverter.schemaRefToIR(doc, media.schema),
-            description: resp.description || "",
+            description: resp.description || '',
             isStreaming: streaming.isStreaming,
             contentType: firstContentType,
             streamingFormat: streaming.format,
@@ -1052,11 +1055,11 @@ export class IrBuilderService {
         }
 
         return {
-          typeTS: "void",
+          typeTS: 'void',
           schema: { kind: IRSchemaKind.Unknown, nullable: false },
-          description: resp.description || "",
+          description: resp.description || '',
           isStreaming: false,
-          contentType: "",
+          contentType: '',
         };
       }
     }
@@ -1065,20 +1068,20 @@ export class IrBuilderService {
     for (const [code, response] of Object.entries(op.responses)) {
       if (
         code.length === 3 &&
-        code[0] === "2" &&
+        code[0] === '2' &&
         response &&
-        !("$ref" in response)
+        !('$ref' in response)
       ) {
         const resp = response as
           | OpenAPIV3.ResponseObject
           | OpenAPIV3_1.ResponseObject;
-        if (code === "204") {
+        if (code === '204') {
           return {
-            typeTS: "void",
+            typeTS: 'void',
             schema: { kind: IRSchemaKind.Unknown, nullable: false },
-            description: resp.description || "",
+            description: resp.description || '',
             isStreaming: false,
-            contentType: "",
+            contentType: '',
           };
         }
 
@@ -1088,9 +1091,9 @@ export class IrBuilderService {
             const streaming = this.detectStreamingContentType(contentType);
             if (streaming.isStreaming) {
               return {
-                typeTS: "",
+                typeTS: '',
                 schema: this.schemaConverter.schemaRefToIR(doc, media.schema),
-                description: resp.description || "",
+                description: resp.description || '',
                 isStreaming: true,
                 contentType,
                 streamingFormat: streaming.format,
@@ -1099,34 +1102,35 @@ export class IrBuilderService {
           }
 
           // Non-streaming JSON
-          if (resp.content["application/json"]) {
-            const media = resp.content["application/json"];
+          if (resp.content['application/json']) {
+            const media = resp.content['application/json'];
             return {
-              typeTS: "",
+              typeTS: '',
               schema: this.schemaConverter.schemaRefToIR(doc, media.schema),
-              description: resp.description || "",
+              description: resp.description || '',
               isStreaming: false,
-              contentType: "application/json",
+              contentType: 'application/json',
             };
           }
 
           // Fallback to first content type
-          const [firstContentType, media] = Object.entries(resp.content)[0] ?? [];
+          const [firstContentType, media] =
+            Object.entries(resp.content)[0] ?? [];
           if (!firstContentType || !media) {
             // No content types available or media object is missing, return void response
             return {
-              typeTS: "void",
+              typeTS: 'void',
               schema: { kind: IRSchemaKind.Unknown, nullable: false },
-              description: resp.description || "",
+              description: resp.description || '',
               isStreaming: false,
-              contentType: "",
+              contentType: '',
             };
           }
           const streaming = this.detectStreamingContentType(firstContentType);
           return {
-            typeTS: "",
+            typeTS: '',
             schema: this.schemaConverter.schemaRefToIR(doc, media.schema),
-            description: resp.description || "",
+            description: resp.description || '',
             isStreaming: streaming.isStreaming,
             contentType: firstContentType,
             streamingFormat: streaming.format,
@@ -1136,11 +1140,11 @@ export class IrBuilderService {
     }
 
     return {
-      typeTS: "unknown",
+      typeTS: 'unknown',
       schema: { kind: IRSchemaKind.Unknown, nullable: false },
-      description: "",
+      description: '',
       isStreaming: false,
-      contentType: "",
+      contentType: '',
     };
   }
 
@@ -1192,7 +1196,7 @@ export class IrBuilderService {
 
     // Helper function to collect references from a schema recursively
     const collectRefs = (schema: IRSchema) => {
-      if (schema.kind === "ref" && schema.ref) {
+      if (schema.kind === 'ref' && schema.ref) {
         const refName = schema.ref;
         referenced.add(refName);
         // If this ref points to a ModelDef and we haven't visited it, collect its transitive references

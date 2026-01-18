@@ -1,12 +1,12 @@
-import { Injectable, Logger } from "@nestjs/common";
-import SwaggerParser from "@apidevtools/swagger-parser";
-import * as fs from "fs";
-import * as path from "path";
-import type { OpenAPIDocument } from "./openapi-version.utils";
+import { Injectable, Logger } from '@nestjs/common';
+import SwaggerParser from '@apidevtools/swagger-parser';
+import * as fs from 'fs';
+import * as path from 'path';
+import type { OpenAPIDocument } from './openapi-version.utils';
 import {
   detectOpenAPIVersion,
   isSupportedVersion,
-} from "./openapi-version.utils";
+} from './openapi-version.utils';
 
 @Injectable()
 export class OpenApiService {
@@ -27,7 +27,7 @@ export class OpenApiService {
       }
 
       let api: OpenAPIDocument;
-      if (url && (url.protocol === "http:" || url.protocol === "https:")) {
+      if (url && (url.protocol === 'http:' || url.protocol === 'https:')) {
         // Load from URL
         this.logger.debug(`Loading OpenAPI spec from URL: ${input}`);
 
@@ -43,21 +43,28 @@ export class OpenApiService {
         }
 
         const documentText = await response.text();
-        let documentJson: any;
+        let documentJson: unknown;
 
         try {
           documentJson = JSON.parse(documentText);
         } catch {
-          throw new Error("OpenAPI spec is not valid JSON");
+          throw new Error('OpenAPI spec is not valid JSON');
         }
 
         // Parse the document first to get the raw structure
         // Then use bundle on the parsed document to preserve internal $ref pointers
         // This is important for component schema references (especially simple types)
         try {
-          const parsed = await SwaggerParser.parse(documentJson);
-          // Bundle the parsed document to resolve external refs but preserve internal ones
-          api = (await SwaggerParser.bundle(parsed)) as OpenAPIDocument;
+          // SwaggerParser.parse accepts string | object and returns Promise<Document>
+          // TypeScript's type definitions for SwaggerParser are complex, so we use type assertions
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const parsed = (await SwaggerParser.parse(
+            documentJson as any
+          )) as any;
+          // SwaggerParser.bundle accepts string | Document and returns Promise<Document>
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const bundled = (await SwaggerParser.bundle(parsed as any)) as any;
+          api = bundled as OpenAPIDocument;
 
           // Don't dereference - we want to preserve internal $ref pointers to component schemas
           // This allows us to correctly identify component schema references even for simple types
@@ -67,14 +74,19 @@ export class OpenApiService {
           this.logger.debug(
             `Bundle failed: ${error instanceof Error ? error.message : String(error)}`
           );
-          this.logger.debug("Attempting dereference directly");
+          this.logger.debug('Attempting dereference directly');
 
-          try {
-            const parsed = await SwaggerParser.parse(documentJson);
-            api = (await SwaggerParser.dereference(parsed)) as OpenAPIDocument;
-          } catch (derefError) {
-            throw derefError; // Throw original error
-          }
+          // SwaggerParser.parse accepts string | object and returns Promise<Document>
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const parsed = (await SwaggerParser.parse(
+            documentJson as any
+          )) as any;
+          // SwaggerParser.dereference accepts string | Document and returns Promise<Document>
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const dereferenced = (await SwaggerParser.dereference(
+            parsed as any
+          )) as any;
+          api = dereferenced as OpenAPIDocument;
         }
       } else {
         // Load from file
@@ -94,7 +106,7 @@ export class OpenApiService {
           this.logger.debug(
             `Bundle failed: ${error instanceof Error ? error.message : String(error)}`
           );
-          this.logger.debug("Attempting dereference directly");
+          this.logger.debug('Attempting dereference directly');
           api = (await SwaggerParser.dereference(filePath)) as OpenAPIDocument;
         }
       }
@@ -131,7 +143,7 @@ export class OpenApiService {
         // Not a URL
       }
 
-      if (url && (url.protocol === "http:" || url.protocol === "https:")) {
+      if (url && (url.protocol === 'http:' || url.protocol === 'https:')) {
         await SwaggerParser.validate(input);
       } else {
         const filePath = path.resolve(input);

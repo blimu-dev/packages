@@ -20,7 +20,7 @@ export interface RetryConfig {
   /**
    * Retry strategy: 'exponential', 'linear', or a custom function
    */
-  strategy: "exponential" | "linear" | RetryStrategyFunction;
+  strategy: 'exponential' | 'linear' | RetryStrategyFunction;
   /**
    * Base backoff time in milliseconds (used for exponential and linear strategies)
    */

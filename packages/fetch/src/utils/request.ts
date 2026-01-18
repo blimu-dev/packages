@@ -1,10 +1,10 @@
+import type { QueryParams } from '../types';
+
 /**
  * Serializes query parameters into a URLSearchParams object
  * Handles arrays, objects, and primitive values
  */
-export function serializeQueryParams(
-  query: Record<string, any>
-): URLSearchParams {
+export function serializeQueryParams(query: QueryParams): URLSearchParams {
   const params = new URLSearchParams();
 
   for (const [key, value] of Object.entries(query)) {
@@ -37,7 +37,7 @@ export function serializeQueryParams(
 export function buildUrl(
   baseUrl: string,
   path: string,
-  query?: Record<string, any>
+  query?: QueryParams
 ): URL {
   // Normalize path - remove trailing slash if present (except for root)
   let normalizedPath = path || '';

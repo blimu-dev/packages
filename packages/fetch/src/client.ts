@@ -1,5 +1,6 @@
 import { createFetchError, FetchError } from './errors';
 import { HookRegistry } from './hooks';
+import type { Hook, HookStage } from './hooks/types';
 import { calculateRetryDelay } from './retry';
 import {
   parseSSEStream,
@@ -8,6 +9,7 @@ import {
 } from './streaming';
 import type {
   FetchClientConfig,
+  QueryParams,
   RequestOptions,
   StreamingRequestOptions,
   AuthStrategy,
@@ -71,29 +73,30 @@ export class FetchClient {
   /**
    * Register a hook for a specific lifecycle stage
    */
-  useHook(stage: string, hook: any): void {
-    this.hookRegistry.register(stage as any, hook);
+  useHook(stage: HookStage, hook: Hook): void {
+    this.hookRegistry.register(stage, hook);
   }
 
   /**
    * Remove a hook
    */
-  removeHook(stage: string, hook: any): boolean {
-    return this.hookRegistry.remove(stage as any, hook);
+  removeHook(stage: HookStage, hook: Hook): boolean {
+    return this.hookRegistry.remove(stage, hook);
   }
 
   /**
    * Clear hooks for a stage or all hooks
    */
-  clearHooks(stage?: string): void {
-    this.hookRegistry.clear(stage as any);
+  clearHooks(stage?: HookStage): void {
+    this.hookRegistry.clear(stage);
   }
 
   /**
    * Make an HTTP request
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async request<T = any>(init: RequestOptions): Promise<T> {
-    let url = buildUrl(this.cfg.baseURL || '', init.path, init.query);
+    const url = buildUrl(this.cfg.baseURL || '', init.path, init.query);
     // Create headers, handling both plain objects and Headers instances
     const headers = new Headers(this.cfg.headers || {});
     if (init.headers) {
@@ -136,7 +139,7 @@ export class FetchClient {
     for (let attempt = 0; attempt <= retries + 1; attempt++) {
       try {
         // Rebuild URL for each attempt (in case query params were modified by auth)
-        let attemptUrl = buildUrl(
+        const attemptUrl = buildUrl(
           this.cfg.baseURL || '',
           init.path,
           init.query
@@ -152,7 +155,7 @@ export class FetchClient {
           attempt,
           bodyContentType
         );
-      } catch (err: any) {
+      } catch (err) {
         lastError = err;
 
         // Check if we should retry
@@ -161,9 +164,10 @@ export class FetchClient {
         if (shouldRetry) {
           // Execute beforeRetry hook
           if (this.hookRegistry.has('beforeRetry')) {
+            const serializedBody = serializeBody(init.body, bodyContentType);
             await this.hookRegistry.execute('beforeRetry', {
               url: url.toString(),
-              init: { ...init, headers },
+              init: { ...init, headers, body: serializedBody },
               attempt,
               error: err,
               retryCount: attempt,
@@ -180,9 +184,10 @@ export class FetchClient {
 
           // Execute afterRetry hook
           if (this.hookRegistry.has('afterRetry')) {
+            const serializedBody = serializeBody(init.body, bodyContentType);
             await this.hookRegistry.execute('afterRetry', {
               url: url.toString(),
-              init: { ...init, headers },
+              init: { ...init, headers, body: serializedBody },
               attempt,
               error: err,
               retryCount: attempt,
@@ -198,16 +203,16 @@ export class FetchClient {
       }
     }
 
-    throw lastError as any;
+    throw lastError as unknown;
   }
 
   /**
    * Make a streaming HTTP request
    */
-  async *requestStream<T = any>(
+  async *requestStream<T = unknown>(
     init: StreamingRequestOptions
   ): AsyncGenerator<T, void, unknown> {
-    let url = buildUrl(this.cfg.baseURL || '', init.path, init.query);
+    const url = buildUrl(this.cfg.baseURL || '', init.path, init.query);
     // Create headers, handling both plain objects and Headers instances
     const headers = new Headers(this.cfg.headers || {});
     if (init.headers) {
@@ -238,7 +243,7 @@ export class FetchClient {
     const fetchInit: Omit<RequestInit, 'body'> & {
       path: string;
       method: string;
-      query?: Record<string, any> | undefined;
+      query?: QueryParams | undefined;
       headers: Headers;
       body: RequestInit['body'] | undefined;
     } = {
@@ -262,7 +267,7 @@ export class FetchClient {
     }
 
     let controller: AbortController | undefined;
-    let timeoutId: any;
+    let timeoutId: NodeJS.Timeout | undefined;
     const existingSignal = fetchInit.signal;
 
     // Setup timeout
@@ -286,7 +291,7 @@ export class FetchClient {
             url: url.toString(),
             init: fetchInit,
             attempt: 0,
-            timeoutMs: this.cfg.timeoutMs!,
+            timeoutMs: this.cfg.timeoutMs,
           });
         }
       }, this.cfg.timeoutMs);
@@ -308,9 +313,12 @@ export class FetchClient {
 
       if (!res.ok) {
         const parsed = await parseResponse(res);
+        const message = (parsed as { message?: string })?.message as
+          | string
+          | undefined;
         const error = createFetchError(
           res.status,
-          parsed?.message || `HTTP ${res.status}`,
+          message || `HTTP ${res.status}`,
           parsed,
           res.headers
         );
@@ -343,7 +351,7 @@ export class FetchClient {
 
       if (streamingFormat === 'sse') {
         for await (const chunk of parseSSEStream(res)) {
-          let transformedChunk = chunk;
+          const transformedChunk = chunk;
           // Execute onStreamChunk hook if present
           if (this.hookRegistry.has('onStreamChunk')) {
             await this.hookRegistry.execute('onStreamChunk', {
@@ -357,7 +365,7 @@ export class FetchClient {
         }
       } else if (streamingFormat === 'ndjson') {
         for await (const chunk of parseNDJSONStream<T>(res)) {
-          let transformedChunk = chunk;
+          const transformedChunk = chunk;
           // Execute onStreamChunk hook if present
           if (this.hookRegistry.has('onStreamChunk')) {
             await this.hookRegistry.execute('onStreamChunk', {
@@ -372,7 +380,7 @@ export class FetchClient {
       } else {
         // Generic chunked streaming
         for await (const chunk of parseChunkedStream<T>(res)) {
-          let transformedChunk = chunk;
+          const transformedChunk = chunk;
           // Execute onStreamChunk hook if present
           if (this.hookRegistry.has('onStreamChunk')) {
             await this.hookRegistry.execute('onStreamChunk', {
@@ -429,7 +437,8 @@ export class FetchClient {
     const fetchInit: Omit<RequestInit, 'body'> & {
       path: string;
       method: string;
-      query?: Record<string, any> | undefined;
+
+      query?: QueryParams | undefined;
       headers: Headers;
       body: RequestInit['body'] | undefined;
     } = {
@@ -453,7 +462,7 @@ export class FetchClient {
     }
 
     let controller: AbortController | undefined;
-    let timeoutId: any;
+    let timeoutId: NodeJS.Timeout | undefined;
     const existingSignal = fetchInit.signal;
 
     // Setup timeout
@@ -477,7 +486,7 @@ export class FetchClient {
             url: url.toString(),
             init: fetchInit,
             attempt,
-            timeoutMs: this.cfg.timeoutMs!,
+            timeoutMs: this.cfg.timeoutMs,
           });
         }
       }, this.cfg.timeoutMs);
@@ -511,9 +520,12 @@ export class FetchClient {
       }
 
       if (!isSuccessResponse(res)) {
+        const message = (parsed as { message?: string })?.message as
+          | string
+          | undefined;
         const error = createFetchError(
           res.status,
-          parsed?.message || `HTTP ${res.status}`,
+          message || `HTTP ${res.status}`,
           parsed,
           res.headers
         );
@@ -552,7 +564,9 @@ export class FetchClient {
       }
 
       // For network errors, try to extract status if available
-      const status = (err as any)?.status as number | undefined;
+      const status = (err as unknown as { status?: number })?.status as
+        | number
+        | undefined;
       const statusCode = typeof status === 'number' ? status : 0;
       if (typeof err === 'string') {
         throw createFetchError(statusCode, err);

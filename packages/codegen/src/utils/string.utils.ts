@@ -7,12 +7,12 @@
  */
 export function toPascalCase(s: string): string {
   s = s.trim();
-  if (s === "") {
-    return "";
+  if (s === '') {
+    return '';
   }
 
   // Split by non-alphanumeric characters
-  const parts = s.split(/[^A-Za-z0-9]+/).filter((p) => p !== "");
+  const parts = s.split(/[^A-Za-z0-9]+/).filter((p) => p !== '');
   const allParts: string[] = [];
 
   for (const part of parts) {
@@ -22,9 +22,9 @@ export function toPascalCase(s: string): string {
   }
 
   return allParts
-    .filter((p) => p !== "")
+    .filter((p) => p !== '')
     .map((p) => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase())
-    .join("");
+    .join('');
 }
 
 /**
@@ -32,8 +32,8 @@ export function toPascalCase(s: string): string {
  */
 export function toCamelCase(s: string): string {
   const pascal = toPascalCase(s);
-  if (pascal === "") {
-    return "";
+  if (pascal === '') {
+    return '';
   }
   return pascal.charAt(0).toLowerCase() + pascal.slice(1);
 }
@@ -43,12 +43,12 @@ export function toCamelCase(s: string): string {
  */
 export function toSnakeCase(s: string): string {
   s = s.trim();
-  if (s === "") {
-    return "";
+  if (s === '') {
+    return '';
   }
 
   // Split by non-alphanumeric characters
-  const parts = s.split(/[^A-Za-z0-9]+/).filter((p) => p !== "");
+  const parts = s.split(/[^A-Za-z0-9]+/).filter((p) => p !== '');
   const allParts: string[] = [];
 
   for (const part of parts) {
@@ -58,9 +58,9 @@ export function toSnakeCase(s: string): string {
   }
 
   return allParts
-    .filter((p) => p !== "")
+    .filter((p) => p !== '')
     .map((p) => p.toLowerCase())
-    .join("_");
+    .join('_');
 }
 
 /**
@@ -68,12 +68,12 @@ export function toSnakeCase(s: string): string {
  */
 export function toKebabCase(s: string): string {
   s = s.trim();
-  if (s === "") {
-    return "";
+  if (s === '') {
+    return '';
   }
 
   // Split by non-alphanumeric characters
-  const parts = s.split(/[^A-Za-z0-9]+/).filter((p) => p !== "");
+  const parts = s.split(/[^A-Za-z0-9]+/).filter((p) => p !== '');
   const allParts: string[] = [];
 
   for (const part of parts) {
@@ -83,42 +83,49 @@ export function toKebabCase(s: string): string {
   }
 
   return allParts
-    .filter((p) => p !== "")
+    .filter((p) => p !== '')
     .map((p) => p.toLowerCase())
-    .join("-");
+    .join('-');
 }
 
 /**
  * Split a camelCase or PascalCase string into words
  */
 function splitCamelCase(s: string): string[] {
-  if (s === "") {
+  if (s === '') {
     return [];
   }
 
   const parts: string[] = [];
-  let current = "";
+  let current = '';
 
   const chars = Array.from(s);
   for (let i = 0; i < chars.length; i++) {
     const char = chars[i];
+    if (!char) {
+      continue;
+    }
     // Check if this is the start of a new word
     let isNewWord = false;
     if (i > 0 && isUppercase(char)) {
       // Current char is uppercase
-      if (!isUppercase(chars[i - 1])) {
+      const prevChar = chars[i - 1];
+      if (prevChar && !isUppercase(prevChar)) {
         // Previous char was lowercase, so this starts a new word
         isNewWord = true;
-      } else if (i < chars.length - 1 && !isUppercase(chars[i + 1])) {
-        // Previous char was uppercase, but next char is lowercase
-        // This handles cases like "XMLHttp" -> "XML", "Http"
-        isNewWord = true;
+      } else if (i < chars.length - 1) {
+        const nextChar = chars[i + 1];
+        if (nextChar && !isUppercase(nextChar)) {
+          // Previous char was uppercase, but next char is lowercase
+          // This handles cases like "XMLHttp" -> "XML", "Http"
+          isNewWord = true;
+        }
       }
     }
 
     if (isNewWord && current.length > 0) {
       parts.push(current);
-      current = "";
+      current = '';
     }
 
     current += char;
@@ -135,5 +142,5 @@ function splitCamelCase(s: string): string[] {
  * Check if a character is uppercase
  */
 function isUppercase(char: string): boolean {
-  return char >= "A" && char <= "Z";
+  return char >= 'A' && char <= 'Z';
 }

@@ -1,5 +1,5 @@
-import type { IR } from "../ir/ir.types";
-import type { Client } from "../config/config.schema";
+import type { IR } from '../ir/ir.types';
+import type { Client } from '../config/config.schema';
 
 /**
  * Generator interface for SDK generators

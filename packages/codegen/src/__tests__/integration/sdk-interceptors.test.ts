@@ -4,13 +4,18 @@ import {
   importGeneratedSDK,
   cleanupTestSDK,
   typecheckGeneratedSDK,
+  type GeneratedSDKModule,
+  getClientConstructor,
+  getService,
+  type SDKClient,
+  type ServiceMethods,
 } from './helpers/sdk-generator';
 import { setupMSW, teardownMSW } from './helpers/msw-setup';
 import { handlers } from './helpers/msw-handlers';
 
 describe('Generated SDK - Interceptors', () => {
   let sdkPath: string;
-  let SDK: any;
+  let SDK: GeneratedSDKModule;
 
   beforeAll(async () => {
     sdkPath = await generateTestSDK('test-api-3.0.json');
@@ -27,22 +32,28 @@ describe('Generated SDK - Interceptors', () => {
   describe('beforeRequest Hook', () => {
     it('should call beforeRequest hook before making request', async () => {
       const beforeRequest = vi.fn();
-      const client = new SDK.TestClient({
+      const TestClient = getClientConstructor(SDK, 'TestClient');
+      const client: SDKClient = new TestClient({
         baseURL: 'https://api.test.com/v1',
         hooks: {
           beforeRequest: [beforeRequest],
         },
       });
 
-      await client.users.listUsers();
+      const users = getService<ServiceMethods<'listUsers'>>(client, 'users');
+      await users.listUsers();
 
       expect(beforeRequest).toHaveBeenCalled();
-      const callArgs = beforeRequest.mock.calls[0][0];
+      const firstCall = beforeRequest.mock.calls[0];
+      expect(firstCall).toBeDefined();
+      const callArgs = firstCall?.[0];
+      expect(callArgs).toBeDefined();
       expect(callArgs).toHaveProperty('url');
       expect(callArgs).toHaveProperty('init');
       expect(callArgs).toHaveProperty('attempt');
-      expect(callArgs.init).toHaveProperty('method');
-      expect(callArgs.init.method).toBe('GET');
+      const init = (callArgs as { init?: { method?: string } })?.init;
+      expect(init).toHaveProperty('method');
+      expect(init?.method).toBe('GET');
     });
 
     it('should allow modifying request in beforeRequest hook', async () => {
@@ -53,14 +64,16 @@ describe('Generated SDK - Interceptors', () => {
         ctx.init.headers.set('X-Custom-Header', 'custom-value');
       });
 
-      const client = new SDK.TestClient({
+      const TestClient = getClientConstructor(SDK, 'TestClient');
+      const client: SDKClient = new TestClient({
         baseURL: 'https://api.test.com/v1',
         hooks: {
           beforeRequest: [beforeRequest],
         },
       });
 
-      await client.users.listUsers();
+      const users = getService<ServiceMethods<'listUsers'>>(client, 'users');
+      await users.listUsers();
 
       expect(beforeRequest).toHaveBeenCalled();
     });
@@ -69,45 +82,57 @@ describe('Generated SDK - Interceptors', () => {
   describe('afterResponse Hook', () => {
     it('should call afterResponse hook after receiving response', async () => {
       const afterResponse = vi.fn();
-      const client = new SDK.TestClient({
+      const TestClient = getClientConstructor(SDK, 'TestClient');
+      const client: SDKClient = new TestClient({
         baseURL: 'https://api.test.com/v1',
         hooks: {
           afterResponse: [afterResponse],
         },
       });
 
-      await client.users.listUsers();
+      const users = getService<ServiceMethods<'listUsers'>>(client, 'users');
+      await users.listUsers();
 
       expect(afterResponse).toHaveBeenCalled();
-      const callArgs = afterResponse.mock.calls[0][0];
+      const firstCall = afterResponse.mock.calls[0];
+      expect(firstCall).toBeDefined();
+      const callArgs = firstCall?.[0];
+      expect(callArgs).toBeDefined();
       expect(callArgs).toHaveProperty('response');
       expect(callArgs).toHaveProperty('url');
       expect(callArgs).toHaveProperty('init');
       expect(callArgs).toHaveProperty('attempt');
       expect(callArgs).toHaveProperty('data');
-      expect(callArgs.response).toBeInstanceOf(Response);
+      const response = (callArgs as { response?: Response })?.response;
+      expect(response).toBeInstanceOf(Response);
     });
 
     it('should receive response status in afterResponse hook', async () => {
       const afterResponse = vi.fn();
-      const client = new SDK.TestClient({
+      const TestClient = getClientConstructor(SDK, 'TestClient');
+      const client: SDKClient = new TestClient({
         baseURL: 'https://api.test.com/v1',
         hooks: {
           afterResponse: [afterResponse],
         },
       });
 
-      await client.users.listUsers();
+      const users = getService<ServiceMethods<'listUsers'>>(client, 'users');
+      await users.listUsers();
 
-      const callArgs = afterResponse.mock.calls[0][0];
-      expect(callArgs.response.status).toBe(200);
+      const firstCall = afterResponse.mock.calls[0];
+      expect(firstCall).toBeDefined();
+      const callArgs = firstCall?.[0] as { response?: Response } | undefined;
+      expect(callArgs).toBeDefined();
+      expect(callArgs?.response?.status).toBe(200);
     });
   });
 
   describe('onError Hook', () => {
     it('should call onError hook when request fails', async () => {
       const onError = vi.fn();
-      const client = new SDK.TestClient({
+      const TestClient = getClientConstructor(SDK, 'TestClient');
+      const client: SDKClient = new TestClient({
         baseURL: 'https://api.test.com/v1',
         hooks: {
           onError: [onError],
@@ -115,15 +140,19 @@ describe('Generated SDK - Interceptors', () => {
       });
 
       try {
-        await client.users.getUser('404');
+        const users = getService<ServiceMethods<'getUser'>>(client, 'users');
+        await users.getUser('404');
         expect.fail('Should have thrown an error');
-      } catch (error) {
+      } catch {
         // Expected to throw
       }
 
       // onError hook is called before throwing
       expect(onError).toHaveBeenCalled();
-      const callArgs = onError.mock.calls[0][0];
+      const firstCall = onError.mock.calls[0];
+      expect(firstCall).toBeDefined();
+      const callArgs = firstCall?.[0];
+      expect(callArgs).toBeDefined();
       expect(callArgs).toHaveProperty('url');
       expect(callArgs).toHaveProperty('init');
       expect(callArgs).toHaveProperty('attempt');
@@ -132,7 +161,8 @@ describe('Generated SDK - Interceptors', () => {
 
     it('should receive error details in onError hook', async () => {
       const onError = vi.fn();
-      const client = new SDK.TestClient({
+      const TestClient = getClientConstructor(SDK, 'TestClient');
+      const client: SDKClient = new TestClient({
         baseURL: 'https://api.test.com/v1',
         hooks: {
           onError: [onError],
@@ -140,16 +170,20 @@ describe('Generated SDK - Interceptors', () => {
       });
 
       try {
-        await client.users.getUser('404');
+        const users = getService<ServiceMethods<'getUser'>>(client, 'users');
+        await users.getUser('404');
         expect.fail('Should have thrown an error');
-      } catch (error) {
+      } catch {
         // Expected to throw
       }
 
       expect(onError).toHaveBeenCalled();
-      const callArgs = onError.mock.calls[0][0];
-      expect(callArgs.error).toBeDefined();
-      expect(callArgs.url).toBeDefined();
+      const firstCall = onError.mock.calls[0];
+      expect(firstCall).toBeDefined();
+      const callArgs = firstCall?.[0];
+      expect(callArgs).toBeDefined();
+      expect(callArgs?.error).toBeDefined();
+      expect(callArgs?.url).toBeDefined();
     });
   });
 
@@ -165,7 +199,8 @@ describe('Generated SDK - Interceptors', () => {
         callOrder.push('response');
       });
 
-      const client = new SDK.TestClient({
+      const TestClient = getClientConstructor(SDK, 'TestClient');
+      const client: SDKClient = new TestClient({
         baseURL: 'https://api.test.com/v1',
         hooks: {
           beforeRequest: [beforeRequest],
@@ -173,7 +208,8 @@ describe('Generated SDK - Interceptors', () => {
         },
       });
 
-      await client.users.listUsers();
+      const users = getService<ServiceMethods<'listUsers'>>(client, 'users');
+      await users.listUsers();
 
       expect(callOrder).toContain('request');
       expect(callOrder).toContain('response');

@@ -55,19 +55,19 @@ Create `chunkflow-codegen.config.mjs` in your project root:
 
 ```javascript
 // @ts-check
-import { defineConfig } from "@blimu/codegen";
+import { defineConfig } from '@blimu/codegen';
 
 export default defineConfig({
-  spec: "http://localhost:3020/docs/backend-api/json",
+  spec: 'http://localhost:3020/docs/backend-api/json',
   clients: [
     {
-      type: "typescript",
-      outDir: "./my-sdk",
-      packageName: "my-sdk",
-      name: "MyClient",
+      type: 'typescript',
+      outDir: './my-sdk',
+      packageName: 'my-sdk',
+      name: 'MyClient',
       operationIdParser: (operationId, method, path) => {
         // Custom transform logic
-        return operationId.replace(/Controller/g, "");
+        return operationId.replace(/Controller/g, '');
       },
     },
   ],
@@ -83,32 +83,32 @@ See `examples/chunkflow-codegen.config.mjs.example` for a complete example with 
 Use the codegen library programmatically in your TypeScript code:
 
 ```typescript
-import { generate, loadConfig, defineConfig } from "@blimu/codegen";
+import { generate, loadConfig, defineConfig } from '@blimu/codegen';
 
 // Generate from config object
 await generate({
-  spec: "http://localhost:3020/docs/backend-api/json",
+  spec: 'http://localhost:3020/docs/backend-api/json',
   clients: [
     {
-      type: "typescript",
-      outDir: "./my-sdk",
-      packageName: "my-sdk",
-      name: "MyClient",
+      type: 'typescript',
+      outDir: './my-sdk',
+      packageName: 'my-sdk',
+      name: 'MyClient',
       operationIdParser: (operationId, method, path) => {
-        return operationId.replace(/Controller/g, "");
+        return operationId.replace(/Controller/g, '');
       },
     },
   ],
 });
 
 // Generate from config file path
-await generate("./chunkflow-codegen.config.mjs");
+await generate('./chunkflow-codegen.config.mjs');
 
 // Generate only a specific client
-await generate("./chunkflow-codegen.config.mjs", { client: "MyClient" });
+await generate('./chunkflow-codegen.config.mjs', { client: 'MyClient' });
 
 // Load config programmatically
-const config = await loadConfig("./chunkflow-codegen.config.mjs");
+const config = await loadConfig('./chunkflow-codegen.config.mjs');
 ```
 
 ## Configuration Options

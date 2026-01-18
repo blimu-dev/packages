@@ -1,5 +1,5 @@
 export default {
   resources: {
-    workspace: {}
-  }
+    workspace: {},
+  },
 };

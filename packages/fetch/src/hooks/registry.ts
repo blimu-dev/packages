@@ -1,4 +1,4 @@
-import type { Hook, HookStage, HooksConfig } from "./types";
+import type { Hook, HookContext, HookStage, HooksConfig } from './types';
 
 /**
  * Hook registry that manages hooks for different lifecycle stages
@@ -32,7 +32,8 @@ export class HookRegistry {
     if (!this.hooks.has(stage)) {
       this.hooks.set(stage, []);
     }
-    this.hooks.get(stage)!.push(hook);
+
+    this.hooks.get(stage)?.push(hook);
   }
 
   /**
@@ -74,7 +75,7 @@ export class HookRegistry {
   /**
    * Execute all hooks for a specific stage in registration order
    */
-  async execute(stage: HookStage, context: any): Promise<void> {
+  async execute(stage: HookStage, context: HookContext): Promise<void> {
     const hooks = this.get(stage);
     for (const hook of hooks) {
       await hook(context);
@@ -85,6 +86,13 @@ export class HookRegistry {
    * Check if any hooks are registered for a stage
    */
   has(stage: HookStage): boolean {
-    return this.hooks.has(stage) && this.hooks.get(stage)!.length > 0;
+    if (!this.hooks.has(stage)) {
+      return false;
+    }
+    const hooks = this.hooks.get(stage);
+    if (!hooks) {
+      return false;
+    }
+    return hooks.length > 0;
   }
 }

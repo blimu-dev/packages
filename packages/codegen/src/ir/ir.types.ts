@@ -1,20 +1,20 @@
 // Intermediate Representation types - language-agnostic representation of OpenAPI specs
 
 export enum IRSchemaKind {
-  Unknown = "unknown",
-  String = "string",
-  Number = "number",
-  Integer = "integer",
-  Boolean = "boolean",
-  Null = "null",
-  Array = "array",
-  Object = "object",
-  Enum = "enum",
-  Ref = "ref",
-  OneOf = "oneOf",
-  AnyOf = "anyOf",
-  AllOf = "allOf",
-  Not = "not",
+  Unknown = 'unknown',
+  String = 'string',
+  Number = 'number',
+  Integer = 'integer',
+  Boolean = 'boolean',
+  Null = 'null',
+  Array = 'array',
+  Object = 'object',
+  Enum = 'enum',
+  Ref = 'ref',
+  OneOf = 'oneOf',
+  AnyOf = 'anyOf',
+  AllOf = 'allOf',
+  Not = 'not',
 }
 
 export interface IROperation {
@@ -44,7 +44,7 @@ export interface IR {
   // ModelDefs holds a language-agnostic structured representation of components schemas
   modelDefs: IRModelDef[];
   // OpenAPI document used to generate this IR (optional, for saving spec to SDK package)
-  openApiDocument?: any; // OpenAPIDocument type, but using any to avoid circular dependency
+  openApiDocument?: unknown; // OpenAPIDocument type, but using unknown to avoid circular dependency
 }
 
 export interface IRParam {
@@ -70,7 +70,7 @@ export interface IRResponse {
   // Streaming support
   isStreaming: boolean;
   contentType: string;
-  streamingFormat?: "sse" | "ndjson" | "chunked" | undefined;
+  streamingFormat?: 'sse' | 'ndjson' | 'chunked' | undefined;
 }
 
 // IRModel represents a generated model (legacy, kept for compatibility)
@@ -94,8 +94,8 @@ export interface IRAnnotations {
   deprecated?: boolean | undefined;
   readOnly?: boolean | undefined;
   writeOnly?: boolean | undefined;
-  default?: any | undefined;
-  examples?: any[] | undefined;
+  default?: unknown | undefined;
+  examples?: unknown[] | undefined;
 }
 
 // IRSchema models a JSON Schema (as used by OpenAPI 3.1) shape in a language-agnostic way
@@ -113,7 +113,7 @@ export interface IRSchema {
 
   // Enum
   enumValues?: string[] | undefined; // stringified values for portability
-  enumRaw?: any[] | undefined; // original values preserving type where possible
+  enumRaw?: unknown[] | undefined; // original values preserving type where possible
   enumBase?: IRSchemaKind | undefined; // underlying base kind: string, number, integer, boolean, unknown
 
   // Ref (component name or canonical name)

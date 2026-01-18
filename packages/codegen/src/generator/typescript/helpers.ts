@@ -72,7 +72,7 @@ export function schemaToTSType(
     case IRSchemaKind.Array:
       if (s.items) {
         const inner = schemaToTSType(s.items, predefinedTypes, modelDefs);
-        // Wrap unions/intersections in parentheses inside Array[]  
+        // Wrap unions/intersections in parentheses inside Array[]
         if (inner.includes(' | ') || inner.includes(' & ')) {
           t = `(${inner})[]`;
         } else {
@@ -252,7 +252,7 @@ function defaultParseOperationID(opID: string): string {
  */
 export function buildPathTemplate(op: IROperation): string {
   // Convert /foo/{id}/bar/{slug} -> `/foo/${encodeURIComponent(id)}/bar/${encodeURIComponent(slug)}`
-  let path = op.path;
+  const path = op.path;
   let result = '`';
   for (let i = 0; i < path.length; i++) {
     if (path[i] === '{') {
@@ -299,11 +299,14 @@ export function buildQueryKeyBase(op: IROperation): string {
 /**
  * Order path params extracts path parameter order as they appear in the path
  */
-export function orderPathParams(op: IROperation) {
+export function orderPathParams(op: IROperation): IROperation['pathParams'] {
   const ordered: typeof op.pathParams = [];
   const index = new Map<string, number>();
   for (let i = 0; i < op.pathParams.length; i++) {
-    index.set(op.pathParams[i].name, i);
+    const param = op.pathParams[i];
+    if (param) {
+      index.set(param.name, i);
+    }
   }
   const path = op.path;
   for (let i = 0; i < path.length; i++) {
@@ -316,7 +319,10 @@ export function orderPathParams(op: IROperation) {
         const name = path.substring(i + 1, j);
         const idx = index.get(name);
         if (idx !== undefined) {
-          ordered.push(op.pathParams[idx]);
+          const param = op.pathParams[idx];
+          if (param) {
+            ordered.push(param);
+          }
         }
         i = j;
         continue;
@@ -561,7 +567,8 @@ export function quoteTSPropertyName(name: string): string {
   }
 
   // Also quote if the name starts with a number
-  if (name.length > 0 && name[0] >= '0' && name[0] <= '9') {
+  const firstChar = name[0];
+  if (firstChar && firstChar >= '0' && firstChar <= '9') {
     needsQuoting = true;
   }
 
@@ -673,7 +680,10 @@ export function sortModelDefsByDependencies(
   }
 
   while (queue.length > 0) {
-    const current = queue.shift()!;
+    const current = queue.shift();
+    if (!current) {
+      continue;
+    }
     const modelDef = modelDefMap.get(current);
     if (modelDef) {
       sorted.push(modelDef);

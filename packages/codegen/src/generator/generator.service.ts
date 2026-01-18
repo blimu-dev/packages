@@ -1,9 +1,8 @@
-import { Injectable, Logger } from "@nestjs/common";
-import type { IR } from "../ir/ir.types";
-import type { Client } from "../config/config.schema";
-import type { Generator } from "./generator.interface";
-import { IrBuilderService } from "./ir-builder.service";
-import { OpenApiService } from "../openapi/openapi.service";
+import { Injectable, Logger } from '@nestjs/common';
+import type { Client } from '../config/config.schema';
+import type { Generator } from './generator.interface';
+import { IrBuilderService } from './ir-builder.service';
+import { OpenApiService } from '../openapi/openapi.service';
 
 @Injectable()
 export class GeneratorService {

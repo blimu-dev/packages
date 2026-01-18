@@ -1,17 +1,17 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { IrBuilderService } from "../ir-builder.service";
-import { SchemaConverterService } from "../schema-converter.service";
+import { describe, it, expect, beforeEach } from 'vitest';
+import { IrBuilderService } from '../ir-builder.service';
+import { SchemaConverterService } from '../schema-converter.service';
 import {
   createMockOpenAPI30Document,
   createMockOpenAPI31Document,
-} from "../../__tests__/helpers/test-utils";
+} from '../../__tests__/helpers/test-utils';
 import {
   createMockDocumentWithStreaming30,
   createMockDocumentWithStreaming31,
-} from "../../__tests__/helpers/create-mock-document";
-import type { Client } from "../../config/config.schema";
+} from '../../__tests__/helpers/create-mock-document';
+import type { Client } from '../../config/config.schema';
 
-describe("IrBuilderService", () => {
+describe('IrBuilderService', () => {
   let service: IrBuilderService;
   let schemaConverter: SchemaConverterService;
 
@@ -20,22 +20,22 @@ describe("IrBuilderService", () => {
     service = new IrBuilderService(schemaConverter);
   });
 
-  describe("buildIR", () => {
-    it("should build IR from OpenAPI 3.0 document", () => {
+  describe('buildIR', () => {
+    it('should build IR from OpenAPI 3.0 document', () => {
       const doc = createMockOpenAPI30Document({
         paths: {
-          "/users": {
+          '/users': {
             get: {
-              operationId: "listUsers",
-              tags: ["users"],
+              operationId: 'listUsers',
+              tags: ['users'],
               responses: {
-                "200": {
-                  description: "OK",
+                '200': {
+                  description: 'OK',
                   content: {
-                    "application/json": {
+                    'application/json': {
                       schema: {
-                        type: "array",
-                        items: { type: "string" },
+                        type: 'array',
+                        items: { type: 'string' },
                       },
                     },
                   },
@@ -53,21 +53,21 @@ describe("IrBuilderService", () => {
       expect(ir.securitySchemes).toBeDefined();
     });
 
-    it("should build IR from OpenAPI 3.1 document", () => {
+    it('should build IR from OpenAPI 3.1 document', () => {
       const doc = createMockOpenAPI31Document({
         paths: {
-          "/products": {
+          '/products': {
             get: {
-              operationId: "listProducts",
-              tags: ["products"],
+              operationId: 'listProducts',
+              tags: ['products'],
               responses: {
-                "200": {
-                  description: "OK",
+                '200': {
+                  description: 'OK',
                   content: {
-                    "application/json": {
+                    'application/json': {
                       schema: {
-                        type: "array",
-                        items: { type: "string" },
+                        type: 'array',
+                        items: { type: 'string' },
                       },
                     },
                   },
@@ -84,21 +84,21 @@ describe("IrBuilderService", () => {
       expect(ir.services.length).toBeGreaterThan(0);
     });
 
-    it("should collect tags from operations", () => {
+    it('should collect tags from operations', () => {
       const doc = createMockOpenAPI30Document({
         paths: {
-          "/users": {
+          '/users': {
             get: {
-              operationId: "listUsers",
-              tags: ["users"],
-              responses: { "200": { description: "OK" } },
+              operationId: 'listUsers',
+              tags: ['users'],
+              responses: { '200': { description: 'OK' } },
             },
           },
-          "/products": {
+          '/products': {
             get: {
-              operationId: "listProducts",
-              tags: ["products"],
-              responses: { "200": { description: "OK" } },
+              operationId: 'listProducts',
+              tags: ['products'],
+              responses: { '200': { description: 'OK' } },
             },
           },
         },
@@ -107,42 +107,42 @@ describe("IrBuilderService", () => {
       const ir = service.buildIR(doc);
       const tags = ir.services.map((s) => s.tag);
 
-      expect(tags).toContain("users");
-      expect(tags).toContain("products");
+      expect(tags).toContain('users');
+      expect(tags).toContain('products');
     });
 
     it("should handle untagged operations as 'misc'", () => {
       const doc = createMockOpenAPI30Document({
         paths: {
-          "/health": {
+          '/health': {
             get: {
-              operationId: "healthCheck",
-              responses: { "200": { description: "OK" } },
+              operationId: 'healthCheck',
+              responses: { '200': { description: 'OK' } },
             },
           },
         },
       });
 
       const ir = service.buildIR(doc);
-      const miscService = ir.services.find((s) => s.tag === "misc");
+      const miscService = ir.services.find((s) => s.tag === 'misc');
 
       expect(miscService).toBeDefined();
       expect(miscService?.operations.length).toBeGreaterThan(0);
     });
 
-    it("should collect security schemes", () => {
+    it('should collect security schemes', () => {
       const doc = createMockOpenAPI30Document({
         components: {
           securitySchemes: {
             BearerAuth: {
-              type: "http",
-              scheme: "bearer",
-              bearerFormat: "JWT",
+              type: 'http',
+              scheme: 'bearer',
+              bearerFormat: 'JWT',
             },
             ApiKeyAuth: {
-              type: "apiKey",
-              in: "header",
-              name: "X-API-Key",
+              type: 'apiKey',
+              in: 'header',
+              name: 'X-API-Key',
             },
           },
         },
@@ -152,29 +152,29 @@ describe("IrBuilderService", () => {
 
       expect(ir.securitySchemes.length).toBe(2);
       expect(
-        ir.securitySchemes.find((s) => s.key === "BearerAuth")
+        ir.securitySchemes.find((s) => s.key === 'BearerAuth')
       ).toBeDefined();
       expect(
-        ir.securitySchemes.find((s) => s.key === "ApiKeyAuth")
+        ir.securitySchemes.find((s) => s.key === 'ApiKeyAuth')
       ).toBeDefined();
     });
 
-    it("should extract path parameters", () => {
+    it('should extract path parameters', () => {
       const doc = createMockOpenAPI30Document({
         paths: {
-          "/users/{id}": {
+          '/users/{id}': {
             get: {
-              operationId: "getUser",
-              tags: ["users"],
+              operationId: 'getUser',
+              tags: ['users'],
               parameters: [
                 {
-                  name: "id",
-                  in: "path",
+                  name: 'id',
+                  in: 'path',
                   required: true,
-                  schema: { type: "string" },
+                  schema: { type: 'string' },
                 },
               ],
-              responses: { "200": { description: "OK" } },
+              responses: { '200': { description: 'OK' } },
             },
           },
         },
@@ -182,36 +182,38 @@ describe("IrBuilderService", () => {
 
       const ir = service.buildIR(doc);
       const operation = ir.services
-        .find((s) => s.tag === "users")
-        ?.operations.find((o) => o.operationID === "getUser");
+        .find((s) => s.tag === 'users')
+        ?.operations.find((o) => o.operationID === 'getUser');
 
       expect(operation?.pathParams.length).toBe(1);
-      expect(operation?.pathParams[0].name).toBe("id");
-      expect(operation?.pathParams[0].required).toBe(true);
+      const firstParam = operation?.pathParams[0];
+      expect(firstParam).toBeDefined();
+      expect(firstParam?.name).toBe('id');
+      expect(firstParam?.required).toBe(true);
     });
 
-    it("should extract query parameters", () => {
+    it('should extract query parameters', () => {
       const doc = createMockOpenAPI30Document({
         paths: {
-          "/users": {
+          '/users': {
             get: {
-              operationId: "listUsers",
-              tags: ["users"],
+              operationId: 'listUsers',
+              tags: ['users'],
               parameters: [
                 {
-                  name: "limit",
-                  in: "query",
+                  name: 'limit',
+                  in: 'query',
                   required: false,
-                  schema: { type: "integer" },
+                  schema: { type: 'integer' },
                 },
                 {
-                  name: "offset",
-                  in: "query",
+                  name: 'offset',
+                  in: 'query',
                   required: false,
-                  schema: { type: "integer" },
+                  schema: { type: 'integer' },
                 },
               ],
-              responses: { "200": { description: "OK" } },
+              responses: { '200': { description: 'OK' } },
             },
           },
         },
@@ -219,35 +221,35 @@ describe("IrBuilderService", () => {
 
       const ir = service.buildIR(doc);
       const operation = ir.services
-        .find((s) => s.tag === "users")
-        ?.operations.find((o) => o.operationID === "listUsers");
+        .find((s) => s.tag === 'users')
+        ?.operations.find((o) => o.operationID === 'listUsers');
 
       expect(operation?.queryParams.length).toBe(2);
-      expect(operation?.queryParams.map((p) => p.name)).toContain("limit");
-      expect(operation?.queryParams.map((p) => p.name)).toContain("offset");
+      expect(operation?.queryParams.map((p) => p.name)).toContain('limit');
+      expect(operation?.queryParams.map((p) => p.name)).toContain('offset');
     });
 
-    it("should extract request body", () => {
+    it('should extract request body', () => {
       const doc = createMockOpenAPI30Document({
         paths: {
-          "/users": {
+          '/users': {
             post: {
-              operationId: "createUser",
-              tags: ["users"],
+              operationId: 'createUser',
+              tags: ['users'],
               requestBody: {
                 required: true,
                 content: {
-                  "application/json": {
+                  'application/json': {
                     schema: {
-                      type: "object",
+                      type: 'object',
                       properties: {
-                        name: { type: "string" },
+                        name: { type: 'string' },
                       },
                     },
                   },
                 },
               },
-              responses: { "201": { description: "Created" } },
+              responses: { '201': { description: 'Created' } },
             },
           },
         },
@@ -255,70 +257,70 @@ describe("IrBuilderService", () => {
 
       const ir = service.buildIR(doc);
       const operation = ir.services
-        .find((s) => s.tag === "users")
-        ?.operations.find((o) => o.operationID === "createUser");
+        .find((s) => s.tag === 'users')
+        ?.operations.find((o) => o.operationID === 'createUser');
 
       expect(operation?.requestBody).toBeDefined();
       expect(operation?.requestBody?.required).toBe(true);
-      expect(operation?.requestBody?.contentType).toBe("application/json");
+      expect(operation?.requestBody?.contentType).toBe('application/json');
     });
   });
 
-  describe("streaming detection", () => {
-    it("should detect SSE streaming in OpenAPI 3.0", () => {
+  describe('streaming detection', () => {
+    it('should detect SSE streaming in OpenAPI 3.0', () => {
       const doc = createMockDocumentWithStreaming30();
       const ir = service.buildIR(doc);
 
       const operation = ir.services
-        .find((s) => s.tag === "events")
-        ?.operations.find((o) => o.operationID === "getEvents");
+        .find((s) => s.tag === 'events')
+        ?.operations.find((o) => o.operationID === 'getEvents');
 
       expect(operation?.response.isStreaming).toBe(true);
-      expect(operation?.response.contentType).toBe("text/event-stream");
-      expect(operation?.response.streamingFormat).toBe("sse");
+      expect(operation?.response.contentType).toBe('text/event-stream');
+      expect(operation?.response.streamingFormat).toBe('sse');
     });
 
-    it("should detect SSE streaming in OpenAPI 3.1", () => {
+    it('should detect SSE streaming in OpenAPI 3.1', () => {
       const doc = createMockDocumentWithStreaming31();
       const ir = service.buildIR(doc);
 
       const operation = ir.services
-        .find((s) => s.tag === "events")
-        ?.operations.find((o) => o.operationID === "getEvents");
+        .find((s) => s.tag === 'events')
+        ?.operations.find((o) => o.operationID === 'getEvents');
 
       expect(operation?.response.isStreaming).toBe(true);
-      expect(operation?.response.contentType).toBe("text/event-stream");
-      expect(operation?.response.streamingFormat).toBe("sse");
+      expect(operation?.response.contentType).toBe('text/event-stream');
+      expect(operation?.response.streamingFormat).toBe('sse');
     });
 
-    it("should detect NDJSON streaming", () => {
+    it('should detect NDJSON streaming', () => {
       const doc = createMockDocumentWithStreaming30();
       const ir = service.buildIR(doc);
 
       const operation = ir.services
-        .find((s) => s.tag === "data")
-        ?.operations.find((o) => o.operationID === "getDataStream");
+        .find((s) => s.tag === 'data')
+        ?.operations.find((o) => o.operationID === 'getDataStream');
 
       expect(operation?.response.isStreaming).toBe(true);
-      expect(operation?.response.contentType).toBe("application/x-ndjson");
-      expect(operation?.response.streamingFormat).toBe("ndjson");
+      expect(operation?.response.contentType).toBe('application/x-ndjson');
+      expect(operation?.response.streamingFormat).toBe('ndjson');
     });
 
-    it("should not mark JSON responses as streaming", () => {
+    it('should not mark JSON responses as streaming', () => {
       const doc = createMockOpenAPI30Document({
         paths: {
-          "/users": {
+          '/users': {
             get: {
-              operationId: "listUsers",
-              tags: ["users"],
+              operationId: 'listUsers',
+              tags: ['users'],
               responses: {
-                "200": {
-                  description: "OK",
+                '200': {
+                  description: 'OK',
                   content: {
-                    "application/json": {
+                    'application/json': {
                       schema: {
-                        type: "array",
-                        items: { type: "string" },
+                        type: 'array',
+                        items: { type: 'string' },
                       },
                     },
                   },
@@ -331,30 +333,30 @@ describe("IrBuilderService", () => {
 
       const ir = service.buildIR(doc);
       const operation = ir.services
-        .find((s) => s.tag === "users")
-        ?.operations.find((o) => o.operationID === "listUsers");
+        .find((s) => s.tag === 'users')
+        ?.operations.find((o) => o.operationID === 'listUsers');
 
       expect(operation?.response.isStreaming).toBe(false);
-      expect(operation?.response.contentType).toBe("application/json");
+      expect(operation?.response.contentType).toBe('application/json');
     });
   });
 
-  describe("filterIR", () => {
-    it("should filter by include tags", () => {
+  describe('filterIR', () => {
+    it('should filter by include tags', () => {
       const doc = createMockOpenAPI30Document({
         paths: {
-          "/users": {
+          '/users': {
             get: {
-              operationId: "listUsers",
-              tags: ["users"],
-              responses: { "200": { description: "OK" } },
+              operationId: 'listUsers',
+              tags: ['users'],
+              responses: { '200': { description: 'OK' } },
             },
           },
-          "/products": {
+          '/products': {
             get: {
-              operationId: "listProducts",
-              tags: ["products"],
-              responses: { "200": { description: "OK" } },
+              operationId: 'listProducts',
+              tags: ['products'],
+              responses: { '200': { description: 'OK' } },
             },
           },
         },
@@ -362,34 +364,36 @@ describe("IrBuilderService", () => {
 
       const fullIR = service.buildIR(doc);
       const client: Client = {
-        type: "typescript",
-        outDir: "./test",
-        packageName: "test",
-        name: "TestClient",
-        includeTags: ["users"],
+        type: 'typescript',
+        outDir: './test',
+        packageName: 'test',
+        name: 'TestClient',
+        includeTags: ['users'],
       };
 
       const filteredIR = service.filterIR(fullIR, client);
 
       expect(filteredIR.services.length).toBe(1);
-      expect(filteredIR.services[0].tag).toBe("users");
+      const firstService = filteredIR.services[0];
+      expect(firstService).toBeDefined();
+      expect(firstService?.tag).toBe('users');
     });
 
-    it("should filter by exclude tags", () => {
+    it('should filter by exclude tags', () => {
       const doc = createMockOpenAPI30Document({
         paths: {
-          "/users": {
+          '/users': {
             get: {
-              operationId: "listUsers",
-              tags: ["users"],
-              responses: { "200": { description: "OK" } },
+              operationId: 'listUsers',
+              tags: ['users'],
+              responses: { '200': { description: 'OK' } },
             },
           },
-          "/products": {
+          '/products': {
             get: {
-              operationId: "listProducts",
-              tags: ["products"],
-              responses: { "200": { description: "OK" } },
+              operationId: 'listProducts',
+              tags: ['products'],
+              responses: { '200': { description: 'OK' } },
             },
           },
         },
@@ -397,35 +401,35 @@ describe("IrBuilderService", () => {
 
       const fullIR = service.buildIR(doc);
       const client: Client = {
-        type: "typescript",
-        outDir: "./test",
-        packageName: "test",
-        name: "TestClient",
-        excludeTags: ["products"],
+        type: 'typescript',
+        outDir: './test',
+        packageName: 'test',
+        name: 'TestClient',
+        excludeTags: ['products'],
       };
 
       const filteredIR = service.filterIR(fullIR, client);
 
       expect(
-        filteredIR.services.find((s) => s.tag === "products")
+        filteredIR.services.find((s) => s.tag === 'products')
       ).toBeUndefined();
-      expect(filteredIR.services.find((s) => s.tag === "users")).toBeDefined();
+      expect(filteredIR.services.find((s) => s.tag === 'users')).toBeDefined();
     });
 
-    it("should filter unused model definitions", () => {
+    it('should filter unused model definitions', () => {
       const doc = createMockOpenAPI30Document({
         paths: {
-          "/users": {
+          '/users': {
             get: {
-              operationId: "listUsers",
-              tags: ["users"],
+              operationId: 'listUsers',
+              tags: ['users'],
               responses: {
-                "200": {
-                  description: "OK",
+                '200': {
+                  description: 'OK',
                   content: {
-                    "application/json": {
+                    'application/json': {
                       schema: {
-                        $ref: "#/components/schemas/User",
+                        $ref: '#/components/schemas/User',
                       },
                     },
                   },
@@ -437,15 +441,15 @@ describe("IrBuilderService", () => {
         components: {
           schemas: {
             User: {
-              type: "object",
+              type: 'object',
               properties: {
-                id: { type: "string" },
+                id: { type: 'string' },
               },
             },
             UnusedModel: {
-              type: "object",
+              type: 'object',
               properties: {
-                value: { type: "string" },
+                value: { type: 'string' },
               },
             },
           },
@@ -454,38 +458,38 @@ describe("IrBuilderService", () => {
 
       const fullIR = service.buildIR(doc);
       const client: Client = {
-        type: "typescript",
-        outDir: "./test",
-        packageName: "test",
-        name: "TestClient",
-        includeTags: ["users"],
+        type: 'typescript',
+        outDir: './test',
+        packageName: 'test',
+        name: 'TestClient',
+        includeTags: ['users'],
       };
 
       const filteredIR = service.filterIR(fullIR, client);
 
       const modelNames = filteredIR.modelDefs.map((m) => m.name);
-      expect(modelNames).toContain("User");
-      expect(modelNames).not.toContain("UnusedModel");
+      expect(modelNames).toContain('User');
+      expect(modelNames).not.toContain('UnusedModel');
     });
   });
 
-  describe("buildStructuredModels", () => {
-    it("should build models from components.schemas", () => {
+  describe('buildStructuredModels', () => {
+    it('should build models from components.schemas', () => {
       const doc = createMockOpenAPI30Document({
         components: {
           schemas: {
             User: {
-              type: "object",
+              type: 'object',
               properties: {
-                id: { type: "string" },
-                name: { type: "string" },
+                id: { type: 'string' },
+                name: { type: 'string' },
               },
             },
             Product: {
-              type: "object",
+              type: 'object',
               properties: {
-                id: { type: "string" },
-                price: { type: "number" },
+                id: { type: 'string' },
+                price: { type: 'number' },
               },
             },
           },
@@ -496,26 +500,26 @@ describe("IrBuilderService", () => {
 
       expect(ir.modelDefs.length).toBeGreaterThanOrEqual(2);
       const modelNames = ir.modelDefs.map((m) => m.name);
-      expect(modelNames).toContain("User");
-      expect(modelNames).toContain("Product");
+      expect(modelNames).toContain('User');
+      expect(modelNames).toContain('Product');
     });
   });
 
-  describe("type naming with model references", () => {
-    it("should use model name from $ref schema for response types", () => {
+  describe('type naming with model references', () => {
+    it('should use model name from $ref schema for response types', () => {
       const doc = createMockOpenAPI30Document({
         paths: {
-          "/auth/refresh": {
+          '/auth/refresh': {
             post: {
-              operationId: "AuthController_refresh",
-              tags: ["Auth"],
+              operationId: 'AuthController_refresh',
+              tags: ['Auth'],
               responses: {
-                "200": {
-                  description: "OK",
+                '200': {
+                  description: 'OK',
                   content: {
-                    "application/json": {
+                    'application/json': {
                       schema: {
-                        $ref: "#/components/schemas/RefreshResponse",
+                        $ref: '#/components/schemas/RefreshResponse',
                       },
                     },
                   },
@@ -527,11 +531,11 @@ describe("IrBuilderService", () => {
         components: {
           schemas: {
             RefreshResponse: {
-              type: "object",
+              type: 'object',
               properties: {
-                sessionToken: { type: "string" },
+                sessionToken: { type: 'string' },
               },
-              required: ["sessionToken"],
+              required: ['sessionToken'],
             },
           },
         },
@@ -539,36 +543,36 @@ describe("IrBuilderService", () => {
 
       const ir = service.buildIR(doc);
       const operation = ir.services
-        .find((s) => s.tag === "Auth")
-        ?.operations.find((o) => o.operationID === "AuthController_refresh");
+        .find((s) => s.tag === 'Auth')
+        ?.operations.find((o) => o.operationID === 'AuthController_refresh');
 
       expect(operation).toBeDefined();
-      expect(operation?.response.schema.kind).toBe("ref");
-      if (operation?.response.schema.kind === "ref") {
+      expect(operation?.response.schema.kind).toBe('ref');
+      if (operation?.response.schema.kind === 'ref') {
         // Should use the model name directly, not AuthRefreshResponse
-        expect(operation.response.schema.ref).toBe("RefreshResponse");
+        expect(operation.response.schema.ref).toBe('RefreshResponse');
       }
     });
 
-    it("should use model name from $ref schema for request body types", () => {
+    it('should use model name from $ref schema for request body types', () => {
       const doc = createMockOpenAPI30Document({
         paths: {
-          "/auth/signin": {
+          '/auth/signin': {
             post: {
-              operationId: "AuthController_signin",
-              tags: ["Auth"],
+              operationId: 'AuthController_signin',
+              tags: ['Auth'],
               requestBody: {
                 required: true,
                 content: {
-                  "application/json": {
+                  'application/json': {
                     schema: {
-                      $ref: "#/components/schemas/PasswordSignin",
+                      $ref: '#/components/schemas/PasswordSignin',
                     },
                   },
                 },
               },
               responses: {
-                "200": { description: "OK" },
+                '200': { description: 'OK' },
               },
             },
           },
@@ -576,12 +580,12 @@ describe("IrBuilderService", () => {
         components: {
           schemas: {
             PasswordSignin: {
-              type: "object",
+              type: 'object',
               properties: {
-                email: { type: "string" },
-                password: { type: "string" },
+                email: { type: 'string' },
+                password: { type: 'string' },
               },
-              required: ["email", "password"],
+              required: ['email', 'password'],
             },
           },
         },
@@ -589,44 +593,44 @@ describe("IrBuilderService", () => {
 
       const ir = service.buildIR(doc);
       const operation = ir.services
-        .find((s) => s.tag === "Auth")
-        ?.operations.find((o) => o.operationID === "AuthController_signin");
+        .find((s) => s.tag === 'Auth')
+        ?.operations.find((o) => o.operationID === 'AuthController_signin');
 
       expect(operation).toBeDefined();
       expect(operation?.requestBody).toBeDefined();
       if (operation?.requestBody) {
-        expect(operation.requestBody.schema.kind).toBe("ref");
-        if (operation.requestBody.schema.kind === "ref") {
+        expect(operation.requestBody.schema.kind).toBe('ref');
+        if (operation.requestBody.schema.kind === 'ref') {
           // Should use the model name directly, not AuthSigninRequestBody
-          expect(operation.requestBody.schema.ref).toBe("PasswordSignin");
+          expect(operation.requestBody.schema.ref).toBe('PasswordSignin');
         }
       }
     });
 
-    it("should use operation-based naming for inline object schemas", () => {
+    it('should use operation-based naming for inline object schemas', () => {
       const doc = createMockOpenAPI30Document({
         paths: {
-          "/users": {
+          '/users': {
             post: {
-              operationId: "UserController_create",
-              tags: ["Users"],
+              operationId: 'UserController_create',
+              tags: ['Users'],
               requestBody: {
                 required: true,
                 content: {
-                  "application/json": {
+                  'application/json': {
                     schema: {
-                      type: "object",
+                      type: 'object',
                       properties: {
-                        name: { type: "string" },
-                        email: { type: "string" },
+                        name: { type: 'string' },
+                        email: { type: 'string' },
                       },
-                      required: ["name", "email"],
+                      required: ['name', 'email'],
                     },
                   },
                 },
               },
               responses: {
-                "200": { description: "OK" },
+                '200': { description: 'OK' },
               },
             },
           },
@@ -635,38 +639,38 @@ describe("IrBuilderService", () => {
 
       const ir = service.buildIR(doc);
       const operation = ir.services
-        .find((s) => s.tag === "Users")
-        ?.operations.find((o) => o.operationID === "UserController_create");
+        .find((s) => s.tag === 'Users')
+        ?.operations.find((o) => o.operationID === 'UserController_create');
 
       expect(operation).toBeDefined();
       expect(operation?.requestBody).toBeDefined();
       if (operation?.requestBody) {
         // For inline schemas, should use operation-based naming
-        expect(operation.requestBody.schema.kind).toBe("ref");
-        if (operation.requestBody.schema.kind === "ref") {
+        expect(operation.requestBody.schema.kind).toBe('ref');
+        if (operation.requestBody.schema.kind === 'ref') {
           expect(operation.requestBody.schema.ref).toBe(
-            "UsersCreateRequestBody"
+            'UsersCreateRequestBody'
           );
         }
       }
     });
 
-    it("should use model name from array of refs", () => {
+    it('should use model name from array of refs', () => {
       const doc = createMockOpenAPI30Document({
         paths: {
-          "/users": {
+          '/users': {
             get: {
-              operationId: "UserController_list",
-              tags: ["Users"],
+              operationId: 'UserController_list',
+              tags: ['Users'],
               responses: {
-                "200": {
-                  description: "OK",
+                '200': {
+                  description: 'OK',
                   content: {
-                    "application/json": {
+                    'application/json': {
                       schema: {
-                        type: "array",
+                        type: 'array',
                         items: {
-                          $ref: "#/components/schemas/User",
+                          $ref: '#/components/schemas/User',
                         },
                       },
                     },
@@ -679,10 +683,10 @@ describe("IrBuilderService", () => {
         components: {
           schemas: {
             User: {
-              type: "object",
+              type: 'object',
               properties: {
-                id: { type: "string" },
-                name: { type: "string" },
+                id: { type: 'string' },
+                name: { type: 'string' },
               },
             },
           },
@@ -691,39 +695,39 @@ describe("IrBuilderService", () => {
 
       const ir = service.buildIR(doc);
       const operation = ir.services
-        .find((s) => s.tag === "Users")
-        ?.operations.find((o) => o.operationID === "UserController_list");
+        .find((s) => s.tag === 'Users')
+        ?.operations.find((o) => o.operationID === 'UserController_list');
 
       expect(operation).toBeDefined();
       // The response should be an array of User
-      expect(operation?.response.schema.kind).toBe("array");
+      expect(operation?.response.schema.kind).toBe('array');
       if (
-        operation?.response.schema.kind === "array" &&
+        operation?.response.schema.kind === 'array' &&
         operation.response.schema.items
       ) {
-        expect(operation.response.schema.items.kind).toBe("ref");
-        if (operation.response.schema.items.kind === "ref") {
-          expect(operation.response.schema.items.ref).toBe("User");
+        expect(operation.response.schema.items.kind).toBe('ref');
+        if (operation.response.schema.items.kind === 'ref') {
+          expect(operation.response.schema.items.ref).toBe('User');
         }
       }
     });
 
-    it("should handle response with inline object schema", () => {
+    it('should handle response with inline object schema', () => {
       const doc = createMockOpenAPI30Document({
         paths: {
-          "/custom": {
+          '/custom': {
             post: {
-              operationId: "CustomController_doSomething",
-              tags: ["Custom"],
+              operationId: 'CustomController_doSomething',
+              tags: ['Custom'],
               responses: {
-                "200": {
-                  description: "OK",
+                '200': {
+                  description: 'OK',
                   content: {
-                    "application/json": {
+                    'application/json': {
                       schema: {
-                        type: "object",
+                        type: 'object',
                         properties: {
-                          result: { type: "string" },
+                          result: { type: 'string' },
                         },
                       },
                     },
@@ -737,21 +741,21 @@ describe("IrBuilderService", () => {
 
       const ir = service.buildIR(doc);
       const operation = ir.services
-        .find((s) => s.tag === "Custom")
+        .find((s) => s.tag === 'Custom')
         ?.operations.find(
-          (o) => o.operationID === "CustomController_doSomething"
+          (o) => o.operationID === 'CustomController_doSomething'
         );
 
       expect(operation).toBeDefined();
       // For inline schemas, should extract and use operation-based naming
-      expect(operation?.response.schema.kind).toBe("ref");
-      if (operation?.response.schema.kind === "ref") {
-        expect(operation.response.schema.ref).toBe("CustomDoSomethingResponse");
+      expect(operation?.response.schema.kind).toBe('ref');
+      if (operation?.response.schema.kind === 'ref') {
+        expect(operation.response.schema.ref).toBe('CustomDoSomethingResponse');
       }
 
       // Should have extracted the type
       const extractedType = ir.modelDefs.find(
-        (m) => m.name === "CustomDoSomethingResponse"
+        (m) => m.name === 'CustomDoSomethingResponse'
       );
       expect(extractedType).toBeDefined();
     });

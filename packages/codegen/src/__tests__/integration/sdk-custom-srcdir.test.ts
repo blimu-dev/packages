@@ -1,12 +1,16 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import * as fs from 'fs';
-import * as path from 'path';
 import {
   generateTestSDK,
   importGeneratedSDK,
   cleanupTestSDK,
   typecheckGeneratedSDK,
   getSDKFilePath,
+  type GeneratedSDKModule,
+  getClientConstructor,
+  getService,
+  type SDKClient,
+  type ServiceMethods,
 } from './helpers/sdk-generator';
 import { setupMSW, teardownMSW } from './helpers/msw-setup';
 import { handlers } from './helpers/msw-handlers';
@@ -14,7 +18,7 @@ import { handlers } from './helpers/msw-handlers';
 describe('Generated SDK - Custom srcDir', () => {
   describe('Nested srcDir (src/sdk)', () => {
     let sdkPath: string;
-    let SDK: any;
+    let SDK: GeneratedSDKModule;
 
     beforeAll(async () => {
       // Generate SDK with custom srcDir
@@ -24,6 +28,7 @@ describe('Generated SDK - Custom srcDir', () => {
             type: 'typescript',
             packageName: 'test-sdk',
             name: 'TestClient',
+            outDir: './test-sdk-custom-srcdir',
             srcDir: 'src/sdk',
           },
         ],
@@ -95,18 +100,21 @@ describe('Generated SDK - Custom srcDir', () => {
     });
 
     it('should instantiate SDK client correctly', () => {
-      const client = new SDK.TestClient({
+      const TestClient = getClientConstructor(SDK, 'TestClient');
+      const client: SDKClient = new TestClient({
         baseURL: 'https://api.test.com/v1',
       });
       expect(client).toBeDefined();
     });
 
     it('should make API requests correctly', async () => {
-      const client = new SDK.TestClient({
+      const TestClient = getClientConstructor(SDK, 'TestClient');
+      const client: SDKClient = new TestClient({
         baseURL: 'https://api.test.com/v1',
       });
 
-      const result = await client.users.listUsers();
+      const users = getService<ServiceMethods<'listUsers'>>(client, 'users');
+      const result = (await users.listUsers()) as Array<unknown>;
       expect(result).toBeDefined();
       expect(Array.isArray(result)).toBe(true);
     });
@@ -114,7 +122,7 @@ describe('Generated SDK - Custom srcDir', () => {
 
   describe('Default srcDir (backward compatibility)', () => {
     let sdkPath: string;
-    let SDK: any;
+    let SDK: GeneratedSDKModule;
 
     beforeAll(async () => {
       // Generate SDK without srcDir (should default to "src")
@@ -156,7 +164,8 @@ describe('Generated SDK - Custom srcDir', () => {
     });
 
     it('should instantiate SDK client correctly', () => {
-      const client = new SDK.TestClient({
+      const TestClient = getClientConstructor(SDK, 'TestClient');
+      const client: SDKClient = new TestClient({
         baseURL: 'https://api.test.com/v1',
       });
       expect(client).toBeDefined();
@@ -173,6 +182,7 @@ describe('Generated SDK - Custom srcDir', () => {
             type: 'typescript',
             packageName: 'test-sdk',
             name: 'TestClient',
+            outDir: './test-sdk-custom-srcdir-2',
             srcDir: 'src/sdk',
           },
         ],

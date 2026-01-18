@@ -36,8 +36,9 @@ export async function formatWithPrettier(
       await execAsync('npx --yes prettier --version', {
         cwd: outDir,
         maxBuffer: 10 * 1024 * 1024, // 10MB buffer
+        // Don't set shell explicitly - let Node.js use the default
       });
-    } catch (error) {
+    } catch {
       log.warn?.(
         'Prettier is not available. Skipping code formatting. Install prettier to enable formatting.'
       );
@@ -71,11 +72,13 @@ export async function formatWithPrettier(
       })
       .join(' ');
 
-    const { stdout, stderr } = await execAsync(
+    const { stderr } = await execAsync(
       `npx --yes prettier --write --log-level=error ${escapedFiles}`,
       {
         cwd: outDir,
         maxBuffer: 10 * 1024 * 1024, // 10MB buffer
+        // Don't set shell explicitly - let Node.js use the default
+        // This works better across different platforms
       }
     );
 

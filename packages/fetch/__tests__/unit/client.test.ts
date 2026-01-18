@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { FetchClient } from '../../src/client';
-import { FetchError, NotFoundError, UnauthorizedError } from '../../src/errors';
+import { NotFoundError } from '../../src/errors';
 
 // Mock fetch globally
 const mockFetch = vi.fn();

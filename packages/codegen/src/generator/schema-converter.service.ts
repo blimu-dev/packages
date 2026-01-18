@@ -1,18 +1,18 @@
-import { Injectable } from "@nestjs/common";
-import type { OpenAPIV3, OpenAPIV3_1 } from "openapi-types";
+import { Injectable } from '@nestjs/common';
+import type { OpenAPIV3, OpenAPIV3_1 } from 'openapi-types';
 import type {
   IRSchema,
   IRField,
   IRAnnotations,
   IRDiscriminator,
-} from "../ir/ir.types";
-import { IRSchemaKind } from "../ir/ir.types";
-import type { OpenAPIDocument } from "../openapi/openapi.types";
+} from '../ir/ir.types';
+import { IRSchemaKind } from '../ir/ir.types';
+import type { OpenAPIDocument } from '../openapi/openapi.types';
 import {
   getSchemaFromRef,
   isSchemaNullable,
   getSchemaType,
-} from "../openapi/openapi.types";
+} from '../openapi/openapi.types';
 
 @Injectable()
 export class SchemaConverterService {
@@ -34,14 +34,14 @@ export class SchemaConverterService {
     }
 
     // Handle $ref
-    if ("$ref" in schemaRef && schemaRef.$ref) {
+    if ('$ref' in schemaRef && schemaRef.$ref) {
       const ref = schemaRef.$ref;
-      if (ref.startsWith("#/components/schemas/")) {
-        const name = ref.replace("#/components/schemas/", "");
+      if (ref.startsWith('#/components/schemas/')) {
+        const name = ref.replace('#/components/schemas/', '');
         return { kind: IRSchemaKind.Ref, ref: name, nullable: false };
       }
       // Handle other ref formats
-      const parts = ref.split("/");
+      const parts = ref.split('/');
       if (parts.length > 0) {
         const name = parts[parts.length - 1];
         if (name) {
@@ -126,39 +126,38 @@ export class SchemaConverterService {
     // Handle both string and string[] types (3.0 vs 3.1)
     const type = getSchemaType(schema);
     const normalizedType = Array.isArray(type)
-      ? type.filter((t) => t !== "null")[0]
+      ? type.filter((t) => t !== 'null')[0]
       : type;
 
     if (normalizedType) {
       switch (normalizedType) {
-        case "string":
+        case 'string':
           return {
             kind: IRSchemaKind.String,
             nullable,
             format: schema.format,
             discriminator,
           };
-        case "integer":
+        case 'integer':
           return {
             kind: IRSchemaKind.Integer,
             nullable,
             discriminator,
           };
-        case "number":
+        case 'number':
           return {
             kind: IRSchemaKind.Number,
             nullable,
             discriminator,
           };
-        case "boolean":
+        case 'boolean':
           return {
             kind: IRSchemaKind.Boolean,
             nullable,
             discriminator,
           };
-        case "array":
-          // When type is "array", schema has items property (required in OpenAPI spec)
-          // TypeScript doesn't narrow the union type, so we use type assertion
+        case 'array': // TypeScript doesn't narrow the union type, so we use type assertion // When type is "array", schema has items property (required in OpenAPI spec)
+        {
           const arraySchema = schema as
             | (OpenAPIV3.SchemaObject & {
                 items?: OpenAPIV3.SchemaObject | OpenAPIV3.ReferenceObject;
@@ -173,8 +172,8 @@ export class SchemaConverterService {
             nullable,
             discriminator,
           };
-        case "object":
-          // Properties
+        }
+        case 'object': { // Properties
           const properties: IRField[] = [];
           if (schema.properties) {
             const propNames = Object.keys(schema.properties).sort();
@@ -192,7 +191,7 @@ export class SchemaConverterService {
           }
           let additionalProperties: IRSchema | undefined;
           if (schema.additionalProperties) {
-            if (typeof schema.additionalProperties === "object") {
+            if (typeof schema.additionalProperties === 'object') {
               additionalProperties = this.schemaRefToIR(
                 doc,
                 schema.additionalProperties
@@ -206,6 +205,7 @@ export class SchemaConverterService {
             nullable,
             discriminator,
           };
+        }
       }
     }
 
@@ -228,7 +228,7 @@ export class SchemaConverterService {
       | OpenAPIV3_1.SchemaObject
       | undefined
   ): IRAnnotations {
-    if (!schemaRef || "$ref" in schemaRef) {
+    if (!schemaRef || '$ref' in schemaRef) {
       return {};
     }
     const schema = schemaRef as
@@ -260,17 +260,17 @@ export class SchemaConverterService {
     const type = getSchemaType(schema);
     if (type) {
       const normalizedType = Array.isArray(type)
-        ? type.filter((t) => t !== "null")[0]
+        ? type.filter((t) => t !== 'null')[0]
         : type;
       if (normalizedType) {
         switch (normalizedType) {
-          case "string":
+          case 'string':
             return IRSchemaKind.String;
-          case "integer":
+          case 'integer':
             return IRSchemaKind.Integer;
-          case "number":
+          case 'number':
             return IRSchemaKind.Number;
-          case "boolean":
+          case 'boolean':
             return IRSchemaKind.Boolean;
         }
       }
@@ -278,15 +278,15 @@ export class SchemaConverterService {
     // Fallback: inspect first enum value
     if (schema.enum && schema.enum.length > 0) {
       const first = schema.enum[0];
-      if (typeof first === "string") {
+      if (typeof first === 'string') {
         return IRSchemaKind.String;
       }
-      if (typeof first === "number") {
+      if (typeof first === 'number') {
         return Number.isInteger(first)
           ? IRSchemaKind.Integer
           : IRSchemaKind.Number;
       }
-      if (typeof first === "boolean") {
+      if (typeof first === 'boolean') {
         return IRSchemaKind.Boolean;
       }
     }
