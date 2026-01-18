@@ -1,0 +1,7 @@
+# Handlebar template files
+*.hbs
+*.handlebars
+*.handlebars.html
+**/*.hbs
+**/*.handlebars
+packages/**/*.hbs

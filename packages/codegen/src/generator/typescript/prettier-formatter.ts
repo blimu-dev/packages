@@ -15,17 +15,17 @@ interface SimpleLogger {
 }
 
 /**
- * Formats TypeScript files in the generated SDK using Prettier.
- * This function formats all .ts and .tsx files in the src directory.
+ * Formats specific TypeScript files in the generated SDK using Prettier.
+ * This function formats only the files that were explicitly generated.
  *
  * @param outDir - The output directory where the SDK was generated
- * @param srcDir - The source directory path (e.g., "src" or "src/sdk"). Defaults to "src".
+ * @param filesToFormat - Array of file paths (relative to outDir) to format. Only .ts and .tsx files will be formatted.
  * @param logger - Optional logger instance for logging formatting progress
  * @returns Promise that resolves when formatting is complete
  */
 export async function formatWithPrettier(
   outDir: string,
-  srcDir: string = 'src',
+  filesToFormat: string[],
   logger?: Logger | SimpleLogger
 ): Promise<void> {
   const log = logger || console;
@@ -44,24 +44,35 @@ export async function formatWithPrettier(
       return;
     }
 
-    // Format all TypeScript files in the src directory
-    const srcDirPath = path.join(outDir, srcDir);
+    // Filter to only TypeScript files and check they exist
+    const tsFilesToFormat: string[] = [];
+    for (const file of filesToFormat) {
+      if (file.endsWith('.ts') || file.endsWith('.tsx')) {
+        const fullPath = path.join(outDir, file);
+        if (fs.existsSync(fullPath)) {
+          tsFilesToFormat.push(file);
+        }
+      }
+    }
 
-    // Check if src directory exists
-    if (!fs.existsSync(srcDirPath)) {
-      log.warn?.(
-        `Source directory not found at ${srcDirPath}. Skipping formatting.`
-      );
+    if (tsFilesToFormat.length === 0) {
+      log.debug?.('No TypeScript files to format.');
       return;
     }
 
-    // Use Prettier to format all TypeScript files
+    // Use Prettier to format only the specific files we generated
     // Prettier will use the .prettierrc file in the outDir if it exists
     // Use --loglevel=error to suppress informational output (only show errors)
-    // Escape the srcDir path for use in the glob pattern
-    const escapedSrcDir = srcDir.replace(/\\/g, '/');
+    // Escape file paths for use in the command
+    const escapedFiles = tsFilesToFormat
+      .map((file) => {
+        const escaped = file.replace(/\\/g, '/');
+        return `"${escaped}"`;
+      })
+      .join(' ');
+
     const { stdout, stderr } = await execAsync(
-      `npx --yes prettier --write --log-level=error "${escapedSrcDir}/**/*.{ts,tsx}"`,
+      `npx --yes prettier --write --log-level=error ${escapedFiles}`,
       {
         cwd: outDir,
         maxBuffer: 10 * 1024 * 1024, // 10MB buffer

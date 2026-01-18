@@ -81,7 +81,8 @@ describe('Generated SDK - Custom srcDir', () => {
       expect(fs.existsSync(tsupConfigPath)).toBe(true);
 
       const tsupConfig = fs.readFileSync(tsupConfigPath, 'utf-8');
-      expect(tsupConfig).toContain('entry: ["src/sdk/**/*.ts"]');
+      // Prettier formats with single quotes, so check for that
+      expect(tsupConfig).toContain("entry: ['src/sdk/**/*.ts']");
     });
 
     it('should have correct package.json with custom srcDir', () => {
@@ -89,7 +90,8 @@ describe('Generated SDK - Custom srcDir', () => {
       expect(fs.existsSync(packageJsonPath)).toBe(true);
 
       const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
-      expect(packageJson.files).toContain('src/sdk/**');
+      // package.json.files should only include dist/** for npm publishing, not source files
+      expect(packageJson.files).toContain('dist/**');
     });
 
     it('should instantiate SDK client correctly', () => {

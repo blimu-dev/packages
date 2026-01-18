@@ -63,17 +63,35 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
     // Register Handlebars helpers
     this.registerHandlebarsHelpers(client);
 
-    // Generate files
-    await this.generateClient(client, processedIR, srcDir);
-    await this.generateAuthStrategies(client, processedIR, srcDir);
-    await this.generateIndex(client, processedIR, srcDir);
-    await this.generateUtils(client, processedIR, srcDir);
-    await this.generateServices(client, processedIR, servicesDir);
-    await this.generateSchema(client, processedIR, srcDir);
-    await this.generateZodSchema(client, processedIR, srcDir);
+    // Generate files and track all generated TypeScript files for formatting
+    const generatedTypeScriptFiles: string[] = [];
+    
+    generatedTypeScriptFiles.push(
+      ...(await this.generateClient(client, processedIR, srcDir))
+    );
+    generatedTypeScriptFiles.push(
+      ...(await this.generateAuthStrategies(client, processedIR, srcDir))
+    );
+    generatedTypeScriptFiles.push(
+      ...(await this.generateIndex(client, processedIR, srcDir))
+    );
+    generatedTypeScriptFiles.push(
+      ...(await this.generateUtils(client, processedIR, srcDir))
+    );
+    generatedTypeScriptFiles.push(
+      ...(await this.generateServices(client, processedIR, servicesDir))
+    );
+    generatedTypeScriptFiles.push(
+      ...(await this.generateSchema(client, processedIR, srcDir))
+    );
+    generatedTypeScriptFiles.push(
+      ...(await this.generateZodSchema(client, processedIR, srcDir))
+    );
     await this.generatePackageJson(client);
     await this.generateTsConfig(client);
-    await this.generateTsupConfig(client);
+    generatedTypeScriptFiles.push(
+      ...(await this.generateTsupConfig(client))
+    );
     await this.generateReadme(client, processedIR);
 
     // Format generated TypeScript files with Prettier (if enabled)
@@ -85,7 +103,11 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
       this.logger.debug(
         'Formatting generated TypeScript files with Prettier...'
       );
-      await formatWithPrettier(client.outDir, srcDirPath, this.logger);
+      await formatWithPrettier(
+        client.outDir,
+        generatedTypeScriptFiles,
+        this.logger
+      );
     } else {
       this.logger.debug('Code formatting is disabled for this client.');
     }
@@ -533,10 +555,10 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
     client: TypeScriptClient,
     ir: IR,
     srcDir: string
-  ): Promise<void> {
+  ): Promise<string[]> {
     const clientPath = path.join(srcDir, 'client.ts');
     if (this.configService.shouldExcludeFile(client, clientPath)) {
-      return;
+      return [];
     }
     try {
       await this.renderTemplate(
@@ -545,6 +567,7 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
         clientPath,
         client
       );
+      return [path.relative(client.outDir, clientPath)];
     } catch (error) {
       // Fallback if template doesn't exist yet
       const errorMsg = error instanceof Error ? error.message : String(error);
@@ -553,6 +576,7 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
       );
       const content = `// Generated client - template rendering to be implemented`;
       await fs.promises.writeFile(clientPath, content, 'utf-8');
+      return [path.relative(client.outDir, clientPath)];
     }
   }
 
@@ -560,10 +584,10 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
     client: TypeScriptClient,
     ir: IR,
     srcDir: string
-  ): Promise<void> {
+  ): Promise<string[]> {
     const authStrategiesPath = path.join(srcDir, 'auth-strategies.ts');
     if (this.configService.shouldExcludeFile(client, authStrategiesPath)) {
-      return;
+      return [];
     }
     try {
       await this.renderTemplate(
@@ -572,12 +596,14 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
         authStrategiesPath,
         client
       );
+      return [path.relative(client.outDir, authStrategiesPath)];
     } catch (error) {
       this.logger.warn(
         `Template auth-strategies.ts.hbs not found, using placeholder`
       );
       const content = `// Generated auth-strategies - template rendering to be implemented`;
       await fs.promises.writeFile(authStrategiesPath, content, 'utf-8');
+      return [path.relative(client.outDir, authStrategiesPath)];
     }
   }
 
@@ -585,10 +611,10 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
     client: TypeScriptClient,
     ir: IR,
     srcDir: string
-  ): Promise<void> {
+  ): Promise<string[]> {
     const indexPath = path.join(srcDir, 'index.ts');
     if (this.configService.shouldExcludeFile(client, indexPath)) {
-      return;
+      return [];
     }
 
     // Skip generation if index.ts already exists (allows user customization)
@@ -597,7 +623,7 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
       this.logger.debug(
         `index.ts already exists at ${indexPath}, skipping generation to preserve customizations`
       );
-      return;
+      return [];
     } catch (error) {
       // File doesn't exist, proceed with generation
     }
@@ -609,10 +635,12 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
         indexPath,
         client
       );
+      return [path.relative(client.outDir, indexPath)];
     } catch (error) {
       this.logger.warn(`Template index.ts.hbs not found, using placeholder`);
       const content = `// Generated index - template rendering to be implemented`;
       await fs.promises.writeFile(indexPath, content, 'utf-8');
+      return [path.relative(client.outDir, indexPath)];
     }
   }
 
@@ -620,10 +648,10 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
     client: TypeScriptClient,
     ir: IR,
     srcDir: string
-  ): Promise<void> {
+  ): Promise<string[]> {
     const utilsPath = path.join(srcDir, 'utils.ts');
     if (this.configService.shouldExcludeFile(client, utilsPath)) {
-      return;
+      return [];
     }
     try {
       await this.renderTemplate(
@@ -632,10 +660,12 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
         utilsPath,
         client
       );
+      return [path.relative(client.outDir, utilsPath)];
     } catch (error) {
       this.logger.warn(`Template utils.ts.hbs not found, using placeholder`);
       const content = `// Generated utils - template rendering to be implemented`;
       await fs.promises.writeFile(utilsPath, content, 'utf-8');
+      return [path.relative(client.outDir, utilsPath)];
     }
   }
 
@@ -643,7 +673,8 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
     client: TypeScriptClient,
     ir: IR,
     servicesDir: string
-  ): Promise<void> {
+  ): Promise<string[]> {
+    const generatedFiles: string[] = [];
     for (const service of ir.services) {
       const servicePath = path.join(
         servicesDir,
@@ -665,24 +696,27 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
           servicePath,
           client
         );
+        generatedFiles.push(path.relative(client.outDir, servicePath));
       } catch (error) {
         this.logger.warn(
           `Template service.ts.hbs not found, using placeholder`
         );
         const content = `// Generated service ${service.tag} - template rendering to be implemented`;
         await fs.promises.writeFile(servicePath, content, 'utf-8');
+        generatedFiles.push(path.relative(client.outDir, servicePath));
       }
     }
+    return generatedFiles;
   }
 
   private async generateSchema(
     client: TypeScriptClient,
     ir: IR,
     srcDir: string
-  ): Promise<void> {
+  ): Promise<string[]> {
     const schemaPath = path.join(srcDir, 'schema.ts');
     if (this.configService.shouldExcludeFile(client, schemaPath)) {
-      return;
+      return [];
     }
     try {
       await this.renderTemplate(
@@ -696,6 +730,7 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
         schemaPath,
         client
       );
+      return [path.relative(client.outDir, schemaPath)];
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
       this.logger.warn(
@@ -703,6 +738,7 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
       );
       const content = `// Generated schema - template rendering to be implemented`;
       await fs.promises.writeFile(schemaPath, content, 'utf-8');
+      return [path.relative(client.outDir, schemaPath)];
     }
   }
 
@@ -710,10 +746,10 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
     client: TypeScriptClient,
     ir: IR,
     srcDir: string
-  ): Promise<void> {
+  ): Promise<string[]> {
     const zodSchemaPath = path.join(srcDir, 'schema.zod.ts');
     if (this.configService.shouldExcludeFile(client, zodSchemaPath)) {
-      return;
+      return [];
     }
     try {
       // Sort modelDefs by dependencies to ensure const declarations are in correct order
@@ -728,6 +764,7 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
         zodSchemaPath,
         client
       );
+      return [path.relative(client.outDir, zodSchemaPath)];
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
       this.logger.warn(
@@ -735,6 +772,7 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
       );
       const content = `// Generated Zod schemas - template rendering to be implemented`;
       await fs.promises.writeFile(zodSchemaPath, content, 'utf-8');
+      return [path.relative(client.outDir, zodSchemaPath)];
     }
   }
 
@@ -804,10 +842,10 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
     }
   }
 
-  private async generateTsupConfig(client: TypeScriptClient): Promise<void> {
+  private async generateTsupConfig(client: TypeScriptClient): Promise<string[]> {
     const tsupConfigPath = path.join(client.outDir, 'tsup.config.ts');
     if (this.configService.shouldExcludeFile(client, tsupConfigPath)) {
-      return;
+      return [];
     }
     try {
       await this.renderTemplate(
@@ -837,6 +875,7 @@ export default defineConfig({
 `;
       await fs.promises.writeFile(tsupConfigPath, content, 'utf-8');
     }
+    return ['tsup.config.ts'];
   }
 
   private async generateReadme(
