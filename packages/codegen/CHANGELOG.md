@@ -1,5 +1,11 @@
 # @blimu/codegen
 
+## 0.4.0
+
+### Minor Changes
+
+- 88e3349: Add `srcDir` configuration option to customize the source directory path for generated SDK output. This allows placing generated code in subdirectories like `src/sdk` instead of the default `src`.
+
 ## 0.3.1
 
 ### Patch Changes
