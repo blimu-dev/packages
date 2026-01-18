@@ -1,5 +1,11 @@
 # @blimu/codegen
 
+## 0.4.1
+
+### Patch Changes
+
+- d063379: Fix Prettier formatting to only format files that were explicitly generated, rather than using glob patterns that could format unintended files. This makes the formatter safer and more explicit.
+
 ## 0.4.0
 
 ### Minor Changes
