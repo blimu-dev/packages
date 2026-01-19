@@ -31,6 +31,8 @@ import {
   getStreamingItemType,
   collectPredefinedTypesUsedInService,
   sortModelDefsByDependencies,
+  buildQueryKeyReturnType,
+  hasOptionalQueryKeyParams,
 } from './helpers';
 import { schemaToZodSchema } from './zod-schema-converter';
 import { toPascalCase, toSnakeCase } from '../../utils/string.utils';
@@ -234,6 +236,36 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
         const args = queryKeyArgs(op);
         // Return as SafeString array to prevent HTML escaping
         return args.map((arg) => new Handlebars.SafeString(arg));
+      }
+    );
+    Handlebars.registerHelper(
+      'queryKeyReturnType',
+      (op: OperationWithResolvedName, options: Handlebars.HelperOptions) => {
+        const methodName = op._resolvedMethodName || deriveMethodName(op);
+        const modelDefs = options?.data?.root?.IR?.modelDefs || [];
+        const predefinedTypes = options?.data?.root?.PredefinedTypes || [];
+        // Service files are not in the same file as schema.ts, so isSameFile=false
+        const isSameFile = options?.data?.root?.isSameFile || false;
+        const returnType = buildQueryKeyReturnType(
+          op,
+          methodName,
+          modelDefs,
+          predefinedTypes,
+          isSameFile
+        );
+        return new Handlebars.SafeString(returnType);
+      }
+    );
+    Handlebars.registerHelper(
+      'hasOptionalQueryKeyParams',
+      (op: OperationWithResolvedName) => {
+        return hasOptionalQueryKeyParams(op);
+      }
+    );
+    Handlebars.registerHelper(
+      'hasAnyOptionalQueryKeyParams',
+      (service: { operations: IROperation[] }) => {
+        return service.operations.some((op) => hasOptionalQueryKeyParams(op));
       }
     );
     Handlebars.registerHelper(

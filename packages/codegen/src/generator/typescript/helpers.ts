@@ -546,6 +546,107 @@ export function queryKeyArgs(op: IROperation): string[] {
 }
 
 /**
+ * Build query key return type generates a TypeScript tuple type for query keys
+ * Returns a union type when there are optional parameters
+ */
+export function buildQueryKeyReturnType(
+  op: IROperation,
+  methodName: string,
+  modelDefs?: { name: string; schema: IRSchema }[],
+  predefinedTypes?: { type: string; package: string }[],
+  isSameFile: boolean = false
+): string {
+  const baseType = buildQueryKeyBase(op); // e.g., 'v1/entitlements/check'
+
+  // Get types for path params (always required)
+  const pathParamTypes: string[] = [];
+  for (const p of orderPathParams(op)) {
+    const type = schemaToTSTypeWithSimpleTypes(
+      p.schema,
+      modelDefs,
+      predefinedTypes,
+      isSameFile
+    );
+    pathParamTypes.push(type);
+  }
+
+  // Check for optional parameters
+  const hasOptionalQuery = op.queryParams.length > 0;
+  const hasOptionalBody = op.requestBody && !op.requestBody.required;
+
+  // Helper to build tuple string
+  const buildTuple = (types: string[]): string => {
+    const allTypes = [baseType, ...types];
+    return `readonly [${allTypes.join(', ')}]`;
+  };
+
+  // If no optional params, return simple tuple
+  if (!hasOptionalQuery && !hasOptionalBody) {
+    return buildTuple(pathParamTypes);
+  }
+
+  // Build union types for optional parameters
+  const unionTypes: string[] = [];
+
+  // Generate all combinations of optional parameters
+  if (hasOptionalQuery && hasOptionalBody) {
+    // Both optional: 4 combinations
+    const queryType = `Schema.${toPascalCase(op.tag)}${toPascalCase(methodName)}Query`;
+    const bodyType = schemaToTSTypeWithSimpleTypes(
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      op.requestBody!.schema,
+      modelDefs,
+      predefinedTypes,
+      isSameFile
+    );
+
+    // [base, ...pathParams]
+    unionTypes.push(buildTuple(pathParamTypes));
+    // [base, ...pathParams, query]
+    unionTypes.push(buildTuple([...pathParamTypes, queryType]));
+    // [base, ...pathParams, body]
+    unionTypes.push(buildTuple([...pathParamTypes, bodyType]));
+    // [base, ...pathParams, query, body]
+    unionTypes.push(buildTuple([...pathParamTypes, queryType, bodyType]));
+  } else if (hasOptionalQuery) {
+    // Only query optional: 2 combinations
+    const queryType = `Schema.${toPascalCase(op.tag)}${toPascalCase(methodName)}Query`;
+    // [base, ...pathParams]
+    unionTypes.push(buildTuple(pathParamTypes));
+    // [base, ...pathParams, query]
+    unionTypes.push(buildTuple([...pathParamTypes, queryType]));
+  } else if (hasOptionalBody) {
+    if (!op.requestBody?.schema) {
+      throw new Error('Request body schema is required');
+    }
+    // Only body optional: 2 combinations
+    const bodyType = schemaToTSTypeWithSimpleTypes(
+      op.requestBody.schema,
+      modelDefs,
+      predefinedTypes,
+      isSameFile
+    );
+    // [base, ...pathParams]
+    unionTypes.push(buildTuple(pathParamTypes));
+    // [base, ...pathParams, body]
+    unionTypes.push(buildTuple([...pathParamTypes, bodyType]));
+  }
+
+  return unionTypes.join(' | ');
+}
+
+/**
+ * Check if operation has optional query key parameters
+ * Optional parameters are: query (if exists) and body (if exists and not required)
+ */
+export function hasOptionalQueryKeyParams(op: IROperation): boolean {
+  return (
+    op.queryParams.length > 0 ||
+    (op.requestBody !== null && !op.requestBody.required)
+  );
+}
+
+/**
  * Quote TS property name quotes TypeScript property names that contain special characters
  */
 export function quoteTSPropertyName(name: string): string {

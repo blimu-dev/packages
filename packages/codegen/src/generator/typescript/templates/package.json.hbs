@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "TypeScript SDK for {{Client.name}} API (auto-generated)",
   "main": "dist/index.js",
+  "type": "module",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "files": ["dist/**"],
@@ -10,32 +11,32 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
-      "require": "./dist/index.js",
-      "default": "./dist/index.js"
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.cjs"
     },
     "./services/*": {
       "types": "./dist/services/*.d.ts",
       "import": "./dist/services/*.mjs",
-      "require": "./dist/services/*.js",
-      "default": "./dist/services/*.js"
+      "require": "./dist/services/*.cjs",
+      "default": "./dist/services/*.cjs"
     },
     "./schema": {
       "types": "./dist/schema.d.ts",
       "import": "./dist/schema.mjs",
-      "require": "./dist/schema.js",
-      "default": "./dist/schema.js"
+      "require": "./dist/schema.cjs",
+      "default": "./dist/schema.cjs"
     },
     "./client": {
       "types": "./dist/client.d.ts",
       "import": "./dist/client.mjs",
-      "require": "./dist/client.js",
-      "default": "./dist/client.js"
+      "require": "./dist/client.cjs",
+      "default": "./dist/client.cjs"
     },
     "./utils": {
       "types": "./dist/utils.d.ts",
       "import": "./dist/utils.mjs",
-      "require": "./dist/utils.js",
-      "default": "./dist/utils.js"
+      "require": "./dist/utils.cjs",
+      "default": "./dist/utils.cjs"
     }
   },
   "scripts": {

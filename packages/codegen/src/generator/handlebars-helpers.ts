@@ -38,8 +38,13 @@ export function registerCommonHandlebarsHelpers(): void {
     (a: unknown, b: unknown) => (a as number) < (b as number)
   );
   Handlebars.registerHelper('sub', (a: number, b: number) => a - b);
+  Handlebars.registerHelper('subtract', (a: number, b: number) => a - b);
   Handlebars.registerHelper('len', (arr: unknown) =>
     Array.isArray(arr) ? arr.length : 0
+  );
+  Handlebars.registerHelper(
+    'lte',
+    (a: unknown, b: unknown) => (a as number) <= (b as number)
   );
   Handlebars.registerHelper('or', function (this: unknown, ...args: unknown[]) {
     const options = args[args.length - 1] as

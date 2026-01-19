@@ -3,7 +3,9 @@ import { FetchClient } from '@blimu/fetch';
 import * as Schema from "../schema";
 {{/if}}
 {{#if Client.includeQueryKeys}}
+{{#if (hasAnyOptionalQueryKeyParams Service)}}
 import { isNotUndefined } from "../utils";
+{{/if}}
 {{/if}}
 {{! Generate import statements for predefined types used in this specific service }}
 {{#if (getServicePredefinedTypes Service)}}
@@ -78,9 +80,13 @@ export class {{serviceName Service.tag}} {
     {{~#each (methodSignatureNoInit this) as |param|~}}
     {{param}}{{#unless @last}},{{/unless}}
     {{~/each~}}
-  ) {
+  ): {{#if (hasOptionalQueryKeyParams this)}}readonly string[]{{else}}{{queryKeyReturnType this}}{{/if}} {
+    {{#if (hasOptionalQueryKeyParams this)}}
     const keys = [{{queryKeyBase this}}{{#each (queryKeyArgs this)}}, {{this}}{{/each}}] as const;
-    return isNotUndefined(keys);
+    return isNotUndefined(keys) as readonly string[];
+    {{else}}
+    return [{{queryKeyBase this}}{{#each (queryKeyArgs this)}}, {{this}}{{/each}}] as const;
+    {{/if}}
   }
   {{/if}}
   {{/each}}
