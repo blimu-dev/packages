@@ -2,7 +2,7 @@
   "name": "{{Client.packageName}}",
   "version": "0.1.0",
   "description": "TypeScript SDK for {{Client.name}} API (auto-generated)",
-  "main": "dist/index.js",
+  "main": "dist/index.cjs",
   "type": "module",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
@@ -44,7 +44,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint .",
     "format": "eslint --fix . && prettier --write .",
-    "prepublishOnly": "npm run build && npm run typecheck || true"
+    "prepublishOnly": "npm run build && npm run typecheck"
   },
   "dependencies": {
 {{#each (getAllDependencies Client)}}

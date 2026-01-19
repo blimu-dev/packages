@@ -37,7 +37,7 @@ export function serializeQueryParams(query: QueryParams): URLSearchParams {
 export function buildUrl(
   baseUrl: string,
   path: string,
-  query?: QueryParams
+  query?: QueryParams | undefined
 ): URL {
   // Normalize path - remove trailing slash if present (except for root)
   let normalizedPath = path || '';

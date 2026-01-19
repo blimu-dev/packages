@@ -603,6 +603,112 @@ describe('TypeScript Helpers - Streaming', () => {
         );
         expect(result).toContain('Schema.ResourcesGetResourceQuery');
       });
+
+      it('should include required body type in tuple when no optional params', () => {
+        const op: IROperation = {
+          operationID: 'validate',
+          method: 'POST',
+          path: '/v1/workspace/{workspaceId}/environments/{environmentId}/definitions/validate',
+          tag: 'definitions',
+          originalTags: ['definitions'],
+          summary: '',
+          description: '',
+          deprecated: false,
+          pathParams: [
+            {
+              name: 'workspaceId',
+              schema: { kind: IRSchemaKind.String, nullable: false },
+              required: true,
+              description: '',
+            },
+            {
+              name: 'environmentId',
+              schema: { kind: IRSchemaKind.String, nullable: false },
+              required: true,
+              description: '',
+            },
+          ],
+          queryParams: [],
+          requestBody: {
+            required: true,
+            schema: {
+              kind: IRSchemaKind.Ref,
+              ref: 'DefinitionValidateRequestDto',
+              nullable: false,
+            },
+            contentType: 'application/json',
+            typeTS: '',
+          },
+          response: {
+            typeTS: '',
+            schema: { kind: IRSchemaKind.Object, nullable: false },
+            description: '',
+            isStreaming: false,
+            contentType: 'application/json',
+          },
+        };
+        const result = buildQueryKeyReturnType(op, 'validate');
+        // Should include base, path params, and required body type
+        expect(result).toBe(
+          "readonly ['v1/workspace/environments/definitions/validate', string, string, Schema.DefinitionValidateRequestDto]"
+        );
+      });
+
+      it('should include required body type when query params are optional', () => {
+        const op: IROperation = {
+          operationID: 'createWithQuery',
+          method: 'POST',
+          path: '/users/{userId}/posts',
+          tag: 'posts',
+          originalTags: ['posts'],
+          summary: '',
+          description: '',
+          deprecated: false,
+          pathParams: [
+            {
+              name: 'userId',
+              schema: { kind: IRSchemaKind.String, nullable: false },
+              required: true,
+              description: '',
+            },
+          ],
+          queryParams: [
+            {
+              name: 'include',
+              schema: { kind: IRSchemaKind.String, nullable: false },
+              required: false,
+              description: '',
+            },
+          ],
+          requestBody: {
+            required: true,
+            schema: {
+              kind: IRSchemaKind.Ref,
+              ref: 'CreatePostDto',
+              nullable: false,
+            },
+            contentType: 'application/json',
+            typeTS: '',
+          },
+          response: {
+            typeTS: '',
+            schema: { kind: IRSchemaKind.Object, nullable: false },
+            description: '',
+            isStreaming: false,
+            contentType: 'application/json',
+          },
+        };
+        const result = buildQueryKeyReturnType(op, 'createWithQuery');
+        // Should have 2 combinations: [base, userId, body] and [base, userId, body, query]
+        const parts = result.split(' | ');
+        expect(parts.length).toBe(2);
+        expect(result).toContain(
+          "readonly ['users/posts', string, Schema.CreatePostDto]"
+        );
+        expect(result).toContain(
+          "readonly ['users/posts', string, Schema.CreatePostDto, Schema.PostsCreateWithQueryQuery]"
+        );
+      });
     });
 
     describe('buildQueryKeyBase', () => {

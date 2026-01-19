@@ -573,6 +573,7 @@ export function buildQueryKeyReturnType(
   // Check for optional parameters
   const hasOptionalQuery = op.queryParams.length > 0;
   const hasOptionalBody = op.requestBody && !op.requestBody.required;
+  const hasRequiredBody = op.requestBody && op.requestBody.required;
 
   // Helper to build tuple string
   const buildTuple = (types: string[]): string => {
@@ -580,8 +581,20 @@ export function buildQueryKeyReturnType(
     return `readonly [${allTypes.join(', ')}]`;
   };
 
-  // If no optional params, return simple tuple
+  // If no optional params, return simple tuple (but include required body if present)
   if (!hasOptionalQuery && !hasOptionalBody) {
+    if (hasRequiredBody) {
+      if (!op.requestBody?.schema) {
+        throw new Error('Request body schema is required');
+      }
+      const bodyType = schemaToTSTypeWithSimpleTypes(
+        op.requestBody.schema,
+        modelDefs,
+        predefinedTypes,
+        isSameFile
+      );
+      return buildTuple([...pathParamTypes, bodyType]);
+    }
     return buildTuple(pathParamTypes);
   }
 
@@ -609,12 +622,28 @@ export function buildQueryKeyReturnType(
     // [base, ...pathParams, query, body]
     unionTypes.push(buildTuple([...pathParamTypes, queryType, bodyType]));
   } else if (hasOptionalQuery) {
-    // Only query optional: 2 combinations
+    // Query optional: 2 combinations (include required body if present)
     const queryType = `Schema.${toPascalCase(op.tag)}${toPascalCase(methodName)}Query`;
-    // [base, ...pathParams]
-    unionTypes.push(buildTuple(pathParamTypes));
-    // [base, ...pathParams, query]
-    unionTypes.push(buildTuple([...pathParamTypes, queryType]));
+    if (hasRequiredBody) {
+      if (!op.requestBody?.schema) {
+        throw new Error('Request body schema is required');
+      }
+      const bodyType = schemaToTSTypeWithSimpleTypes(
+        op.requestBody.schema,
+        modelDefs,
+        predefinedTypes,
+        isSameFile
+      );
+      // [base, ...pathParams, body]
+      unionTypes.push(buildTuple([...pathParamTypes, bodyType]));
+      // [base, ...pathParams, body, query]
+      unionTypes.push(buildTuple([...pathParamTypes, bodyType, queryType]));
+    } else {
+      // [base, ...pathParams]
+      unionTypes.push(buildTuple(pathParamTypes));
+      // [base, ...pathParams, query]
+      unionTypes.push(buildTuple([...pathParamTypes, queryType]));
+    }
   } else if (hasOptionalBody) {
     if (!op.requestBody?.schema) {
       throw new Error('Request body schema is required');
