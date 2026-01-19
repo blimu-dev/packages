@@ -156,7 +156,8 @@ export class SchemaConverterService {
             nullable,
             discriminator,
           };
-        case 'array': { // TypeScript doesn't narrow the union type, so we use type assertion // When type is "array", schema has items property (required in OpenAPI spec)
+        case 'array': {
+          // TypeScript doesn't narrow the union type, so we use type assertion // When type is "array", schema has items property (required in OpenAPI spec)
           const arraySchema = schema as
             | (OpenAPIV3.SchemaObject & {
                 items?: OpenAPIV3.SchemaObject | OpenAPIV3.ReferenceObject;
