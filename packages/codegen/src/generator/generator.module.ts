@@ -1,10 +1,10 @@
-import { Module } from "@nestjs/common";
-import { GeneratorService } from "./generator.service";
-import { IrBuilderService } from "./ir-builder.service";
-import { SchemaConverterService } from "./schema-converter.service";
-import { OpenApiModule } from "../openapi/openapi.module";
-import { ConfigModule } from "../config/config.module";
-import { TypeScriptGeneratorService } from "./typescript/typescript-generator.service";
+import { Module } from '@nestjs/common';
+import { GeneratorService } from './generator.service';
+import { IrBuilderService } from './ir-builder.service';
+import { SchemaConverterService } from './schema-converter.service';
+import { OpenApiModule } from '../openapi/openapi.module';
+import { ConfigModule } from '../config/config.module';
+import { TypeScriptGeneratorService } from './typescript/typescript-generator.service';
 
 @Module({
   imports: [OpenApiModule, ConfigModule],

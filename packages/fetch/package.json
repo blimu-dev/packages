@@ -31,8 +31,9 @@
     }
   },
   "files": [
-    "dist"
+    "dist/**/*"
   ],
+  "sideEffects": false,
   "scripts": {
     "build": "tsup",
     "clean": "rm -rf dist",
@@ -45,7 +46,7 @@
     "node": ">=22.0.0"
   },
   "devDependencies": {
-    "@types/node": "^25.0.8",
+    "@types/node": "^25.0.9",
     "@vitest/browser": "^4.0.17",
     "@vitest/coverage-v8": "^4.0.17",
     "msw": "^2.12.7",

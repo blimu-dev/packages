@@ -3,12 +3,15 @@
  * @param response - Fetch Response object
  * @returns Parsed response data
  */
-export async function parseResponse(response: Response): Promise<any> {
-  const contentType = response.headers.get("content-type") || "";
 
-  if (contentType.includes("application/json")) {
+type AnyPromiseResponse = Promise<string | object | ArrayBuffer | unknown>;
+
+export async function parseResponse(response: Response): AnyPromiseResponse {
+  const contentType = response.headers.get('content-type') || '';
+
+  if (contentType.includes('application/json')) {
     return await response.json();
-  } else if (contentType.startsWith("text/")) {
+  } else if (contentType.startsWith('text/')) {
     return await response.text();
   } else {
     // Binary or unknown content type - return ArrayBuffer

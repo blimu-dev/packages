@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { FetchClient } from '../../src/client';
-import { FetchError, NotFoundError, UnauthorizedError } from '../../src/errors';
+import { NotFoundError } from '../../src/errors';
 
 // Mock fetch globally
 const mockFetch = vi.fn();
@@ -28,7 +28,7 @@ describe('FetchClient', () => {
 
     it('should throw if fetch is not available', () => {
       const originalFetch = global.fetch;
-      // @ts-ignore
+      // @ts-expect-error - Intentionally deleting fetch to test error handling
       delete global.fetch;
       expect(() => new FetchClient()).toThrow();
       global.fetch = originalFetch;

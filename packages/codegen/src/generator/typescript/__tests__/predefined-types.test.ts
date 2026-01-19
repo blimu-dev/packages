@@ -1,69 +1,70 @@
-import { describe, it, expect } from "vitest";
-import { schemaToTSType } from "../helpers";
-import { IRSchema, IRSchemaKind } from "../../../ir/ir.types";
+import { describe, it, expect } from 'vitest';
+import { schemaToTSType } from '../helpers';
+import type { IRSchema } from '../../../ir/ir.types';
+import { IRSchemaKind } from '../../../ir/ir.types';
 
-describe("schemaToTSType with predefined types", () => {
+describe('schemaToTSType with predefined types', () => {
   const predefinedTypes = [
-    { type: "ResourceType", package: "@blimu/types" },
-    { type: "EntitlementType", package: "@blimu/types" },
-    { type: "PlanType", package: "@blimu/types" },
-    { type: "LimitType", package: "@blimu/types" },
-    { type: "UsageLimitType", package: "@blimu/types" },
+    { type: 'ResourceType', package: '@blimu/types' },
+    { type: 'EntitlementType', package: '@blimu/types' },
+    { type: 'PlanType', package: '@blimu/types' },
+    { type: 'LimitType', package: '@blimu/types' },
+    { type: 'UsageLimitType', package: '@blimu/types' },
   ];
 
-  it("should return type name directly for predefined type refs", () => {
+  it('should return type name directly for predefined type refs', () => {
     const schema: IRSchema = {
       kind: IRSchemaKind.Ref,
-      ref: "ResourceType",
+      ref: 'ResourceType',
       nullable: false,
     };
 
     const result = schemaToTSType(schema, predefinedTypes);
-    expect(result).toBe("ResourceType");
+    expect(result).toBe('ResourceType');
   });
 
-  it("should return Schema.TypeName for non-predefined type refs", () => {
+  it('should return Schema.TypeName for non-predefined type refs', () => {
     const schema: IRSchema = {
       kind: IRSchemaKind.Ref,
-      ref: "User",
+      ref: 'User',
       nullable: false,
     };
 
     const result = schemaToTSType(schema, predefinedTypes);
-    expect(result).toBe("Schema.User");
+    expect(result).toBe('Schema.User');
   });
 
-  it("should handle predefined types in arrays", () => {
+  it('should handle predefined types in arrays', () => {
     const schema: IRSchema = {
       kind: IRSchemaKind.Array,
       items: {
         kind: IRSchemaKind.Ref,
-        ref: "ResourceType",
+        ref: 'ResourceType',
         nullable: false,
       },
       nullable: false,
     };
 
     const result = schemaToTSType(schema, predefinedTypes);
-    expect(result).toBe("Array<ResourceType>");
+    expect(result).toBe('ResourceType[]');
   });
 
-  it("should handle predefined types in object properties", () => {
+  it('should handle predefined types in object properties', () => {
     const schema: IRSchema = {
       kind: IRSchemaKind.Object,
       properties: [
         {
-          name: "type",
+          name: 'type',
           type: {
             kind: IRSchemaKind.Ref,
-            ref: "ResourceType",
+            ref: 'ResourceType',
             nullable: false,
           },
           required: true,
           annotations: {},
         },
         {
-          name: "id",
+          name: 'id',
           type: {
             kind: IRSchemaKind.String,
             nullable: false,
@@ -76,24 +77,24 @@ describe("schemaToTSType with predefined types", () => {
     };
 
     const result = schemaToTSType(schema, predefinedTypes);
-    expect(result).toContain("type: ResourceType");
-    expect(result).toContain("id: string");
-    expect(result).not.toContain("Schema.ResourceType");
+    expect(result).toContain('type: ResourceType');
+    expect(result).toContain('id: string');
+    expect(result).not.toContain('Schema.ResourceType');
   });
 
-  it("should handle nested predefined types in complex structures", () => {
+  it('should handle nested predefined types in complex structures', () => {
     const schema: IRSchema = {
       kind: IRSchemaKind.Object,
       properties: [
         {
-          name: "parents",
+          name: 'parents',
           type: {
             kind: IRSchemaKind.Array,
             items: {
               kind: IRSchemaKind.Object,
               properties: [
                 {
-                  name: "id",
+                  name: 'id',
                   type: {
                     kind: IRSchemaKind.String,
                     nullable: false,
@@ -102,10 +103,10 @@ describe("schemaToTSType with predefined types", () => {
                   annotations: {},
                 },
                 {
-                  name: "type",
+                  name: 'type',
                   type: {
                     kind: IRSchemaKind.Ref,
-                    ref: "ResourceType",
+                    ref: 'ResourceType',
                     nullable: false,
                   },
                   required: true,
@@ -124,17 +125,17 @@ describe("schemaToTSType with predefined types", () => {
     };
 
     const result = schemaToTSType(schema, predefinedTypes);
-    expect(result).toContain("type: ResourceType");
-    expect(result).not.toContain("Schema.ResourceType");
+    expect(result).toContain('type: ResourceType');
+    expect(result).not.toContain('Schema.ResourceType');
   });
 
-  it("should handle oneOf with predefined types", () => {
+  it('should handle oneOf with predefined types', () => {
     const schema: IRSchema = {
       kind: IRSchemaKind.OneOf,
       oneOf: [
         {
           kind: IRSchemaKind.Ref,
-          ref: "ResourceType",
+          ref: 'ResourceType',
           nullable: false,
         },
         {
@@ -146,7 +147,7 @@ describe("schemaToTSType with predefined types", () => {
     };
 
     const result = schemaToTSType(schema, predefinedTypes);
-    expect(result).toBe("ResourceType | string");
-    expect(result).not.toContain("Schema.ResourceType");
+    expect(result).toBe('ResourceType | string');
+    expect(result).not.toContain('Schema.ResourceType');
   });
 });

@@ -32,7 +32,10 @@ const server = setupServer(
 
   http.post('https://api.example.com/users', async ({ request }) => {
     const body = await request.json();
-    return HttpResponse.json({ id: 1, ...(body as any) }, { status: 201 });
+    return HttpResponse.json(
+      { id: 1, ...(body as Record<string, unknown>) },
+      { status: 201 }
+    );
   }),
 
   http.get('https://api.example.com/protected', ({ request }) => {
@@ -259,7 +262,7 @@ describe('FetchClient Integration Tests', () => {
 
     it('should parse NDJSON stream', async () => {
       const client = new FetchClient({ baseURL: 'https://api.example.com' });
-      const chunks: any[] = [];
+      const chunks: unknown[] = [];
 
       for await (const chunk of client.requestStream({
         path: '/ndjson',

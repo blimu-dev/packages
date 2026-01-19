@@ -1,5 +1,4 @@
-import * as fs from "fs";
-import * as path from "path";
+import * as path from 'path';
 
 /**
  * Extracted types from customer config
@@ -16,10 +15,10 @@ export interface ExtractedTypes {
  * Customer config structure (from .blimu config files)
  */
 export interface BlimuConfig {
-  resources?: Record<string, any>;
-  entitlements?: Record<string, any>;
+  resources?: Record<string, unknown>;
+  entitlements?: Record<string, unknown>;
   plans?: Record<string, PlanConfig>;
-  features?: Record<string, any>;
+  features?: Record<string, unknown>;
 }
 
 export interface PlanConfig {
@@ -49,23 +48,23 @@ export async function extractTypesFromConfig(
 async function loadConfigFile(filePath: string): Promise<BlimuConfig> {
   const ext = path.extname(filePath);
 
-  if (ext === ".mjs" || ext === ".js") {
+  if (ext === '.mjs' || ext === '.js') {
     // Dynamic import for MJS/JS files
     const module = await import(path.resolve(filePath));
     // Config should be exported as default or named export
     const config = module.default || module.config || module;
 
     // If it's a function (factory), call it
-    if (typeof config === "function") {
+    if (typeof config === 'function') {
       return await config();
     }
 
     return config as BlimuConfig;
-  } else if (ext === ".ts") {
+  } else if (ext === '.ts') {
     // For TS files, we'd need to use tsx or ts-node
     // For now, throw an error suggesting to use MJS
     throw new Error(
-      "TypeScript config files require tsx or ts-node. Please use .mjs instead or ensure tsx is available."
+      'TypeScript config files require tsx or ts-node. Please use .mjs instead or ensure tsx is available.'
     );
   } else {
     throw new Error(

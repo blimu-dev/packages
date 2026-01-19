@@ -1,4 +1,5 @@
-import { IRSchema, IRSchemaKind } from '../../ir/ir.types';
+import type { IRSchema } from '../../ir/ir.types';
+import { IRSchemaKind } from '../../ir/ir.types';
 import { quoteTSPropertyName } from './helpers';
 
 /**
@@ -9,7 +10,7 @@ import { quoteTSPropertyName } from './helpers';
 export function schemaToZodSchema(
   s: IRSchema,
   indent: string = '',
-  modelDefs?: Array<{ name: string; schema: IRSchema }>,
+  modelDefs?: { name: string; schema: IRSchema }[],
   useLocalSchemaTypes: boolean = false
 ): string {
   const nextIndent = indent + '  ';

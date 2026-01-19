@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import * as fs from 'fs';
-import * as path from 'path';
 import {
   generateTestSDK,
   cleanupTestSDK,
@@ -18,9 +17,10 @@ describe('Generated SDK - Predefined Types', () => {
     const config = {
       clients: [
         {
-          type: 'typescript',
+          type: 'typescript' as const,
           packageName: 'test-sdk',
           name: 'TestClient',
+          outDir: './test-sdk-predefined-types',
           predefinedTypes: [
             { type: 'ResourceType', package: '@blimu/types' },
             { type: 'EntitlementType', package: '@blimu/types' },

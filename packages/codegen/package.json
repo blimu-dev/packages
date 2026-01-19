@@ -19,12 +19,13 @@
     }
   },
   "files": [
-    "dist"
+    "dist/**/*"
   ],
+  "sideEffects": false,
   "scripts": {
     "build": "tsup",
     "dev": "tsx watch src/main.ts",
-    "type-check": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
@@ -33,8 +34,8 @@
   },
   "dependencies": {
     "@apidevtools/swagger-parser": "^12.1.0",
-    "@nestjs/common": "^11.1.0",
-    "@nestjs/core": "^11.1.0",
+    "@nestjs/common": "^11.1.12",
+    "@nestjs/core": "^11.1.12",
     "handlebars": "^4.7.8",
     "nest-commander": "^3.20.1",
     "openapi-types": "^12.1.3",
@@ -48,7 +49,7 @@
     "@swc/core": "^1.15.8",
     "@types/handlebars": "^4.1.0",
     "@types/inquirer": "^9.0.9",
-    "@types/node": "^25.0.8",
+    "@types/node": "^25.0.9",
     "@vitest/coverage-v8": "^4.0.17",
     "@vitest/ui": "^4.0.17",
     "msw": "^2.12.7",

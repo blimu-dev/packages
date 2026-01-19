@@ -1,28 +1,31 @@
+import type { QueryParams } from '../types';
+
 /**
  * Lifecycle stages for request execution
  */
 export type HookStage =
-  | "beforeRequest"
-  | "afterRequest"
-  | "afterResponse"
-  | "onError"
-  | "beforeRetry"
-  | "afterRetry"
-  | "onTimeout"
-  | "onStreamStart"
-  | "onStreamChunk"
-  | "onStreamEnd";
+  | 'beforeRequest'
+  | 'afterRequest'
+  | 'afterResponse'
+  | 'onError'
+  | 'beforeRetry'
+  | 'afterRetry'
+  | 'onTimeout'
+  | 'onStreamStart'
+  | 'onStreamChunk'
+  | 'onStreamEnd';
 
 /**
  * Base context available to all hooks
  */
 export interface BaseHookContext {
   url: string;
-  init: RequestInit & {
-    path?: string;
+  init: Omit<RequestInit, 'body'> & {
+    path?: string | undefined;
     method: string;
-    query?: Record<string, any>;
-    headers?: Headers;
+    query?: QueryParams | undefined;
+    headers?: Headers | undefined;
+    body?: RequestInit['body'] | null | undefined;
   };
   attempt: number;
 }
@@ -30,6 +33,7 @@ export interface BaseHookContext {
 /**
  * Context for beforeRequest hook
  */
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface BeforeRequestHookContext extends BaseHookContext {
   // Hooks can modify the request
 }

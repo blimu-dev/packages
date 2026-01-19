@@ -1,4 +1,4 @@
-import type { RetryStrategyFunction } from "./types";
+import type { RetryStrategyFunction } from './types';
 
 /**
  * Exponential backoff strategy
@@ -26,16 +26,16 @@ export const linearStrategy: RetryStrategyFunction = (
  * Get the retry strategy function based on the strategy name or function
  */
 export function getRetryStrategy(
-  strategy: "exponential" | "linear" | RetryStrategyFunction
+  strategy: 'exponential' | 'linear' | RetryStrategyFunction
 ): RetryStrategyFunction {
-  if (typeof strategy === "function") {
+  if (typeof strategy === 'function') {
     return strategy;
   }
 
   switch (strategy) {
-    case "exponential":
+    case 'exponential':
       return exponentialStrategy;
-    case "linear":
+    case 'linear':
       return linearStrategy;
     default:
       return exponentialStrategy;
@@ -47,7 +47,7 @@ export function getRetryStrategy(
  */
 export function calculateRetryDelay(
   attempt: number,
-  strategy: "exponential" | "linear" | RetryStrategyFunction,
+  strategy: 'exponential' | 'linear' | RetryStrategyFunction,
   baseBackoffMs: number
 ): number {
   const strategyFn = getRetryStrategy(strategy);

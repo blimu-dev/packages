@@ -1,9 +1,9 @@
-import { OpenAPIV3, OpenAPIV3_1 } from "openapi-types";
+import type { OpenAPIV3, OpenAPIV3_1 } from 'openapi-types';
 import {
-  OpenAPIDocument,
+  type OpenAPIDocument,
   isOpenAPI31,
   isOpenAPI30,
-} from "./openapi-version.utils";
+} from './openapi-version.utils';
 
 // Re-export the union type and type guards for convenience
 export type { OpenAPIDocument };
@@ -17,8 +17,11 @@ export interface NormalizedOpenAPIDocument {
   openapi: string;
   info: OpenAPIV3.InfoObject | OpenAPIV3_1.InfoObject;
   paths: OpenAPIV3.PathsObject | OpenAPIV3_1.PathsObject | undefined;
-  components?: OpenAPIV3.ComponentsObject | OpenAPIV3_1.ComponentsObject;
-  servers?: (OpenAPIV3.ServerObject | OpenAPIV3_1.ServerObject)[];
+  components?:
+    | OpenAPIV3.ComponentsObject
+    | OpenAPIV3_1.ComponentsObject
+    | undefined;
+  servers?: (OpenAPIV3.ServerObject | OpenAPIV3_1.ServerObject)[] | undefined;
 }
 
 /**
@@ -50,18 +53,18 @@ export function getSchemaFromRef(
     | OpenAPIV3_1.SchemaObject
     | undefined
 ): OpenAPIV3.SchemaObject | OpenAPIV3_1.SchemaObject | undefined {
-  if (!schemaRef || typeof schemaRef !== "object") {
+  if (!schemaRef || typeof schemaRef !== 'object') {
     return undefined;
   }
 
   // Handle $ref
-  if ("$ref" in schemaRef && schemaRef.$ref) {
+  if ('$ref' in schemaRef && schemaRef.$ref) {
     const ref = schemaRef.$ref;
-    if (ref.startsWith("#/components/schemas/")) {
-      const name = ref.replace("#/components/schemas/", "");
+    if (ref.startsWith('#/components/schemas/')) {
+      const name = ref.replace('#/components/schemas/', '');
       if (doc.components?.schemas?.[name]) {
         const schema = doc.components.schemas[name];
-        if ("$ref" in schema) {
+        if ('$ref' in schema) {
           // Recursive reference
           return getSchemaFromRef(doc, schema);
         }
@@ -85,13 +88,13 @@ export function isSchemaNullable(
   }
 
   // OpenAPI 3.0: uses nullable property
-  if ("nullable" in schema && schema.nullable === true) {
+  if ('nullable' in schema && schema.nullable === true) {
     return true;
   }
 
   // OpenAPI 3.1: uses type array with 'null'
-  if ("type" in schema && Array.isArray(schema.type)) {
-    return schema.type.includes("null");
+  if ('type' in schema && Array.isArray(schema.type)) {
+    return schema.type.includes('null');
   }
 
   return false;
@@ -103,7 +106,7 @@ export function isSchemaNullable(
 export function getSchemaType(
   schema: OpenAPIV3.SchemaObject | OpenAPIV3_1.SchemaObject | undefined
 ): string | string[] | undefined {
-  if (!schema || !("type" in schema)) {
+  if (!schema || !('type' in schema)) {
     return undefined;
   }
 

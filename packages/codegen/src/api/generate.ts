@@ -1,4 +1,4 @@
-import { Config, Client } from '../config/config.schema';
+import type { Config, Client } from '../config/config.schema';
 import { loadMjsConfig } from '../config/mjs-config-loader';
 import { ConfigService } from '../config/config.service';
 import { OpenApiService } from '../openapi/openapi.service';

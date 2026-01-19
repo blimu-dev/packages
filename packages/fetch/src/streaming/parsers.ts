@@ -11,7 +11,7 @@ export async function* parseSSEStream(
 
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
-  let buffer = "";
+  let buffer = '';
 
   try {
     while (true) {
@@ -19,13 +19,13 @@ export async function* parseSSEStream(
       if (done) break;
 
       buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n");
-      buffer = lines.pop() || ""; // Keep incomplete line in buffer
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || ''; // Keep incomplete line in buffer
 
       let currentEvent: { type?: string; data?: string; id?: string } = {};
 
       for (const line of lines) {
-        if (line.trim() === "") {
+        if (line.trim() === '') {
           // Empty line indicates end of event
           if (currentEvent.data !== undefined) {
             yield currentEvent.data;
@@ -34,19 +34,19 @@ export async function* parseSSEStream(
           continue;
         }
 
-        const colonIndex = line.indexOf(":");
+        const colonIndex = line.indexOf(':');
         if (colonIndex === -1) continue;
 
         const field = line.substring(0, colonIndex).trim();
         const value = line.substring(colonIndex + 1).trim();
 
-        if (field === "data") {
+        if (field === 'data') {
           currentEvent.data = currentEvent.data
-            ? currentEvent.data + "\n" + value
+            ? currentEvent.data + '\n' + value
             : value;
-        } else if (field === "event") {
+        } else if (field === 'event') {
           currentEvent.type = value;
-        } else if (field === "id") {
+        } else if (field === 'id') {
           currentEvent.id = value;
         }
       }
@@ -54,21 +54,21 @@ export async function* parseSSEStream(
 
     // Handle any remaining event in buffer
     if (buffer.trim()) {
-      const lines = buffer.split("\n");
+      const lines = buffer.split('\n');
       let currentEvent: { data?: string } = {};
       for (const line of lines) {
-        if (line.trim() === "" && currentEvent.data !== undefined) {
+        if (line.trim() === '' && currentEvent.data !== undefined) {
           yield currentEvent.data;
           currentEvent = {};
           continue;
         }
-        const colonIndex = line.indexOf(":");
+        const colonIndex = line.indexOf(':');
         if (colonIndex !== -1) {
           const field = line.substring(0, colonIndex).trim();
           const value = line.substring(colonIndex + 1).trim();
-          if (field === "data") {
+          if (field === 'data') {
             currentEvent.data = currentEvent.data
-              ? currentEvent.data + "\n" + value
+              ? currentEvent.data + '\n' + value
               : value;
           }
         }
@@ -82,11 +82,13 @@ export async function* parseSSEStream(
   }
 }
 
+type AnyParsedNDJSON = string | object | ArrayBuffer | unknown;
+
 /**
  * Parse NDJSON (Newline-Delimited JSON) stream
  * Yields each JSON object as it arrives
  */
-export async function* parseNDJSONStream<T = any>(
+export async function* parseNDJSONStream<T = AnyParsedNDJSON>(
   response: Response
 ): AsyncGenerator<T, void, unknown> {
   if (!response.body) {
@@ -95,7 +97,7 @@ export async function* parseNDJSONStream<T = any>(
 
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
-  let buffer = "";
+  let buffer = '';
 
   try {
     while (true) {
@@ -103,19 +105,19 @@ export async function* parseNDJSONStream<T = any>(
       if (done) break;
 
       buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n");
-      buffer = lines.pop() || ""; // Keep incomplete line in buffer
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || ''; // Keep incomplete line in buffer
 
       for (const line of lines) {
         const trimmed = line.trim();
-        if (trimmed === "") continue;
+        if (trimmed === '') continue;
 
         try {
           const parsed = JSON.parse(trimmed) as T;
           yield parsed;
-        } catch (error) {
+        } catch {
           // Skip invalid JSON lines
-          console.warn("Skipping invalid JSON line:", trimmed);
+          console.warn('Skipping invalid JSON line:', trimmed);
         }
       }
     }
@@ -125,9 +127,9 @@ export async function* parseNDJSONStream<T = any>(
       try {
         const parsed = JSON.parse(buffer.trim()) as T;
         yield parsed;
-      } catch (error) {
+      } catch {
         // Skip invalid JSON
-        console.warn("Skipping invalid JSON in buffer:", buffer.trim());
+        console.warn('Skipping invalid JSON in buffer:', buffer.trim());
       }
     }
   } finally {

@@ -52,12 +52,12 @@ export class {{Client.name}} {
   {{/each}}
 
   constructor(options?: ClientOption) {
-    const restCfg = { ...(options || {}) };
+    const restCfg = { ...(options ?? {}) };
     {{#each IR.securitySchemes}}
     delete restCfg.{{camel this.key}};
     {{/each}}
 
-    const authStrategies = buildAuthStrategies(options || {});
+    const authStrategies = buildAuthStrategies(options ?? {});
     
     const core = new FetchClient({
       ...restCfg,

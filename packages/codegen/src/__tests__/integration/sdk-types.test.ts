@@ -4,13 +4,18 @@ import {
   importGeneratedSDK,
   cleanupTestSDK,
   typecheckGeneratedSDK,
+  type GeneratedSDKModule,
+  getClientConstructor,
+  getService,
+  type SDKClient,
+  type ServiceMethods,
 } from './helpers/sdk-generator';
 import { setupMSW, teardownMSW } from './helpers/msw-setup';
 import { handlers } from './helpers/msw-handlers';
 
 describe('Generated SDK - Type Safety', () => {
   let sdkPath: string;
-  let SDK: any;
+  let SDK: GeneratedSDKModule;
 
   beforeAll(async () => {
     sdkPath = await generateTestSDK('test-api-3.0.json');
@@ -26,30 +31,34 @@ describe('Generated SDK - Type Safety', () => {
 
   describe('Request Body Types', () => {
     it('should accept correct request body types', async () => {
-      const client = new SDK.TestClient({
+      const TestClient = getClientConstructor(SDK, 'TestClient');
+      const client: SDKClient = new TestClient({
         baseURL: 'https://api.test.com/v1',
       });
 
       // TypeScript would catch this at compile time, but we verify at runtime
-      const result = await client.users.createUser({
+      const users = getService<ServiceMethods<'createUser'>>(client, 'users');
+      const result = (await users.createUser({
         name: 'Test',
         email: 'test@example.com',
         age: 25,
-      });
+      })) as { email: string };
 
       expect(result).toBeDefined();
       expect(result.email).toBe('test@example.com');
     });
 
     it('should handle optional request body fields', async () => {
-      const client = new SDK.TestClient({
+      const TestClient = getClientConstructor(SDK, 'TestClient');
+      const client: SDKClient = new TestClient({
         baseURL: 'https://api.test.com/v1',
       });
 
       // age is optional
-      const result = await client.users.createUser({
+      const users = getService<ServiceMethods<'createUser'>>(client, 'users');
+      const result = (await users.createUser({
         email: 'test@example.com',
-      });
+      })) as Record<string, unknown>;
 
       expect(result).toBeDefined();
     });
@@ -57,11 +66,17 @@ describe('Generated SDK - Type Safety', () => {
 
   describe('Response Types', () => {
     it('should return correctly typed responses', async () => {
-      const client = new SDK.TestClient({
+      const TestClient = getClientConstructor(SDK, 'TestClient');
+      const client: SDKClient = new TestClient({
         baseURL: 'https://api.test.com/v1',
       });
 
-      const result = await client.users.getUser('1');
+      const users = getService<ServiceMethods<'getUser'>>(client, 'users');
+      const result = (await users.getUser('1')) as {
+        id: string;
+        email: string;
+        status: string;
+      };
 
       // Verify response has expected properties
       expect(result).toHaveProperty('id');
@@ -74,31 +89,43 @@ describe('Generated SDK - Type Safety', () => {
 
   describe('Parameter Types', () => {
     it('should accept string path parameters', async () => {
-      const client = new SDK.TestClient({
+      const TestClient = getClientConstructor(SDK, 'TestClient');
+      const client: SDKClient = new TestClient({
         baseURL: 'https://api.test.com/v1',
       });
 
-      const result = await client.users.getUser('123');
+      const users = getService<ServiceMethods<'getUser'>>(client, 'users');
+      const result = (await users.getUser('123')) as Record<string, unknown>;
       expect(result).toBeDefined();
     });
 
     it('should accept integer query parameters', async () => {
-      const client = new SDK.TestClient({
+      const TestClient = getClientConstructor(SDK, 'TestClient');
+      const client: SDKClient = new TestClient({
         baseURL: 'https://api.test.com/v1',
       });
 
-      const result = await client.users.listUsers({ limit: 10, offset: 0 });
+      const users = getService<ServiceMethods<'listUsers'>>(client, 'users');
+      const result = (await users.listUsers({
+        limit: 10,
+        offset: 0,
+      })) as Array<unknown>;
       expect(result).toBeDefined();
     });
   });
 
   describe('Nullable Types', () => {
     it('should handle nullable fields in responses', async () => {
-      const client = new SDK.TestClient({
+      const TestClient = getClientConstructor(SDK, 'TestClient');
+      const client: SDKClient = new TestClient({
         baseURL: 'https://api.test.com/v1',
       });
 
-      const result = await client.users.getUser('1');
+      const users = getService<ServiceMethods<'getUser'>>(client, 'users');
+      const result = (await users.getUser('1')) as {
+        name: string | null;
+        age: number | null;
+      };
 
       // name and age are nullable in the schema
       expect(result).toHaveProperty('name');
@@ -115,11 +142,13 @@ describe('Generated SDK - Type Safety', () => {
 
   describe('Enum Types', () => {
     it('should handle enum values in responses', async () => {
-      const client = new SDK.TestClient({
+      const TestClient = getClientConstructor(SDK, 'TestClient');
+      const client: SDKClient = new TestClient({
         baseURL: 'https://api.test.com/v1',
       });
 
-      const result = await client.users.getUser('1');
+      const users = getService<ServiceMethods<'getUser'>>(client, 'users');
+      const result = (await users.getUser('1')) as { status: string };
 
       // status is an enum
       expect(result).toHaveProperty('status');
@@ -129,11 +158,15 @@ describe('Generated SDK - Type Safety', () => {
 
   describe('Array Types', () => {
     it('should handle array responses', async () => {
-      const client = new SDK.TestClient({
+      const TestClient = getClientConstructor(SDK, 'TestClient');
+      const client: SDKClient = new TestClient({
         baseURL: 'https://api.test.com/v1',
       });
 
-      const result = await client.users.listUsers();
+      const users = getService<ServiceMethods<'listUsers'>>(client, 'users');
+      const result = (await users.listUsers()) as Array<
+        Record<string, unknown>
+      >;
 
       expect(Array.isArray(result)).toBe(true);
       if (result.length > 0) {
@@ -143,13 +176,15 @@ describe('Generated SDK - Type Safety', () => {
     });
 
     it('should handle array query parameters', async () => {
-      const client = new SDK.TestClient({
+      const TestClient = getClientConstructor(SDK, 'TestClient');
+      const client: SDKClient = new TestClient({
         baseURL: 'https://api.test.com/v1',
       });
 
-      const result = await client.users.listUsers({
+      const users = getService<ServiceMethods<'listUsers'>>(client, 'users');
+      const result = (await users.listUsers({
         status: ['active', 'inactive'],
-      });
+      })) as Array<unknown>;
 
       expect(Array.isArray(result)).toBe(true);
     });
@@ -157,11 +192,13 @@ describe('Generated SDK - Type Safety', () => {
 
   describe('Object Types with Nested Properties', () => {
     it('should handle nested object properties', async () => {
-      const client = new SDK.TestClient({
+      const TestClient = getClientConstructor(SDK, 'TestClient');
+      const client: SDKClient = new TestClient({
         baseURL: 'https://api.test.com/v1',
       });
 
-      const result = await client.users.getUser('1');
+      const users = getService<ServiceMethods<'getUser'>>(client, 'users');
+      const result = (await users.getUser('1')) as Record<string, unknown>;
 
       // metadata is an object with additionalProperties (optional in schema)
       // The MSW handler now includes metadata, but it's optional

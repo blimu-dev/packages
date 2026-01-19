@@ -1,10 +1,10 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import * as fs from "fs";
-import * as path from "path";
-import { extractTypesFromConfig, ExtractedTypes } from "../type-extractor";
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import * as fs from 'fs';
+import * as path from 'path';
+import { extractTypesFromConfig } from '../type-extractor';
 
-describe("type-extractor", () => {
-  const testDir = path.join(process.cwd(), ".tests", "type-extractor");
+describe('type-extractor', () => {
+  const testDir = path.join(process.cwd(), '.tests', 'type-extractor');
 
   beforeEach(() => {
     // Create test directory
@@ -23,10 +23,10 @@ describe("type-extractor", () => {
     }
   });
 
-  describe("extractTypesFromConfig", () => {
-    describe("MJS config files", () => {
-      it("should extract types from MJS config with default export", async () => {
-        const configPath = path.join(testDir, "config.mjs");
+  describe('extractTypesFromConfig', () => {
+    describe('MJS config files', () => {
+      it('should extract types from MJS config with default export', async () => {
+        const configPath = path.join(testDir, 'config.mjs');
         const configContent = `
 export default {
   resources: {
@@ -45,25 +45,25 @@ export default {
   }
 };
 `;
-        fs.writeFileSync(configPath, configContent, "utf-8");
+        fs.writeFileSync(configPath, configContent, 'utf-8');
 
         const extracted = await extractTypesFromConfig(configPath);
 
         expect(extracted.resourceTypes).toEqual([
-          "workspace",
-          "environment",
-          "project",
+          'workspace',
+          'environment',
+          'project',
         ]);
         expect(extracted.entitlementTypes).toEqual([
-          "workspace:read",
-          "workspace:create",
-          "environment:manage",
+          'workspace:read',
+          'workspace:create',
+          'environment:manage',
         ]);
-        expect(extracted.planTypes).toEqual(["free", "pro"]);
+        expect(extracted.planTypes).toEqual(['free', 'pro']);
       });
 
-      it("should extract types from MJS config with factory function", async () => {
-        const configPath = path.join(testDir, "config-factory.mjs");
+      it('should extract types from MJS config with factory function', async () => {
+        const configPath = path.join(testDir, 'config-factory.mjs');
         const configContent = `
 export default function defineConfig() {
   return {
@@ -80,17 +80,17 @@ export default function defineConfig() {
   };
 }
 `;
-        fs.writeFileSync(configPath, configContent, "utf-8");
+        fs.writeFileSync(configPath, configContent, 'utf-8');
 
         const extracted = await extractTypesFromConfig(configPath);
 
-        expect(extracted.resourceTypes).toEqual(["organization", "workspace"]);
-        expect(extracted.entitlementTypes).toEqual(["organization:read"]);
-        expect(extracted.planTypes).toEqual(["basic"]);
+        expect(extracted.resourceTypes).toEqual(['organization', 'workspace']);
+        expect(extracted.entitlementTypes).toEqual(['organization:read']);
+        expect(extracted.planTypes).toEqual(['basic']);
       });
 
-      it("should extract limit types from plans", async () => {
-        const configPath = path.join(testDir, "config-limits.mjs");
+      it('should extract limit types from plans', async () => {
+        const configPath = path.join(testDir, 'config-limits.mjs');
         const configContent = `
 export default {
   plans: {
@@ -117,30 +117,30 @@ export default {
   }
 };
 `;
-        fs.writeFileSync(configPath, configContent, "utf-8");
+        fs.writeFileSync(configPath, configContent, 'utf-8');
 
         const extracted = await extractTypesFromConfig(configPath);
 
-        expect(extracted.planTypes).toEqual(["free", "pro"]);
-        expect(extracted.limitTypes).toContain("workspace_count");
-        expect(extracted.limitTypes).toContain("project_count");
+        expect(extracted.planTypes).toEqual(['free', 'pro']);
+        expect(extracted.limitTypes).toContain('workspace_count');
+        expect(extracted.limitTypes).toContain('project_count');
         // limitTypes only includes resource_limits, not usage_based_limits
-        expect(extracted.limitTypes).not.toContain("api_calls");
-        expect(extracted.limitTypes).not.toContain("storage");
-        expect(extracted.usageLimitTypes).toContain("api_calls");
-        expect(extracted.usageLimitTypes).toContain("storage");
+        expect(extracted.limitTypes).not.toContain('api_calls');
+        expect(extracted.limitTypes).not.toContain('storage');
+        expect(extracted.usageLimitTypes).toContain('api_calls');
+        expect(extracted.usageLimitTypes).toContain('storage');
         // Resource limits should not be in usageLimitTypes
-        expect(extracted.usageLimitTypes).not.toContain("workspace_count");
+        expect(extracted.usageLimitTypes).not.toContain('workspace_count');
       });
 
-      it("should handle empty config sections", async () => {
-        const configPath = path.join(testDir, "config-empty.mjs");
+      it('should handle empty config sections', async () => {
+        const configPath = path.join(testDir, 'config-empty.mjs');
         const configContent = `
 export default {
   resources: {}
 };
 `;
-        fs.writeFileSync(configPath, configContent, "utf-8");
+        fs.writeFileSync(configPath, configContent, 'utf-8');
 
         const extracted = await extractTypesFromConfig(configPath);
 
@@ -149,8 +149,8 @@ export default {
         expect(extracted.planTypes).toBeUndefined();
       });
 
-      it("should handle plans with no limits", async () => {
-        const configPath = path.join(testDir, "config-no-limits.mjs");
+      it('should handle plans with no limits', async () => {
+        const configPath = path.join(testDir, 'config-no-limits.mjs');
         const configContent = `
 export default {
   plans: {
@@ -160,54 +160,54 @@ export default {
   }
 };
 `;
-        fs.writeFileSync(configPath, configContent, "utf-8");
+        fs.writeFileSync(configPath, configContent, 'utf-8');
 
         const extracted = await extractTypesFromConfig(configPath);
 
-        expect(extracted.planTypes).toEqual(["unlimited"]);
+        expect(extracted.planTypes).toEqual(['unlimited']);
         expect(extracted.limitTypes).toBeUndefined();
         expect(extracted.usageLimitTypes).toBeUndefined();
       });
     });
 
-    describe("TypeScript config files", () => {
-      it("should throw error for TS files", async () => {
-        const configPath = path.join(testDir, "config.ts");
-        fs.writeFileSync(configPath, "export default {}", "utf-8");
+    describe('TypeScript config files', () => {
+      it('should throw error for TS files', async () => {
+        const configPath = path.join(testDir, 'config.ts');
+        fs.writeFileSync(configPath, 'export default {}', 'utf-8');
 
         await expect(extractTypesFromConfig(configPath)).rejects.toThrow(
-          "TypeScript config files require tsx or ts-node"
+          'TypeScript config files require tsx or ts-node'
         );
       });
     });
 
-    describe("Error handling", () => {
-      it("should throw error for invalid file path", async () => {
-        const invalidPath = path.join(testDir, "nonexistent.mjs");
+    describe('Error handling', () => {
+      it('should throw error for invalid file path', async () => {
+        const invalidPath = path.join(testDir, 'nonexistent.mjs');
 
         await expect(extractTypesFromConfig(invalidPath)).rejects.toThrow();
       });
 
-      it("should throw error for unsupported file format", async () => {
-        const configPath = path.join(testDir, "config.json");
-        fs.writeFileSync(configPath, "{}", "utf-8");
+      it('should throw error for unsupported file format', async () => {
+        const configPath = path.join(testDir, 'config.json');
+        fs.writeFileSync(configPath, '{}', 'utf-8');
 
         await expect(extractTypesFromConfig(configPath)).rejects.toThrow(
-          "Unsupported config file format"
+          'Unsupported config file format'
         );
       });
 
-      it("should handle malformed MJS config", async () => {
-        const configPath = path.join(testDir, "config-malformed.mjs");
-        fs.writeFileSync(configPath, "invalid javascript syntax {", "utf-8");
+      it('should handle malformed MJS config', async () => {
+        const configPath = path.join(testDir, 'config-malformed.mjs');
+        fs.writeFileSync(configPath, 'invalid javascript syntax {', 'utf-8');
 
         await expect(extractTypesFromConfig(configPath)).rejects.toThrow();
       });
     });
 
-    describe("Type extraction logic", () => {
-      it("should extract all types correctly from complete config", async () => {
-        const configPath = path.join(testDir, "config-complete.mjs");
+    describe('Type extraction logic', () => {
+      it('should extract all types correctly from complete config', async () => {
+        const configPath = path.join(testDir, 'config-complete.mjs');
         const configContent = `
 export default {
   resources: {
@@ -240,20 +240,20 @@ export default {
   }
 };
 `;
-        fs.writeFileSync(configPath, configContent, "utf-8");
+        fs.writeFileSync(configPath, configContent, 'utf-8');
 
         const extracted = await extractTypesFromConfig(configPath);
 
         expect(extracted).toEqual({
-          resourceTypes: ["organization", "workspace", "project"],
+          resourceTypes: ['organization', 'workspace', 'project'],
           entitlementTypes: [
-            "organization:read",
-            "organization:write",
-            "workspace:create",
+            'organization:read',
+            'organization:write',
+            'workspace:create',
           ],
-          planTypes: ["free", "pro"],
-          limitTypes: ["workspace_count", "project_count"], // Only resource_limits
-          usageLimitTypes: ["api_calls"], // Only usage_based_limits
+          planTypes: ['free', 'pro'],
+          limitTypes: ['workspace_count', 'project_count'], // Only resource_limits
+          usageLimitTypes: ['api_calls'], // Only usage_based_limits
         });
       });
     });

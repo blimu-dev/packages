@@ -2,8 +2,12 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 import { generate } from '../../api/generate';
-import { Config } from '../../config/config.schema';
-import { generateTestSDK, cleanupTestSDK } from './helpers/sdk-generator';
+import type { Config } from '../../config/config.schema';
+import {
+  generateTestSDK,
+  cleanupTestSDK,
+  registerForCleanup,
+} from './helpers/sdk-generator';
 
 describe('Post-Command Execution', () => {
   describe('Programmatic API', () => {
@@ -18,6 +22,8 @@ describe('Post-Command Execution', () => {
       }
       const tempDir = fs.mkdtempSync(path.join(testsDir, 'test-sdk-'));
       sdkPath = path.join(tempDir, 'generated-sdk');
+      // Register for cleanup
+      registerForCleanup(sdkPath);
       postCommandFile = path.join(sdkPath, '.post-command-executed');
 
       const fixturesDir = path.join(__dirname, 'fixtures');
@@ -120,6 +126,8 @@ describe('Post-Command Execution', () => {
       }
       const tempDir = fs.mkdtempSync(path.join(testsDir, 'test-sdk-'));
       const sdkPath = path.join(tempDir, 'generated-sdk');
+      // Register for cleanup
+      registerForCleanup(sdkPath);
 
       const fixturesDir = path.join(__dirname, 'fixtures');
       const specPath = path.resolve(fixturesDir, 'test-api-3.0.json');

@@ -1,4 +1,4 @@
-import { OpenAPIV3, OpenAPIV3_1 } from "openapi-types";
+import type { OpenAPIV3, OpenAPIV3_1 } from 'openapi-types';
 
 /**
  * Helper to create mock OpenAPI documents for testing
@@ -9,13 +9,13 @@ export function createMockDocument30(
   components?: OpenAPIV3.ComponentsObject
 ): OpenAPIV3.Document {
   return {
-    openapi: "3.0.0",
+    openapi: '3.0.0',
     info: {
-      title: "Test API",
-      version: "1.0.0",
+      title: 'Test API',
+      version: '1.0.0',
     },
     paths: paths || {},
-    components: components,
+    ...(components !== undefined && { components }),
   };
 }
 
@@ -24,35 +24,35 @@ export function createMockDocument31(
   components?: OpenAPIV3_1.ComponentsObject
 ): OpenAPIV3_1.Document {
   return {
-    openapi: "3.1.0",
+    openapi: '3.1.0',
     info: {
-      title: "Test API",
-      version: "1.0.0",
+      title: 'Test API',
+      version: '1.0.0',
     },
     paths: paths || {},
-    components: components,
+    ...(components !== undefined && { components }),
   };
 }
 
 export function createMockDocumentWithStreaming30(): OpenAPIV3.Document {
   return {
-    openapi: "3.0.0",
+    openapi: '3.0.0',
     info: {
-      title: "Test API with Streaming",
-      version: "1.0.0",
+      title: 'Test API with Streaming',
+      version: '1.0.0',
     },
     paths: {
-      "/events": {
+      '/events': {
         get: {
-          operationId: "getEvents",
-          tags: ["events"],
+          operationId: 'getEvents',
+          tags: ['events'],
           responses: {
-            "200": {
-              description: "Server-Sent Events stream",
+            '200': {
+              description: 'Server-Sent Events stream',
               content: {
-                "text/event-stream": {
+                'text/event-stream': {
                   schema: {
-                    type: "string",
+                    type: 'string',
                   },
                 },
               },
@@ -60,22 +60,22 @@ export function createMockDocumentWithStreaming30(): OpenAPIV3.Document {
           },
         },
       },
-      "/data": {
+      '/data': {
         get: {
-          operationId: "getDataStream",
-          tags: ["data"],
+          operationId: 'getDataStream',
+          tags: ['data'],
           responses: {
-            "200": {
-              description: "NDJSON stream",
+            '200': {
+              description: 'NDJSON stream',
               content: {
-                "application/x-ndjson": {
+                'application/x-ndjson': {
                   schema: {
-                    type: "array",
+                    type: 'array',
                     items: {
-                      type: "object",
+                      type: 'object',
                       properties: {
-                        id: { type: "string" },
-                        value: { type: "number" },
+                        id: { type: 'string' },
+                        value: { type: 'number' },
                       },
                     },
                   },
@@ -91,23 +91,23 @@ export function createMockDocumentWithStreaming30(): OpenAPIV3.Document {
 
 export function createMockDocumentWithStreaming31(): OpenAPIV3_1.Document {
   return {
-    openapi: "3.1.0",
+    openapi: '3.1.0',
     info: {
-      title: "Test API with Streaming",
-      version: "1.0.0",
+      title: 'Test API with Streaming',
+      version: '1.0.0',
     },
     paths: {
-      "/events": {
+      '/events': {
         get: {
-          operationId: "getEvents",
-          tags: ["events"],
+          operationId: 'getEvents',
+          tags: ['events'],
           responses: {
-            "200": {
-              description: "Server-Sent Events stream",
+            '200': {
+              description: 'Server-Sent Events stream',
               content: {
-                "text/event-stream": {
+                'text/event-stream': {
                   schema: {
-                    type: "string",
+                    type: 'string',
                   },
                 },
               },
@@ -115,22 +115,22 @@ export function createMockDocumentWithStreaming31(): OpenAPIV3_1.Document {
           },
         },
       },
-      "/data": {
+      '/data': {
         get: {
-          operationId: "getDataStream",
-          tags: ["data"],
+          operationId: 'getDataStream',
+          tags: ['data'],
           responses: {
-            "200": {
-              description: "NDJSON stream",
+            '200': {
+              description: 'NDJSON stream',
               content: {
-                "application/x-ndjson": {
+                'application/x-ndjson': {
                   schema: {
-                    type: "array",
+                    type: 'array',
                     items: {
-                      type: "object",
+                      type: 'object',
                       properties: {
-                        id: { type: "string" },
-                        value: { type: "number" },
+                        id: { type: 'string' },
+                        value: { type: 'number' },
                       },
                     },
                   },

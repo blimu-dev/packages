@@ -1,13 +1,13 @@
-import { Injectable, Logger } from "@nestjs/common";
-import * as fs from "fs";
-import * as path from "path";
-import { Config, ConfigSchema, Client } from "./config.schema";
-import { loadMjsConfig } from "./mjs-config-loader";
+import { Injectable, Logger } from '@nestjs/common';
+import * as fs from 'fs';
+import * as path from 'path';
+import type { Config, Client } from './config.schema';
+import { loadMjsConfig } from './mjs-config-loader';
 
 @Injectable()
 export class ConfigService {
   private readonly logger = new Logger(ConfigService.name);
-  private readonly DEFAULT_CONFIG_FILE = "chunkflow-codegen.config.mjs";
+  private readonly DEFAULT_CONFIG_FILE = 'chunkflow-codegen.config.mjs';
 
   /**
    * Find default config file in current directory and parent directories
@@ -86,7 +86,7 @@ export class ConfigService {
   private isUrl(str: string): boolean {
     try {
       const url = new URL(str);
-      return url.protocol === "http:" || url.protocol === "https:";
+      return url.protocol === 'http:' || url.protocol === 'https:';
     } catch {
       return false;
     }
@@ -126,8 +126,8 @@ export class ConfigService {
 
     // Normalize the path (use forward slashes for consistency, handle . and ..)
     relPath = path.posix.normalize(relPath);
-    if (relPath === ".") {
-      relPath = "";
+    if (relPath === '.') {
+      relPath = '';
     }
 
     // Check if the relative path matches any exclude pattern
@@ -143,8 +143,8 @@ export class ConfigService {
       // Check if the file is in a directory that matches the exclude pattern
       // For example, if exclude is "src/", then "src/client.ts" should match
       if (
-        normalizedExclude !== "" &&
-        relPath.startsWith(normalizedExclude + "/")
+        normalizedExclude !== '' &&
+        relPath.startsWith(normalizedExclude + '/')
       ) {
         return true;
       }

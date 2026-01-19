@@ -1,5 +1,6 @@
-import { IROperation, IRSchema, IRSchemaKind } from '../../ir/ir.types';
-import { Client } from '../../config/config.schema';
+import type { IROperation, IRSchema } from '../../ir/ir.types';
+import { IRSchemaKind } from '../../ir/ir.types';
+import type { Client } from '../../config/config.schema';
 import { toPascalCase, toCamelCase } from '../../utils/string.utils';
 
 /**
@@ -20,8 +21,8 @@ function decodeHtmlEntities(str: string): string {
 
 export function schemaToTSType(
   s: IRSchema,
-  predefinedTypes?: Array<{ type: string; package: string }>,
-  modelDefs?: Array<{ name: string; schema: IRSchema }>,
+  predefinedTypes?: { type: string; package: string }[],
+  modelDefs?: { name: string; schema: IRSchema }[],
   isSameFile: boolean = false
 ): string {
   // Base type string without nullability; append null later
@@ -71,14 +72,14 @@ export function schemaToTSType(
     case IRSchemaKind.Array:
       if (s.items) {
         const inner = schemaToTSType(s.items, predefinedTypes, modelDefs);
-        // Wrap unions/intersections in parentheses inside Array<>
+        // Wrap unions/intersections in parentheses inside Array[]
         if (inner.includes(' | ') || inner.includes(' & ')) {
-          t = `Array<(${inner})>`;
+          t = `(${inner})[]`;
         } else {
-          t = `Array<${inner}>`;
+          t = `${inner}[]`;
         }
       } else {
-        t = 'Array<unknown>';
+        t = 'unknown[]';
       }
       break;
     case IRSchemaKind.OneOf:
@@ -251,7 +252,7 @@ function defaultParseOperationID(opID: string): string {
  */
 export function buildPathTemplate(op: IROperation): string {
   // Convert /foo/{id}/bar/{slug} -> `/foo/${encodeURIComponent(id)}/bar/${encodeURIComponent(slug)}`
-  let path = op.path;
+  const path = op.path;
   let result = '`';
   for (let i = 0; i < path.length; i++) {
     if (path[i] === '{') {
@@ -298,11 +299,14 @@ export function buildQueryKeyBase(op: IROperation): string {
 /**
  * Order path params extracts path parameter order as they appear in the path
  */
-export function orderPathParams(op: IROperation) {
+export function orderPathParams(op: IROperation): IROperation['pathParams'] {
   const ordered: typeof op.pathParams = [];
   const index = new Map<string, number>();
   for (let i = 0; i < op.pathParams.length; i++) {
-    index.set(op.pathParams[i].name, i);
+    const param = op.pathParams[i];
+    if (param) {
+      index.set(param.name, i);
+    }
   }
   const path = op.path;
   for (let i = 0; i < path.length; i++) {
@@ -315,7 +319,10 @@ export function orderPathParams(op: IROperation) {
         const name = path.substring(i + 1, j);
         const idx = index.get(name);
         if (idx !== undefined) {
-          ordered.push(op.pathParams[idx]);
+          const param = op.pathParams[idx];
+          if (param) {
+            ordered.push(param);
+          }
         }
         i = j;
         continue;
@@ -335,8 +342,8 @@ export function orderPathParams(op: IROperation) {
  */
 export function schemaToTSTypeWithSimpleTypes(
   s: IRSchema,
-  modelDefs?: Array<{ name: string; schema: IRSchema }>,
-  predefinedTypes?: Array<{ type: string; package: string }>,
+  modelDefs?: { name: string; schema: IRSchema }[],
+  predefinedTypes?: { type: string; package: string }[],
   isSameFile: boolean = false
 ): string {
   // Use schemaToTSType with predefined types and modelDefs
@@ -347,8 +354,8 @@ export function schemaToTSTypeWithSimpleTypes(
 export function buildMethodSignature(
   op: IROperation,
   methodName: string,
-  modelDefs?: Array<{ name: string; schema: IRSchema }>,
-  predefinedTypes?: Array<{ type: string; package: string }>,
+  modelDefs?: { name: string; schema: IRSchema }[],
+  predefinedTypes?: { type: string; package: string }[],
   isSameFile: boolean = false
 ): string[] {
   const parts: string[] = [];
@@ -382,9 +389,9 @@ export function buildMethodSignature(
  * Checks all model definitions (interfaces, types, etc.) to find which predefined types are referenced
  */
 export function collectPredefinedTypesUsedInSchema(
-  modelDefs: Array<{ name: string; schema: IRSchema }>,
-  predefinedTypes?: Array<{ type: string; package: string }>
-): Array<{ type: string; package: string }> {
+  modelDefs: { name: string; schema: IRSchema }[],
+  predefinedTypes?: { type: string; package: string }[]
+): { type: string; package: string }[] {
   if (!predefinedTypes || predefinedTypes.length === 0) {
     return [];
   }
@@ -447,9 +454,9 @@ export function collectPredefinedTypesUsedInSchema(
  */
 export function collectPredefinedTypesUsedInService(
   service: { operations: IROperation[] },
-  predefinedTypes?: Array<{ type: string; package: string }>,
-  modelDefs?: Array<{ name: string; schema: IRSchema }>
-): Array<{ type: string; package: string }> {
+  predefinedTypes?: { type: string; package: string }[],
+  modelDefs?: { name: string; schema: IRSchema }[]
+): { type: string; package: string }[] {
   if (!predefinedTypes || predefinedTypes.length === 0) {
     return [];
   }
@@ -539,6 +546,136 @@ export function queryKeyArgs(op: IROperation): string[] {
 }
 
 /**
+ * Build query key return type generates a TypeScript tuple type for query keys
+ * Returns a union type when there are optional parameters
+ */
+export function buildQueryKeyReturnType(
+  op: IROperation,
+  methodName: string,
+  modelDefs?: { name: string; schema: IRSchema }[],
+  predefinedTypes?: { type: string; package: string }[],
+  isSameFile: boolean = false
+): string {
+  const baseType = buildQueryKeyBase(op); // e.g., 'v1/entitlements/check'
+
+  // Get types for path params (always required)
+  const pathParamTypes: string[] = [];
+  for (const p of orderPathParams(op)) {
+    const type = schemaToTSTypeWithSimpleTypes(
+      p.schema,
+      modelDefs,
+      predefinedTypes,
+      isSameFile
+    );
+    pathParamTypes.push(type);
+  }
+
+  // Check for optional parameters
+  const hasOptionalQuery = op.queryParams.length > 0;
+  const hasOptionalBody = op.requestBody && !op.requestBody.required;
+  const hasRequiredBody = op.requestBody && op.requestBody.required;
+
+  // Helper to build tuple string
+  const buildTuple = (types: string[]): string => {
+    const allTypes = [baseType, ...types];
+    return `readonly [${allTypes.join(', ')}]`;
+  };
+
+  // If no optional params, return simple tuple (but include required body if present)
+  if (!hasOptionalQuery && !hasOptionalBody) {
+    if (hasRequiredBody) {
+      if (!op.requestBody?.schema) {
+        throw new Error('Request body schema is required');
+      }
+      const bodyType = schemaToTSTypeWithSimpleTypes(
+        op.requestBody.schema,
+        modelDefs,
+        predefinedTypes,
+        isSameFile
+      );
+      return buildTuple([...pathParamTypes, bodyType]);
+    }
+    return buildTuple(pathParamTypes);
+  }
+
+  // Build union types for optional parameters
+  const unionTypes: string[] = [];
+
+  // Generate all combinations of optional parameters
+  if (hasOptionalQuery && hasOptionalBody) {
+    // Both optional: 4 combinations
+    const queryType = `Schema.${toPascalCase(op.tag)}${toPascalCase(methodName)}Query`;
+    const bodyType = schemaToTSTypeWithSimpleTypes(
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      op.requestBody!.schema,
+      modelDefs,
+      predefinedTypes,
+      isSameFile
+    );
+
+    // [base, ...pathParams]
+    unionTypes.push(buildTuple(pathParamTypes));
+    // [base, ...pathParams, query]
+    unionTypes.push(buildTuple([...pathParamTypes, queryType]));
+    // [base, ...pathParams, body]
+    unionTypes.push(buildTuple([...pathParamTypes, bodyType]));
+    // [base, ...pathParams, query, body]
+    unionTypes.push(buildTuple([...pathParamTypes, queryType, bodyType]));
+  } else if (hasOptionalQuery) {
+    // Query optional: 2 combinations (include required body if present)
+    const queryType = `Schema.${toPascalCase(op.tag)}${toPascalCase(methodName)}Query`;
+    if (hasRequiredBody) {
+      if (!op.requestBody?.schema) {
+        throw new Error('Request body schema is required');
+      }
+      const bodyType = schemaToTSTypeWithSimpleTypes(
+        op.requestBody.schema,
+        modelDefs,
+        predefinedTypes,
+        isSameFile
+      );
+      // [base, ...pathParams, body]
+      unionTypes.push(buildTuple([...pathParamTypes, bodyType]));
+      // [base, ...pathParams, body, query]
+      unionTypes.push(buildTuple([...pathParamTypes, bodyType, queryType]));
+    } else {
+      // [base, ...pathParams]
+      unionTypes.push(buildTuple(pathParamTypes));
+      // [base, ...pathParams, query]
+      unionTypes.push(buildTuple([...pathParamTypes, queryType]));
+    }
+  } else if (hasOptionalBody) {
+    if (!op.requestBody?.schema) {
+      throw new Error('Request body schema is required');
+    }
+    // Only body optional: 2 combinations
+    const bodyType = schemaToTSTypeWithSimpleTypes(
+      op.requestBody.schema,
+      modelDefs,
+      predefinedTypes,
+      isSameFile
+    );
+    // [base, ...pathParams]
+    unionTypes.push(buildTuple(pathParamTypes));
+    // [base, ...pathParams, body]
+    unionTypes.push(buildTuple([...pathParamTypes, bodyType]));
+  }
+
+  return unionTypes.join(' | ');
+}
+
+/**
+ * Check if operation has optional query key parameters
+ * Optional parameters are: query (if exists) and body (if exists and not required)
+ */
+export function hasOptionalQueryKeyParams(op: IROperation): boolean {
+  return (
+    op.queryParams.length > 0 ||
+    (op.requestBody !== null && !op.requestBody.required)
+  );
+}
+
+/**
  * Quote TS property name quotes TypeScript property names that contain special characters
  */
 export function quoteTSPropertyName(name: string): string {
@@ -560,7 +697,8 @@ export function quoteTSPropertyName(name: string): string {
   }
 
   // Also quote if the name starts with a number
-  if (name.length > 0 && name[0] >= '0' && name[0] <= '9') {
+  const firstChar = name[0];
+  if (firstChar && firstChar >= '0' && firstChar <= '9') {
     needsQuoting = true;
   }
 
@@ -636,8 +774,8 @@ function extractRefDependencies(
  * @returns Sorted array of model definitions
  */
 export function sortModelDefsByDependencies(
-  modelDefs: Array<{ name: string; schema: IRSchema }>
-): Array<{ name: string; schema: IRSchema }> {
+  modelDefs: { name: string; schema: IRSchema }[]
+): { name: string; schema: IRSchema }[] {
   // Build a map for quick lookup
   const modelDefMap = new Map<string, { name: string; schema: IRSchema }>();
   for (const md of modelDefs) {
@@ -659,7 +797,7 @@ export function sortModelDefsByDependencies(
   }
 
   // Topological sort using Kahn's algorithm
-  const sorted: Array<{ name: string; schema: IRSchema }> = [];
+  const sorted: { name: string; schema: IRSchema }[] = [];
   const inDegree = new Map<string, number>();
   const queue: string[] = [];
 
@@ -672,7 +810,10 @@ export function sortModelDefsByDependencies(
   }
 
   while (queue.length > 0) {
-    const current = queue.shift()!;
+    const current = queue.shift();
+    if (!current) {
+      continue;
+    }
     const modelDef = modelDefMap.get(current);
     if (modelDef) {
       sorted.push(modelDef);

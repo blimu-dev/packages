@@ -1,20 +1,20 @@
 // Intermediate Representation types - language-agnostic representation of OpenAPI specs
 
 export enum IRSchemaKind {
-  Unknown = "unknown",
-  String = "string",
-  Number = "number",
-  Integer = "integer",
-  Boolean = "boolean",
-  Null = "null",
-  Array = "array",
-  Object = "object",
-  Enum = "enum",
-  Ref = "ref",
-  OneOf = "oneOf",
-  AnyOf = "anyOf",
-  AllOf = "allOf",
-  Not = "not",
+  Unknown = 'unknown',
+  String = 'string',
+  Number = 'number',
+  Integer = 'integer',
+  Boolean = 'boolean',
+  Null = 'null',
+  Array = 'array',
+  Object = 'object',
+  Enum = 'enum',
+  Ref = 'ref',
+  OneOf = 'oneOf',
+  AnyOf = 'anyOf',
+  AllOf = 'allOf',
+  Not = 'not',
 }
 
 export interface IROperation {
@@ -44,7 +44,7 @@ export interface IR {
   // ModelDefs holds a language-agnostic structured representation of components schemas
   modelDefs: IRModelDef[];
   // OpenAPI document used to generate this IR (optional, for saving spec to SDK package)
-  openApiDocument?: any; // OpenAPIDocument type, but using any to avoid circular dependency
+  openApiDocument?: unknown; // OpenAPIDocument type, but using unknown to avoid circular dependency
 }
 
 export interface IRParam {
@@ -70,7 +70,7 @@ export interface IRResponse {
   // Streaming support
   isStreaming: boolean;
   contentType: string;
-  streamingFormat?: "sse" | "ndjson" | "chunked";
+  streamingFormat?: 'sse' | 'ndjson' | 'chunked' | undefined;
 }
 
 // IRModel represents a generated model (legacy, kept for compatibility)
@@ -89,44 +89,44 @@ export interface IRModelDef {
 
 // IRAnnotations captures non-structural metadata that some generators may render.
 export interface IRAnnotations {
-  title?: string;
-  description?: string;
-  deprecated?: boolean;
-  readOnly?: boolean;
-  writeOnly?: boolean;
-  default?: any;
-  examples?: any[];
+  title?: string | undefined;
+  description?: string | undefined;
+  deprecated?: boolean | undefined;
+  readOnly?: boolean | undefined;
+  writeOnly?: boolean | undefined;
+  default?: unknown | undefined;
+  examples?: unknown[] | undefined;
 }
 
 // IRSchema models a JSON Schema (as used by OpenAPI 3.1) shape in a language-agnostic way
 export interface IRSchema {
   kind: IRSchemaKind;
   nullable: boolean;
-  format?: string;
+  format?: string | undefined;
 
   // Object
-  properties?: IRField[];
-  additionalProperties?: IRSchema; // typed maps; undefined when absent
+  properties?: IRField[] | undefined;
+  additionalProperties?: IRSchema | undefined; // typed maps; undefined when absent
 
   // Array
-  items?: IRSchema;
+  items?: IRSchema | undefined;
 
   // Enum
-  enumValues?: string[]; // stringified values for portability
-  enumRaw?: any[]; // original values preserving type where possible
-  enumBase?: IRSchemaKind; // underlying base kind: string, number, integer, boolean, unknown
+  enumValues?: string[] | undefined; // stringified values for portability
+  enumRaw?: unknown[] | undefined; // original values preserving type where possible
+  enumBase?: IRSchemaKind | undefined; // underlying base kind: string, number, integer, boolean, unknown
 
   // Ref (component name or canonical name)
   ref?: string;
 
   // Compositions
-  oneOf?: IRSchema[];
-  anyOf?: IRSchema[];
-  allOf?: IRSchema[];
-  not?: IRSchema;
+  oneOf?: IRSchema[] | undefined;
+  anyOf?: IRSchema[] | undefined;
+  allOf?: IRSchema[] | undefined;
+  not?: IRSchema | undefined;
 
   // Polymorphism
-  discriminator?: IRDiscriminator;
+  discriminator?: IRDiscriminator | undefined;
 }
 
 // IRField represents a field in an object schema
@@ -141,7 +141,7 @@ export interface IRField {
 // IRDiscriminator represents polymorphism discriminator information
 export interface IRDiscriminator {
   propertyName: string;
-  mapping?: Record<string, string>;
+  mapping?: Record<string, string> | undefined;
 }
 
 // IRSecurityScheme captures a simplified view of OpenAPI security schemes
@@ -154,9 +154,9 @@ export interface IRSecurityScheme {
   // Scheme is used when Type is http (e.g., "basic", "bearer")
   scheme?: string;
   // In is used when Type is apiKey (e.g., "header", "query", "cookie")
-  in?: string;
+  in?: string | undefined;
   // Name is used when Type is apiKey; it is the header/query/cookie name
-  name?: string;
+  name?: string | undefined;
   // BearerFormat may be provided for bearer tokens
-  bearerFormat?: string;
+  bearerFormat?: string | undefined;
 }

@@ -1,15 +1,15 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect } from 'vitest';
 import {
   parseSSEStream,
   parseNDJSONStream,
   parseChunkedStream,
-} from "../../src/streaming";
+} from '../../src/streaming';
 
-describe("parseSSEStream", () => {
-  it("should parse SSE stream", async () => {
-    const sseData = "data: message1\n\ndata: message2\n\n";
+describe('parseSSEStream', () => {
+  it('should parse SSE stream', async () => {
+    const sseData = 'data: message1\n\ndata: message2\n\n';
     const response = new Response(sseData, {
-      headers: { "Content-Type": "text/event-stream" },
+      headers: { 'Content-Type': 'text/event-stream' },
     });
 
     const chunks: string[] = [];
@@ -17,12 +17,12 @@ describe("parseSSEStream", () => {
       chunks.push(chunk);
     }
 
-    expect(chunks).toEqual(["message1", "message2"]);
+    expect(chunks).toEqual(['message1', 'message2']);
   });
 
-  it("should handle empty stream", async () => {
-    const response = new Response("", {
-      headers: { "Content-Type": "text/event-stream" },
+  it('should handle empty stream', async () => {
+    const response = new Response('', {
+      headers: { 'Content-Type': 'text/event-stream' },
     });
 
     const chunks: string[] = [];
@@ -34,14 +34,14 @@ describe("parseSSEStream", () => {
   });
 });
 
-describe("parseNDJSONStream", () => {
-  it("should parse NDJSON stream", async () => {
+describe('parseNDJSONStream', () => {
+  it('should parse NDJSON stream', async () => {
     const ndjsonData = '{"a":1}\n{"b":2}\n{"c":3}\n';
     const response = new Response(ndjsonData, {
-      headers: { "Content-Type": "application/x-ndjson" },
+      headers: { 'Content-Type': 'application/x-ndjson' },
     });
 
-    const chunks: any[] = [];
+    const chunks: unknown[] = [];
     for await (const chunk of parseNDJSONStream(response)) {
       chunks.push(chunk);
     }
@@ -49,13 +49,13 @@ describe("parseNDJSONStream", () => {
     expect(chunks).toEqual([{ a: 1 }, { b: 2 }, { c: 3 }]);
   });
 
-  it("should skip invalid JSON lines", async () => {
+  it('should skip invalid JSON lines', async () => {
     const ndjsonData = '{"a":1}\ninvalid\n{"b":2}\n';
     const response = new Response(ndjsonData, {
-      headers: { "Content-Type": "application/x-ndjson" },
+      headers: { 'Content-Type': 'application/x-ndjson' },
     });
 
-    const chunks: any[] = [];
+    const chunks: unknown[] = [];
     const consoleWarn = console.warn;
     console.warn = () => {}; // Suppress warnings in test
 
@@ -69,9 +69,9 @@ describe("parseNDJSONStream", () => {
   });
 });
 
-describe("parseChunkedStream", () => {
-  it("should parse chunked stream", async () => {
-    const textData = "chunk1chunk2chunk3";
+describe('parseChunkedStream', () => {
+  it('should parse chunked stream', async () => {
+    const textData = 'chunk1chunk2chunk3';
     const response = new Response(textData);
 
     const chunks: string[] = [];
@@ -80,6 +80,6 @@ describe("parseChunkedStream", () => {
     }
 
     expect(chunks.length).toBeGreaterThan(0);
-    expect(chunks.join("")).toBe(textData);
+    expect(chunks.join('')).toBe(textData);
   });
 });

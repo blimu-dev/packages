@@ -1,5 +1,5 @@
-import { RequestHandler } from "msw";
-import { setupServer } from "msw/node";
+import { RequestHandler } from 'msw';
+import { setupServer } from 'msw/node';
 
 // Global server instance - will be initialized by setup.ts
 let server: ReturnType<typeof setupServer> | null = null;
@@ -10,7 +10,7 @@ let server: ReturnType<typeof setupServer> | null = null;
 export function initMSWServer(): ReturnType<typeof setupServer> {
   if (!server) {
     server = setupServer();
-    server.listen({ onUnhandledRequest: "warn" });
+    server.listen({ onUnhandledRequest: 'warn' });
   }
   return server;
 }
@@ -25,7 +25,9 @@ export function getMSWServer(): ReturnType<typeof setupServer> | null {
 /**
  * Set the MSW server instance (used by setup.ts)
  */
-export function setMSWServer(instance: ReturnType<typeof setupServer> | null): void {
+export function setMSWServer(
+  instance: ReturnType<typeof setupServer> | null
+): void {
   server = instance;
 }
 

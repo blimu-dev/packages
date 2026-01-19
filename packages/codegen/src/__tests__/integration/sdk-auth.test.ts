@@ -8,9 +8,12 @@ import {
 import { setupMSW, teardownMSW, resetMSWHandlers } from './helpers/msw-setup';
 import { http, HttpResponse } from 'msw';
 
+import type { GeneratedSDKModule, SDKClient } from './helpers/sdk-generator';
+import { getClientConstructor, getService } from './helpers/sdk-generator';
+
 describe('Generated SDK - Authentication', () => {
   let sdkPath: string;
-  let SDK: any;
+  let SDK: GeneratedSDKModule;
 
   beforeAll(async () => {
     sdkPath = await generateTestSDK('test-api-3.0.json');
@@ -41,28 +44,39 @@ describe('Generated SDK - Authentication', () => {
 
   describe('Bearer Token Authentication', () => {
     it('should send Bearer token in Authorization header', async () => {
-      const client = new SDK.TestClient({
+      const TestClient = getClientConstructor(SDK, 'TestClient');
+      const client = new TestClient({
         baseURL: 'https://api.test.com/v1',
         bearerAuth: 'test-token-123',
       });
 
-      const result = await client.users.listUsers();
+      const users = getService<{ listUsers: () => Promise<unknown> }>(
+        client,
+        'users'
+      );
+      const result = await users.listUsers();
       expect(result).toBeDefined();
       expect(Array.isArray(result)).toBe(true);
     });
 
     it('should use bearerAuth function if provided', async () => {
-      const client = new SDK.TestClient({
+      const TestClient = getClientConstructor(SDK, 'TestClient');
+      const client: SDKClient = new TestClient({
         baseURL: 'https://api.test.com/v1',
         bearerAuth: () => 'bearer-function-token-123',
       });
 
-      const result = await client.users.listUsers();
+      const users = getService<{ listUsers: () => Promise<unknown> }>(
+        client,
+        'users'
+      );
+      const result = await users.listUsers();
       expect(result).toBeDefined();
     });
 
     it('should use bearerAuth async function if provided', async () => {
-      const client = new SDK.TestClient({
+      const TestClient = getClientConstructor(SDK, 'TestClient');
+      const client: SDKClient = new TestClient({
         baseURL: 'https://api.test.com/v1',
         bearerAuth: async () => {
           // Simulate async token retrieval
@@ -71,19 +85,28 @@ describe('Generated SDK - Authentication', () => {
         },
       });
 
-      const result = await client.users.listUsers();
+      const users = getService<{ listUsers: () => Promise<unknown> }>(
+        client,
+        'users'
+      );
+      const result = await users.listUsers();
       expect(result).toBeDefined();
     });
   });
 
   describe('API Key Authentication', () => {
     it('should send API key in header', async () => {
-      const client = new SDK.TestClient({
+      const TestClient = getClientConstructor(SDK, 'TestClient');
+      const client: SDKClient = new TestClient({
         baseURL: 'https://api.test.com/v1',
         apiKeyAuth: 'api-key-123',
       });
 
-      const result = await client.users.listUsers();
+      const users = getService<{ listUsers: () => Promise<unknown> }>(
+        client,
+        'users'
+      );
+      const result = await users.listUsers();
       expect(result).toBeDefined();
     });
   });
@@ -105,7 +128,8 @@ describe('Generated SDK - Authentication', () => {
         }),
       ]);
 
-      const client = new SDK.TestClient({
+      const TestClient = getClientConstructor(SDK, 'TestClient');
+      const client: SDKClient = new TestClient({
         baseURL: 'https://api.test.com/v1',
         basicAuth: {
           username: 'user',
@@ -113,7 +137,11 @@ describe('Generated SDK - Authentication', () => {
         },
       });
 
-      const result = await client.users.listUsers();
+      const users = getService<{ listUsers: () => Promise<unknown> }>(
+        client,
+        'users'
+      );
+      const result = await users.listUsers();
       expect(result).toBeDefined();
     });
   });
@@ -129,11 +157,16 @@ describe('Generated SDK - Authentication', () => {
         }),
       ]);
 
-      const client = new SDK.TestClient({
+      const TestClient = getClientConstructor(SDK, 'TestClient');
+      const client: SDKClient = new TestClient({
         baseURL: 'https://api.test.com/v1',
       });
 
-      await expect(client.users.listUsers()).rejects.toThrow();
+      const users = getService<{ listUsers: () => Promise<unknown> }>(
+        client,
+        'users'
+      );
+      await expect(users.listUsers()).rejects.toThrow();
     });
   });
 });

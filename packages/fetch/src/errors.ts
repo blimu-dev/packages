@@ -9,7 +9,7 @@ export class FetchError<T = unknown> extends Error {
     public readonly headers?: Headers
   ) {
     super(message);
-    this.name = "FetchError";
+    this.name = 'FetchError';
     // Maintains proper stack trace for where our error was thrown (only available on V8)
     if (Error.captureStackTrace) {
       Error.captureStackTrace(this, FetchError);
@@ -23,7 +23,7 @@ export class FetchError<T = unknown> extends Error {
 export class ClientError<T = unknown> extends FetchError<T> {
   constructor(message: string, status: number, data?: T, headers?: Headers) {
     super(message, status, data, headers);
-    this.name = "ClientError";
+    this.name = 'ClientError';
   }
 }
 
@@ -33,117 +33,117 @@ export class ClientError<T = unknown> extends FetchError<T> {
 export class ServerError<T = unknown> extends FetchError<T> {
   constructor(message: string, status: number, data?: T, headers?: Headers) {
     super(message, status, data, headers);
-    this.name = "ServerError";
+    this.name = 'ServerError';
   }
 }
 
 // 4xx Client Errors
 export class BadRequestError<T = unknown> extends ClientError<T> {
-  constructor(message: string = "Bad Request", data?: T, headers?: Headers) {
+  constructor(message: string = 'Bad Request', data?: T, headers?: Headers) {
     super(message, 400, data, headers);
-    this.name = "BadRequestError";
+    this.name = 'BadRequestError';
   }
 }
 
 export class UnauthorizedError<T = unknown> extends ClientError<T> {
-  constructor(message: string = "Unauthorized", data?: T, headers?: Headers) {
+  constructor(message: string = 'Unauthorized', data?: T, headers?: Headers) {
     super(message, 401, data, headers);
-    this.name = "UnauthorizedError";
+    this.name = 'UnauthorizedError';
   }
 }
 
 export class ForbiddenError<T = unknown> extends ClientError<T> {
-  constructor(message: string = "Forbidden", data?: T, headers?: Headers) {
+  constructor(message: string = 'Forbidden', data?: T, headers?: Headers) {
     super(message, 403, data, headers);
-    this.name = "ForbiddenError";
+    this.name = 'ForbiddenError';
   }
 }
 
 export class NotFoundError<T = unknown> extends ClientError<T> {
-  constructor(message: string = "Not Found", data?: T, headers?: Headers) {
+  constructor(message: string = 'Not Found', data?: T, headers?: Headers) {
     super(message, 404, data, headers);
-    this.name = "NotFoundError";
+    this.name = 'NotFoundError';
   }
 }
 
 export class MethodNotAllowedError<T = unknown> extends ClientError<T> {
   constructor(
-    message: string = "Method Not Allowed",
+    message: string = 'Method Not Allowed',
     data?: T,
     headers?: Headers
   ) {
     super(message, 405, data, headers);
-    this.name = "MethodNotAllowedError";
+    this.name = 'MethodNotAllowedError';
   }
 }
 
 export class ConflictError<T = unknown> extends ClientError<T> {
-  constructor(message: string = "Conflict", data?: T, headers?: Headers) {
+  constructor(message: string = 'Conflict', data?: T, headers?: Headers) {
     super(message, 409, data, headers);
-    this.name = "ConflictError";
+    this.name = 'ConflictError';
   }
 }
 
 export class UnprocessableEntityError<T = unknown> extends ClientError<T> {
   constructor(
-    message: string = "Unprocessable Entity",
+    message: string = 'Unprocessable Entity',
     data?: T,
     headers?: Headers
   ) {
     super(message, 422, data, headers);
-    this.name = "UnprocessableEntityError";
+    this.name = 'UnprocessableEntityError';
   }
 }
 
 export class TooManyRequestsError<T = unknown> extends ClientError<T> {
   constructor(
-    message: string = "Too Many Requests",
+    message: string = 'Too Many Requests',
     data?: T,
     headers?: Headers
   ) {
     super(message, 429, data, headers);
-    this.name = "TooManyRequestsError";
+    this.name = 'TooManyRequestsError';
   }
 }
 
 // 5xx Server Errors
 export class InternalServerError<T = unknown> extends ServerError<T> {
   constructor(
-    message: string = "Internal Server Error",
+    message: string = 'Internal Server Error',
     data?: T,
     headers?: Headers
   ) {
     super(message, 500, data, headers);
-    this.name = "InternalServerError";
+    this.name = 'InternalServerError';
   }
 }
 
 export class BadGatewayError<T = unknown> extends ServerError<T> {
-  constructor(message: string = "Bad Gateway", data?: T, headers?: Headers) {
+  constructor(message: string = 'Bad Gateway', data?: T, headers?: Headers) {
     super(message, 502, data, headers);
-    this.name = "BadGatewayError";
+    this.name = 'BadGatewayError';
   }
 }
 
 export class ServiceUnavailableError<T = unknown> extends ServerError<T> {
   constructor(
-    message: string = "Service Unavailable",
+    message: string = 'Service Unavailable',
     data?: T,
     headers?: Headers
   ) {
     super(message, 503, data, headers);
-    this.name = "ServiceUnavailableError";
+    this.name = 'ServiceUnavailableError';
   }
 }
 
 export class GatewayTimeoutError<T = unknown> extends ServerError<T> {
   constructor(
-    message: string = "Gateway Timeout",
+    message: string = 'Gateway Timeout',
     data?: T,
     headers?: Headers
   ) {
     super(message, 504, data, headers);
-    this.name = "GatewayTimeoutError";
+    this.name = 'GatewayTimeoutError';
   }
 }
 

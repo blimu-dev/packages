@@ -1,47 +1,48 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, assert } from 'vitest';
 import {
   transformSpecForTypes,
   findSimpleTypeSchemas,
-} from "../openapi-spec-transformer";
-import { ExtractedTypes } from "../type-extractor";
-import { OpenAPIDocument } from "../../openapi/openapi.types";
+} from '../openapi-spec-transformer';
+import type { ExtractedTypes } from '../type-extractor';
+import type { OpenAPIDocument } from '../../openapi/openapi.types';
+import type { OpenAPIV3 } from 'openapi-types';
 
-describe("openapi-spec-transformer", () => {
-  describe("transformSpecForTypes", () => {
-    it("should transform ResourceType from string to enum", () => {
+describe('openapi-spec-transformer', () => {
+  describe('transformSpecForTypes', () => {
+    it('should transform ResourceType from string to enum', () => {
       const spec: OpenAPIDocument = {
-        openapi: "3.0.0",
-        info: { title: "Test API", version: "1.0.0" },
+        openapi: '3.0.0',
+        info: { title: 'Test API', version: '1.0.0' },
         components: {
           schemas: {
             ResourceType: {
-              type: "string",
-              description: "Resource type",
+              type: 'string',
+              description: 'Resource type',
             },
           },
         },
       };
 
       const extractedTypes: ExtractedTypes = {
-        resourceTypes: ["workspace", "environment", "project"],
+        resourceTypes: ['workspace', 'environment', 'project'],
       };
 
       const transformed = transformSpecForTypes(spec, extractedTypes);
 
       expect(transformed.components?.schemas?.ResourceType).toMatchObject({
-        type: "string",
-        enum: ["workspace", "environment", "project"],
+        type: 'string',
+        enum: ['workspace', 'environment', 'project'],
       });
     });
 
-    it("should transform EntitlementType from string to enum", () => {
+    it('should transform EntitlementType from string to enum', () => {
       const spec: OpenAPIDocument = {
-        openapi: "3.0.0",
-        info: { title: "Test API", version: "1.0.0" },
+        openapi: '3.0.0',
+        info: { title: 'Test API', version: '1.0.0' },
         components: {
           schemas: {
             EntitlementType: {
-              type: "string",
+              type: 'string',
             },
           },
         },
@@ -49,103 +50,103 @@ describe("openapi-spec-transformer", () => {
 
       const extractedTypes: ExtractedTypes = {
         entitlementTypes: [
-          "workspace:read",
-          "workspace:create",
-          "environment:manage",
+          'workspace:read',
+          'workspace:create',
+          'environment:manage',
         ],
       };
 
       const transformed = transformSpecForTypes(spec, extractedTypes);
 
       expect(transformed.components?.schemas?.EntitlementType).toMatchObject({
-        type: "string",
-        enum: ["workspace:read", "workspace:create", "environment:manage"],
+        type: 'string',
+        enum: ['workspace:read', 'workspace:create', 'environment:manage'],
       });
     });
 
-    it("should transform PlanType from string to enum", () => {
+    it('should transform PlanType from string to enum', () => {
       const spec: OpenAPIDocument = {
-        openapi: "3.0.0",
-        info: { title: "Test API", version: "1.0.0" },
+        openapi: '3.0.0',
+        info: { title: 'Test API', version: '1.0.0' },
         components: {
           schemas: {
             PlanType: {
-              type: "string",
+              type: 'string',
             },
           },
         },
       };
 
       const extractedTypes: ExtractedTypes = {
-        planTypes: ["free", "pro", "enterprise"],
+        planTypes: ['free', 'pro', 'enterprise'],
       };
 
       const transformed = transformSpecForTypes(spec, extractedTypes);
 
       expect(transformed.components?.schemas?.PlanType).toMatchObject({
-        type: "string",
-        enum: ["free", "pro", "enterprise"],
+        type: 'string',
+        enum: ['free', 'pro', 'enterprise'],
       });
     });
 
-    it("should transform LimitType from string to enum", () => {
+    it('should transform LimitType from string to enum', () => {
       const spec: OpenAPIDocument = {
-        openapi: "3.0.0",
-        info: { title: "Test API", version: "1.0.0" },
+        openapi: '3.0.0',
+        info: { title: 'Test API', version: '1.0.0' },
         components: {
           schemas: {
             LimitType: {
-              type: "string",
+              type: 'string',
             },
           },
         },
       };
 
       const extractedTypes: ExtractedTypes = {
-        limitTypes: ["workspace_count", "project_count", "api_calls"],
+        limitTypes: ['workspace_count', 'project_count', 'api_calls'],
       };
 
       const transformed = transformSpecForTypes(spec, extractedTypes);
 
       expect(transformed.components?.schemas?.LimitType).toMatchObject({
-        type: "string",
-        enum: ["workspace_count", "project_count", "api_calls"],
+        type: 'string',
+        enum: ['workspace_count', 'project_count', 'api_calls'],
       });
     });
 
-    it("should transform UsageLimitType from string to enum", () => {
+    it('should transform UsageLimitType from string to enum', () => {
       const spec: OpenAPIDocument = {
-        openapi: "3.0.0",
-        info: { title: "Test API", version: "1.0.0" },
+        openapi: '3.0.0',
+        info: { title: 'Test API', version: '1.0.0' },
         components: {
           schemas: {
             UsageLimitType: {
-              type: "string",
+              type: 'string',
             },
           },
         },
       };
 
       const extractedTypes: ExtractedTypes = {
-        usageLimitTypes: ["api_calls", "storage"],
+        usageLimitTypes: ['api_calls', 'storage'],
       };
 
       const transformed = transformSpecForTypes(spec, extractedTypes);
 
       expect(transformed.components?.schemas?.UsageLimitType).toMatchObject({
-        type: "string",
-        enum: ["api_calls", "storage"],
+        type: 'string',
+        enum: ['api_calls', 'storage'],
       });
     });
 
-    it("should handle missing extracted types (no transformation)", () => {
+    it('should handle missing extracted types (no transformation)', () => {
       const spec: OpenAPIDocument = {
-        openapi: "3.0.0",
-        info: { title: "Test API", version: "1.0.0" },
+        openapi: '3.0.0',
+        info: { title: 'Test API', version: '1.0.0' },
         components: {
           schemas: {
             ResourceType: {
-              type: "string",
+              type: 'string',
             },
           },
         },
@@ -156,21 +157,22 @@ describe("openapi-spec-transformer", () => {
       const transformed = transformSpecForTypes(spec, extractedTypes);
 
       expect(transformed.components?.schemas?.ResourceType).toEqual({
-        type: "string",
+        type: 'string',
       });
       expect(
-        (transformed.components?.schemas?.ResourceType as any).enum
+        (transformed.components?.schemas?.ResourceType as { enum?: unknown[] })
+          .enum
       ).toBeUndefined();
     });
 
-    it("should handle missing components.schemas", () => {
-      const spec: OpenAPIDocument = {
-        openapi: "3.0.0",
-        info: { title: "Test API", version: "1.0.0" },
-      };
+    it('should handle missing components.schemas', () => {
+      const spec = {
+        openapi: '3.0.0',
+        info: { title: 'Test API', version: '1.0.0' },
+      } as OpenAPIDocument;
 
       const extractedTypes: ExtractedTypes = {
-        resourceTypes: ["workspace"],
+        resourceTypes: ['workspace'],
       };
 
       const transformed = transformSpecForTypes(spec, extractedTypes);
@@ -178,112 +180,104 @@ describe("openapi-spec-transformer", () => {
       expect(transformed.components).toBeUndefined();
     });
 
-    it("should not mutate original spec (deep copy)", () => {
+    it('should not mutate original spec (deep copy)', () => {
       const spec: OpenAPIDocument = {
-        openapi: "3.0.0",
-        info: { title: "Test API", version: "1.0.0" },
+        openapi: '3.0.0',
+        info: { title: 'Test API', version: '1.0.0' },
         components: {
           schemas: {
             ResourceType: {
-              type: "string",
+              type: 'string',
             },
           },
         },
       };
 
       const extractedTypes: ExtractedTypes = {
-        resourceTypes: ["workspace"],
+        resourceTypes: ['workspace'],
       };
 
       const transformed = transformSpecForTypes(spec, extractedTypes);
 
       // Original should not have enum
-      expect(
-        (spec.components?.schemas?.ResourceType as any).enum
-      ).toBeUndefined();
+      const originalSchema = spec.components?.schemas?.ResourceType;
+      if (originalSchema && !('$ref' in originalSchema)) {
+        expect(originalSchema.enum).toBeUndefined();
+      }
       // Transformed should have enum
-      expect(
-        (transformed.components?.schemas?.ResourceType as any).enum
-      ).toEqual(["workspace"]);
+      const transformedSchema = transformed.components?.schemas?.ResourceType;
+      assert(
+        transformedSchema !== undefined,
+        'ResourceType schema should exist'
+      );
+      assert(
+        !('$ref' in transformedSchema),
+        'ResourceType should not be a reference'
+      );
+      expect((transformedSchema as OpenAPIV3.SchemaObject).enum).toEqual([
+        'workspace',
+      ]);
     });
 
-    it("should transform number types (convert string values to numbers)", () => {
+    it('should transform number types (convert string values to numbers)', () => {
       const spec: OpenAPIDocument = {
-        openapi: "3.0.0",
-        info: { title: "Test API", version: "1.0.0" },
+        openapi: '3.0.0',
+        info: { title: 'Test API', version: '1.0.0' },
         components: {
           schemas: {
             LimitType: {
-              type: "number",
+              type: 'number',
             },
           },
         },
       };
 
       const extractedTypes: ExtractedTypes = {
-        limitTypes: ["1", "2", "3"],
+        limitTypes: ['1', '2', '3'],
       };
 
       const transformed = transformSpecForTypes(spec, extractedTypes);
 
       expect(transformed.components?.schemas?.LimitType).toMatchObject({
-        type: "number",
+        type: 'number',
         enum: [1, 2, 3],
       });
     });
 
-    it("should transform integer types (convert string values to integers)", () => {
+    it('should transform integer types (convert string values to integers)', () => {
       const spec: OpenAPIDocument = {
-        openapi: "3.0.0",
-        info: { title: "Test API", version: "1.0.0" },
+        openapi: '3.0.0',
+        info: { title: 'Test API', version: '1.0.0' },
         components: {
           schemas: {
             LimitType: {
-              type: "integer",
+              type: 'integer',
             },
           },
         },
       };
 
       const extractedTypes: ExtractedTypes = {
-        limitTypes: ["10", "20", "30"],
+        limitTypes: ['10', '20', '30'],
       };
 
       const transformed = transformSpecForTypes(spec, extractedTypes);
 
       expect(transformed.components?.schemas?.LimitType).toMatchObject({
-        type: "integer",
+        type: 'integer',
         enum: [10, 20, 30],
       });
     });
 
-    it("should transform boolean types (convert string values to booleans)", () => {
-      const spec: OpenAPIDocument = {
-        openapi: "3.0.0",
-        info: { title: "Test API", version: "1.0.0" },
-        components: {
-          schemas: {
-            FeatureFlag: {
-              type: "boolean",
-            },
-          },
-        },
-      };
-
-      const extractedTypes: ExtractedTypes = {
-        // Note: This is a hypothetical case - boolean types aren't typically used this way
-        // but we test the conversion logic
-        limitTypes: ["true", "false"],
-      };
-
+    it('should transform boolean types (convert string values to booleans)', () => {
       // We'll use a different type name for this test
       const specWithBoolean: OpenAPIDocument = {
-        openapi: "3.0.0",
-        info: { title: "Test API", version: "1.0.0" },
+        openapi: '3.0.0',
+        info: { title: 'Test API', version: '1.0.0' },
         components: {
           schemas: {
             FeatureFlag: {
-              type: "boolean",
+              type: 'boolean',
             },
           },
         },
@@ -292,50 +286,50 @@ describe("openapi-spec-transformer", () => {
       // Since we're testing boolean conversion, we need to manually set the mapping
       // In practice, this would be handled by the type mapping logic
       const transformed = transformSpecForTypes(specWithBoolean, {
-        limitTypes: ["true", "false"],
+        limitTypes: ['true', 'false'],
       });
 
       // The transformation won't apply to FeatureFlag since it's not in the type mappings
       // This test demonstrates the conversion logic exists for boolean types
       expect(transformed.components?.schemas?.FeatureFlag).toEqual({
-        type: "boolean",
+        type: 'boolean',
       });
     });
 
-    it("should not transform schema with $ref", () => {
+    it('should not transform schema with $ref', () => {
       const spec: OpenAPIDocument = {
-        openapi: "3.0.0",
-        info: { title: "Test API", version: "1.0.0" },
+        openapi: '3.0.0',
+        info: { title: 'Test API', version: '1.0.0' },
         components: {
           schemas: {
             ResourceType: {
-              $ref: "#/components/schemas/OtherType",
+              $ref: '#/components/schemas/OtherType',
             },
           },
         },
-      };
+      } as OpenAPIDocument;
 
       const extractedTypes: ExtractedTypes = {
-        resourceTypes: ["workspace"],
+        resourceTypes: ['workspace'],
       };
 
       const transformed = transformSpecForTypes(spec, extractedTypes);
 
       expect(transformed.components?.schemas?.ResourceType).toEqual({
-        $ref: "#/components/schemas/OtherType",
+        $ref: '#/components/schemas/OtherType',
       });
     });
 
     it("should not transform schema that's not a simple type", () => {
       const spec: OpenAPIDocument = {
-        openapi: "3.0.0",
-        info: { title: "Test API", version: "1.0.0" },
+        openapi: '3.0.0',
+        info: { title: 'Test API', version: '1.0.0' },
         components: {
           schemas: {
             ResourceType: {
-              type: "object",
+              type: 'object',
               properties: {
-                name: { type: "string" },
+                name: { type: 'string' },
               },
             },
           },
@@ -343,84 +337,89 @@ describe("openapi-spec-transformer", () => {
       };
 
       const extractedTypes: ExtractedTypes = {
-        resourceTypes: ["workspace"],
+        resourceTypes: ['workspace'],
       };
 
       const transformed = transformSpecForTypes(spec, extractedTypes);
 
       expect(transformed.components?.schemas?.ResourceType).toEqual({
-        type: "object",
+        type: 'object',
         properties: {
-          name: { type: "string" },
+          name: { type: 'string' },
         },
       });
     });
 
-    it("should transform multiple simple types in one spec", () => {
+    it('should transform multiple simple types in one spec', () => {
       const spec: OpenAPIDocument = {
-        openapi: "3.0.0",
-        info: { title: "Test API", version: "1.0.0" },
+        openapi: '3.0.0',
+        info: { title: 'Test API', version: '1.0.0' },
         components: {
           schemas: {
             ResourceType: {
-              type: "string",
+              type: 'string',
             },
             EntitlementType: {
-              type: "string",
+              type: 'string',
             },
             PlanType: {
-              type: "string",
+              type: 'string',
             },
           },
         },
       };
 
       const extractedTypes: ExtractedTypes = {
-        resourceTypes: ["workspace"],
-        entitlementTypes: ["workspace:read"],
-        planTypes: ["free"],
+        resourceTypes: ['workspace'],
+        entitlementTypes: ['workspace:read'],
+        planTypes: ['free'],
       };
 
       const transformed = transformSpecForTypes(spec, extractedTypes);
 
       expect(
-        (transformed.components?.schemas?.ResourceType as any).enum
-      ).toEqual(["workspace"]);
+        (transformed.components?.schemas?.ResourceType as { enum?: unknown[] })
+          .enum
+      ).toEqual(['workspace']);
       expect(
-        (transformed.components?.schemas?.EntitlementType as any).enum
-      ).toEqual(["workspace:read"]);
-      expect((transformed.components?.schemas?.PlanType as any).enum).toEqual([
-        "free",
-      ]);
+        (
+          transformed.components?.schemas?.EntitlementType as {
+            enum?: unknown[];
+          }
+        ).enum
+      ).toEqual(['workspace:read']);
+      expect(
+        (transformed.components?.schemas?.PlanType as { enum?: unknown[] }).enum
+      ).toEqual(['free']);
     });
   });
 
-  describe("findSimpleTypeSchemas", () => {
-    it("should find all simple type schemas in a spec", () => {
+  describe('findSimpleTypeSchemas', () => {
+    it('should find all simple type schemas in a spec', () => {
       const spec: OpenAPIDocument = {
-        openapi: "3.0.0",
-        info: { title: "Test API", version: "1.0.0" },
+        openapi: '3.0.0',
+        info: { title: 'Test API', version: '1.0.0' },
         components: {
           schemas: {
             ResourceType: {
-              type: "string",
+              type: 'string',
             },
             EntitlementType: {
-              type: "string",
+              type: 'string',
             },
             PlanType: {
-              type: "string",
+              type: 'string',
             },
             LimitType: {
-              type: "string",
+              type: 'string',
             },
             UsageLimitType: {
-              type: "string",
+              type: 'string',
             },
             ComplexType: {
-              type: "object",
+              type: 'object',
               properties: {
-                name: { type: "string" },
+                name: { type: 'string' },
               },
             },
           },
@@ -430,24 +429,24 @@ describe("openapi-spec-transformer", () => {
       const simpleTypes = findSimpleTypeSchemas(spec);
 
       expect(simpleTypes.size).toBe(5);
-      expect(simpleTypes.has("ResourceType")).toBe(true);
-      expect(simpleTypes.has("EntitlementType")).toBe(true);
-      expect(simpleTypes.has("PlanType")).toBe(true);
-      expect(simpleTypes.has("LimitType")).toBe(true);
-      expect(simpleTypes.has("UsageLimitType")).toBe(true);
-      expect(simpleTypes.has("ComplexType")).toBe(false);
+      expect(simpleTypes.has('ResourceType')).toBe(true);
+      expect(simpleTypes.has('EntitlementType')).toBe(true);
+      expect(simpleTypes.has('PlanType')).toBe(true);
+      expect(simpleTypes.has('LimitType')).toBe(true);
+      expect(simpleTypes.has('UsageLimitType')).toBe(true);
+      expect(simpleTypes.has('ComplexType')).toBe(false);
     });
 
-    it("should return empty map when no simple types exist", () => {
+    it('should return empty map when no simple types exist', () => {
       const spec: OpenAPIDocument = {
-        openapi: "3.0.0",
-        info: { title: "Test API", version: "1.0.0" },
+        openapi: '3.0.0',
+        info: { title: 'Test API', version: '1.0.0' },
         components: {
           schemas: {
             ComplexType: {
-              type: "object",
+              type: 'object',
               properties: {
-                name: { type: "string" },
+                name: { type: 'string' },
               },
             },
           },
@@ -459,41 +458,41 @@ describe("openapi-spec-transformer", () => {
       expect(simpleTypes.size).toBe(0);
     });
 
-    it("should handle missing components.schemas", () => {
+    it('should handle missing components.schemas', () => {
       const spec: OpenAPIDocument = {
-        openapi: "3.0.0",
-        info: { title: "Test API", version: "1.0.0" },
-      };
+        openapi: '3.0.0',
+        info: { title: 'Test API', version: '1.0.0' },
+      } as OpenAPIDocument;
 
       const simpleTypes = findSimpleTypeSchemas(spec);
 
       expect(simpleTypes.size).toBe(0);
     });
 
-    it("should only include known simple type names", () => {
+    it('should only include known simple type names', () => {
       const spec: OpenAPIDocument = {
-        openapi: "3.0.0",
-        info: { title: "Test API", version: "1.0.0" },
+        openapi: '3.0.0',
+        info: { title: 'Test API', version: '1.0.0' },
         components: {
           schemas: {
             ResourceType: {
-              type: "string",
+              type: 'string',
             },
             NumberType: {
-              type: "number",
+              type: 'number',
             },
             IntegerType: {
-              type: "integer",
+              type: 'integer',
             },
             BooleanType: {
-              type: "boolean",
+              type: 'boolean',
             },
             ArrayType: {
-              type: "array",
-              items: { type: "string" },
+              type: 'array',
+              items: { type: 'string' },
             },
             ObjectType: {
-              type: "object",
+              type: 'object',
             },
           },
         },
@@ -504,26 +503,26 @@ describe("openapi-spec-transformer", () => {
       // findSimpleTypeSchemas only looks for known type names (ResourceType, EntitlementType, etc.)
       // So it will only find ResourceType, not the other arbitrary types
       expect(simpleTypes.size).toBe(1);
-      expect(simpleTypes.has("ResourceType")).toBe(true);
-      expect(simpleTypes.has("NumberType")).toBe(false);
-      expect(simpleTypes.has("IntegerType")).toBe(false);
-      expect(simpleTypes.has("BooleanType")).toBe(false);
-      expect(simpleTypes.has("ArrayType")).toBe(false);
-      expect(simpleTypes.has("ObjectType")).toBe(false);
+      expect(simpleTypes.has('ResourceType')).toBe(true);
+      expect(simpleTypes.has('NumberType')).toBe(false);
+      expect(simpleTypes.has('IntegerType')).toBe(false);
+      expect(simpleTypes.has('BooleanType')).toBe(false);
+      expect(simpleTypes.has('ArrayType')).toBe(false);
+      expect(simpleTypes.has('ObjectType')).toBe(false);
     });
 
-    it("should not include schemas with $ref", () => {
+    it('should not include schemas with $ref', () => {
       const spec: OpenAPIDocument = {
-        openapi: "3.0.0",
-        info: { title: "Test API", version: "1.0.0" },
+        openapi: '3.0.0',
+        info: { title: 'Test API', version: '1.0.0' },
         components: {
           schemas: {
             ResourceType: {
-              $ref: "#/components/schemas/OtherType",
+              $ref: '#/components/schemas/OtherType',
             },
           },
         },
-      };
+      } as OpenAPIDocument;
 
       const simpleTypes = findSimpleTypeSchemas(spec);
 

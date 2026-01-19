@@ -4,13 +4,18 @@ import {
   importGeneratedSDK,
   cleanupTestSDK,
   typecheckGeneratedSDK,
+  type GeneratedSDKModule,
+  getClientConstructor,
+  getService,
+  type SDKClient,
+  type ServiceMethods,
 } from './helpers/sdk-generator';
 import { setupMSW, teardownMSW, resetMSWHandlers } from './helpers/msw-setup';
 import { http, HttpResponse } from 'msw';
 
 describe('Generated SDK - Error Handling', () => {
   let sdkPath: string;
-  let SDK: any;
+  let SDK: GeneratedSDKModule;
 
   beforeAll(async () => {
     sdkPath = await generateTestSDK('test-api-3.0.json');
@@ -35,20 +40,24 @@ describe('Generated SDK - Error Handling', () => {
         }),
       ]);
 
-      const client = new SDK.TestClient({
+      const TestClient = getClientConstructor(SDK, 'TestClient');
+      const client: SDKClient = new TestClient({
         baseURL: 'https://api.test.com/v1',
       });
 
       try {
-        await client.users.getUser('404');
+        const users = getService<ServiceMethods<'getUser'>>(client, 'users');
+        await users.getUser('404');
         expect.fail('Should have thrown an error');
-      } catch (error: any) {
+      } catch (error: unknown) {
         expect(error).toBeDefined();
         // FetchError or specific error types like NotFoundError extend FetchError
+        const fetchError = error as { name?: string; status?: number };
         expect(
-          error.name === 'FetchError' || error.name === 'NotFoundError'
+          fetchError.name === 'FetchError' ||
+            fetchError.name === 'NotFoundError'
         ).toBe(true);
-        expect(error.status).toBe(404);
+        expect(fetchError.status).toBe(404);
       }
     });
 
@@ -62,14 +71,16 @@ describe('Generated SDK - Error Handling', () => {
         }),
       ]);
 
-      const client = new SDK.TestClient({
+      const TestClient = getClientConstructor(SDK, 'TestClient');
+      const client: SDKClient = new TestClient({
         baseURL: 'https://api.test.com/v1',
       });
 
       try {
         // This endpoint might not exist in the generated SDK, so we'll test error structure differently
-        await expect(client.users.getUser('500')).rejects.toThrow();
-      } catch (error: any) {
+        const users = getService<ServiceMethods<'getUser'>>(client, 'users');
+        await expect(users.getUser('500')).rejects.toThrow();
+      } catch (error: unknown) {
         expect(error).toBeDefined();
       }
     });
@@ -90,17 +101,20 @@ describe('Generated SDK - Error Handling', () => {
         }),
       ]);
 
-      const client = new SDK.TestClient({
+      const TestClient = getClientConstructor(SDK, 'TestClient');
+      const client: SDKClient = new TestClient({
         baseURL: 'https://api.test.com/v1',
       });
 
       try {
-        await client.users.getUser('404');
+        const users = getService<ServiceMethods<'getUser'>>(client, 'users');
+        await users.getUser('404');
         expect.fail('Should have thrown an error');
-      } catch (error: any) {
+      } catch (error: unknown) {
         expect(error).toBeDefined();
-        expect(error.status).toBe(404);
-        expect(error.data).toBeDefined();
+        const fetchError = error as { status?: number; data?: unknown };
+        expect(fetchError.status).toBe(404);
+        expect(fetchError.data).toBeDefined();
       }
     });
   });
@@ -109,11 +123,13 @@ describe('Generated SDK - Error Handling', () => {
     it('should handle network errors', async () => {
       resetMSWHandlers([]); // No handlers = network error
 
-      const client = new SDK.TestClient({
+      const TestClient = getClientConstructor(SDK, 'TestClient');
+      const client: SDKClient = new TestClient({
         baseURL: 'https://api.test.com/v1',
       });
 
-      await expect(client.users.listUsers()).rejects.toThrow();
+      const users = getService<ServiceMethods<'listUsers'>>(client, 'users');
+      await expect(users.listUsers()).rejects.toThrow();
     });
   });
 
@@ -137,7 +153,8 @@ describe('Generated SDK - Error Handling', () => {
         }),
       ]);
 
-      const client = new SDK.TestClient({
+      const TestClient = getClientConstructor(SDK, 'TestClient');
+      const client: SDKClient = new TestClient({
         baseURL: 'https://api.test.com/v1',
         hooks: {
           onError: [onError],
@@ -145,14 +162,18 @@ describe('Generated SDK - Error Handling', () => {
       });
 
       try {
-        await client.users.getUser('404');
+        const users = getService<ServiceMethods<'getUser'>>(client, 'users');
+        await users.getUser('404');
         expect.fail('Should have thrown an error');
-      } catch (error) {
+      } catch {
         // Expected - onError hook is called before the error is thrown
       }
 
       expect(onError).toHaveBeenCalled();
-      const callArgs = onError.mock.calls[0][0];
+      const firstCall = onError.mock.calls[0];
+      expect(firstCall).toBeDefined();
+      const callArgs = firstCall?.[0];
+      expect(callArgs).toBeDefined();
       expect(callArgs).toHaveProperty('error');
       expect(callArgs).toHaveProperty('url');
     });

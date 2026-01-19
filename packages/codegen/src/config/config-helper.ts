@@ -1,4 +1,5 @@
-import { Config, ConfigSchema } from "./config.schema";
+import type { Config } from './config.schema';
+import { ConfigSchema } from './config.schema';
 
 /**
  * Helper function to define a codegen configuration with full TypeScript type inference and runtime validation.
