@@ -110,7 +110,7 @@ __metadata:
   resolution: "@blimu/codegen@workspace:packages/codegen"
   dependencies:
     "@apidevtools/swagger-parser": "npm:^12.1.0"
-    "@blimu/fetch": "npm:^0.3.0"
+    "@blimu/fetch": "npm:^0.4.0"
     "@nestjs/common": "npm:^11.1.12"
     "@nestjs/core": "npm:^11.1.12"
     "@swc/cli": "npm:^0.7.10"
@@ -136,7 +136,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@blimu/fetch@npm:^0.3.0, @blimu/fetch@workspace:packages/fetch":
+"@blimu/fetch@npm:^0.4.0, @blimu/fetch@workspace:packages/fetch":
   version: 0.0.0-use.local
   resolution: "@blimu/fetch@workspace:packages/fetch"
   dependencies:
