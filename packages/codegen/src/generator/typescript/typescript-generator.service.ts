@@ -109,7 +109,8 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
       // Generate .prettierrc config before formatting to ensure single quotes are used
       await this.generatePrettierConfig(client);
       this.logger.debug(
-        'Formatting generated TypeScript files with Prettier...'
+        'Formatting generated TypeScript files with Prettier...',
+        client.packageName
       );
       await formatWithPrettier(
         client.outDir,
@@ -117,7 +118,10 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
         this.logger
       );
     } else {
-      this.logger.debug('Code formatting is disabled for this client.');
+      this.logger.debug(
+        'Code formatting is disabled for this client.',
+        client.packageName
+      );
     }
   }
 
@@ -577,10 +581,10 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
     // 2. Fall back to default template resolution
     // Templates are now co-located with the generator
     // Try multiple possible template paths (handles both source and compiled locations)
-    // Note: When bundled by tsup, __dirname will be 'dist/generator/typescript', so we need to look for templates
-    // in dist/generator/typescript/templates/
+    // Note: When bundled by tsup, __dirname is 'dist' (root), so templates are in dist/generator/typescript/templates/
     const possiblePaths = [
-      path.join(__dirname, 'templates', templateName), // Source: src/generator/typescript/templates/ or Bundled: dist/generator/typescript/templates/
+      path.join(__dirname, 'generator/typescript/templates', templateName), // Bundled: when __dirname is 'dist', templates are in dist/generator/typescript/templates/
+      path.join(__dirname, 'templates', templateName), // Source: src/generator/typescript/templates/ (when __dirname is dist/generator/typescript)
       path.join(__dirname, '../typescript/templates', templateName), // Fallback for different bundling scenarios
       path.join(
         process.cwd(),

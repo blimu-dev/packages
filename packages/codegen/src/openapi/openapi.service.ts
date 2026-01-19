@@ -7,6 +7,7 @@ import {
   detectOpenAPIVersion,
   isSupportedVersion,
 } from './openapi-version.utils';
+import type { OpenAPI } from 'openapi-types';
 
 @Injectable()
 export class OpenApiService {
@@ -43,7 +44,7 @@ export class OpenApiService {
         }
 
         const documentText = await response.text();
-        let documentJson: unknown;
+        let documentJson: OpenAPI.Document;
 
         try {
           documentJson = JSON.parse(documentText);
@@ -57,13 +58,10 @@ export class OpenApiService {
         try {
           // SwaggerParser.parse accepts string | object and returns Promise<Document>
           // TypeScript's type definitions for SwaggerParser are complex, so we use type assertions
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const parsed = (await SwaggerParser.parse(
-            documentJson as any
-          )) as any;
+
+          const parsed = await SwaggerParser.parse(documentJson);
           // SwaggerParser.bundle accepts string | Document and returns Promise<Document>
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const bundled = (await SwaggerParser.bundle(parsed as any)) as any;
+          const bundled = await SwaggerParser.bundle(parsed);
           api = bundled as OpenAPIDocument;
 
           // Don't dereference - we want to preserve internal $ref pointers to component schemas
@@ -77,15 +75,11 @@ export class OpenApiService {
           this.logger.debug('Attempting dereference directly');
 
           // SwaggerParser.parse accepts string | object and returns Promise<Document>
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const parsed = (await SwaggerParser.parse(
-            documentJson as any
-          )) as any;
+
+          const parsed = await SwaggerParser.parse(documentJson);
           // SwaggerParser.dereference accepts string | Document and returns Promise<Document>
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const dereferenced = (await SwaggerParser.dereference(
-            parsed as any
-          )) as any;
+
+          const dereferenced = await SwaggerParser.dereference(parsed);
           api = dereferenced as OpenAPIDocument;
         }
       } else {

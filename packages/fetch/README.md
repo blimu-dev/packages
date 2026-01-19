@@ -449,7 +449,7 @@ type AuthStrategy =
 interface RequestOptions extends RequestInit {
   path: string;
   method: string;
-  query?: Record<string, any>;
+  query?: Record<string, any> | undefined;
 }
 
 interface StreamingRequestOptions extends RequestOptions {
