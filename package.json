@@ -30,9 +30,9 @@
     "test": "yarn workspaces foreach -A run test",
     "test:coverage": "yarn workspaces foreach -A run test:coverage",
     "changeset": "changeset",
-    "changeset:version": "changeset version",
+    "changeset:version": "changeset version && yarn install",
     "changeset:publish": "changeset publish",
-    "version-packages": "changeset version",
+    "version-packages": "changeset version && yarn install",
     "release": "yarn build && changeset publish",
     "prepare": "husky"
   },
