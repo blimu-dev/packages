@@ -1,5 +1,12 @@
 # @blimu/fetch
 
+## 0.4.0
+
+### Minor Changes
+
+- fedf7cd: ### Improvements
+  - Improved request utility handling
+
 ## 0.3.0
 
 ### Minor Changes

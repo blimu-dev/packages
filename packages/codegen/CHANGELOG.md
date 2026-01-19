@@ -1,5 +1,14 @@
 # @blimu/codegen
 
+## 0.5.0
+
+### Minor Changes
+
+- fedf7cd: ### Improvements
+  - Enhanced type handling in codegen helpers
+  - Improved template compatibility
+  - Added additional test coverage
+
 ## 0.4.1
 
 ### Patch Changes
