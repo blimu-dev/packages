@@ -46,7 +46,7 @@
   "devDependencies": {
     "@blimu/fetch": "^0.4.0",
     "@swc/cli": "^0.7.10",
-    "@swc/core": "^1.15.8",
+    "@swc/core": "^1.15.10",
     "@types/handlebars": "^4.1.0",
     "@types/inquirer": "^9.0.9",
     "@types/node": "^25.0.9",
@@ -66,7 +66,7 @@
   },
   "packageManager": "yarn@4.12.0",
   "volta": {
-    "node": "25.2.1",
+    "node": "25.4.0",
     "yarn": "4.12.0"
   }
 }

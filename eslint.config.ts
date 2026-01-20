@@ -26,6 +26,17 @@ export default defineConfig(
       ],
       '@typescript-eslint/explicit-module-boundary-types': 'error',
       '@typescript-eslint/no-non-null-assertion': 'warn',
+      '@typescript-eslint/consistent-type-imports': [
+        'error',
+        {
+          prefer: 'type-imports',
+          fixStyle: 'separate-type-imports',
+          // Allow regular imports for classes used in constructor parameters
+          // This is necessary for NestJS dependency injection which requires
+          // runtime class references for decorator metadata
+          disallowTypeAnnotations: false,
+        },
+      ],
     },
   },
   {
@@ -42,5 +53,23 @@ export default defineConfig(
       '**/generated-sdk/**',
       '**/.lintstagedrc.json',
     ],
+  },
+  {
+    // Disable consistent-type-imports for NestJS services and controllers
+    // These files need regular imports for constructor dependency injection
+    // to work properly with decorator metadata
+    files: [
+      '**/*.controller.ts',
+      '**/*.decorator.ts',
+      '**/*.service.ts',
+      '**/*.module.ts',
+      '**/*.guard.ts',
+      '**/*.interceptor.ts',
+      '**/*.filter.ts',
+      '**/*.command.ts',
+    ],
+    rules: {
+      '@typescript-eslint/consistent-type-imports': 'off',
+    },
   }
 );
