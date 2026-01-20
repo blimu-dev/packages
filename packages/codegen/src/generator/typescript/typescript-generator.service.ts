@@ -978,7 +978,7 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
       const content = `import { defineConfig } from "tsup";
 
 export default defineConfig({
-  entry: ["${srcDir}/**/*.ts"],
+  entry: ["${srcDir}/index.ts"],
   format: ["cjs", "esm"],
   dts: {
     resolve: true,

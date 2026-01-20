@@ -19,7 +19,7 @@
   ],
   "scripts": {
     "build": "yarn build:codegen && yarn build:others",
-    "build:codegen": "yarn workspace @blimu/codegen build",
+    "build:codegen": "yarn workspace @blimu/codegen build && yarn workspace @blimu/codegen-nestjs build",
     "build:others": "yarn workspace @blimu/fetch build",
     "typecheck": "yarn workspaces foreach -A run typecheck",
     "lint": "eslint .",

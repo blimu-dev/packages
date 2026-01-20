@@ -105,7 +105,22 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@blimu/codegen@workspace:packages/codegen":
+"@blimu/codegen-nestjs@workspace:packages/codegen-nestjs":
+  version: 0.0.0-use.local
+  resolution: "@blimu/codegen-nestjs@workspace:packages/codegen-nestjs"
+  dependencies:
+    "@blimu/codegen": "workspace:*"
+    "@nestjs/common": "npm:^11.1.12"
+    reflect-metadata: "npm:^0.2.2"
+    rxjs: "npm:^7.8.2"
+    tsup: "npm:^8.5.1"
+    typescript: "npm:^5.9.3"
+  peerDependencies:
+    "@nestjs/common": ">=10.0.0"
+  languageName: unknown
+  linkType: soft
+
+"@blimu/codegen@workspace:*, @blimu/codegen@workspace:packages/codegen":
   version: 0.0.0-use.local
   resolution: "@blimu/codegen@workspace:packages/codegen"
   dependencies:

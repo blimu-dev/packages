@@ -1,6 +1,6 @@
-import { FetchClient } from '@blimu/fetch';
+import type { FetchClient } from '@blimu/fetch';
 {{#if (serviceUsesSchema Service)}}
-import * as Schema from "../schema";
+import type * as Schema from "../schema";
 {{/if}}
 {{#if Client.includeQueryKeys}}
 {{#if (hasAnyOptionalQueryKeyParams Service)}}

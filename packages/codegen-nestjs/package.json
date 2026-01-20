@@ -1,0 +1,61 @@
+{
+  "name": "@blimu/codegen-nestjs",
+  "version": "0.0.1",
+  "description": "NestJS module for generating type-safe SDKs from OpenAPI specifications",
+  "repository": "https://github.com/blimu-dev/packages",
+  "author": "viniciusdacal",
+  "license": "MIT",
+  "keywords": [
+    "nestjs",
+    "openapi",
+    "codegen",
+    "sdk",
+    "typescript",
+    "api-client"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.mjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "yarn build"
+  },
+  "dependencies": {
+    "@blimu/codegen": "workspace:*"
+  },
+  "peerDependencies": {
+    "@nestjs/common": ">=10.0.0"
+  },
+  "devDependencies": {
+    "@nestjs/common": "^11.1.12",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "packageManager": "yarn@4.12.0",
+  "volta": {
+    "extends": "../../package.json"
+  }
+}
