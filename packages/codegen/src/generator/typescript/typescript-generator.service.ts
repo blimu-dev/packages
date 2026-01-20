@@ -414,7 +414,7 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
       'getAllDependencies',
       (client: TypeScriptClient) => {
         const deps: Record<string, string> = {
-          '@blimu/fetch': '^0.2.0', // Always include @blimu/fetch (the generated client extends FetchClient)
+          '@blimu/fetch': '^0.4.0', // Always include @blimu/fetch (the generated client extends FetchClient)
           zod: '^4.3.5', // Always include zod
         };
 

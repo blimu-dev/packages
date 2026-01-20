@@ -1,7 +1,12 @@
 import { defineConfig } from "tsup";
 
 export default defineConfig({
-  entry: ["{{Client.srcDir}}/index.ts"],
+  entry: {
+    index: "{{Client.srcDir}}/index.ts",
+    schema: "{{Client.srcDir}}/schema.ts",
+    client: "{{Client.srcDir}}/client.ts",
+    utils: "{{Client.srcDir}}/utils.ts",
+  },
   format: ["cjs", "esm"],
   dts: true,
   splitting: false,
