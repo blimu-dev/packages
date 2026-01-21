@@ -1,5 +1,11 @@
 # @blimu/codegen
 
+## 0.5.2
+
+### Patch Changes
+
+- de6076a: Patch release: replace-workspace-deps script, release workflow, and related tooling
+
 ## 0.5.1
 
 ### Patch Changes

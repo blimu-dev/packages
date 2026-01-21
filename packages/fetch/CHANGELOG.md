@@ -1,5 +1,11 @@
 # @blimu/fetch
 
+## 0.4.1
+
+### Patch Changes
+
+- de6076a: Patch release: replace-workspace-deps script, release workflow, and related tooling
+
 ## 0.4.0
 
 ### Minor Changes
