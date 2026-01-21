@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import type { PathLike } from 'fs';
 import { TypeScriptGeneratorService } from '../typescript-generator.service';
-import { ConfigService } from '../../../config/config.service';
+import type { ConfigService } from '../../../config/config.service';
 import type { TypeScriptClient } from '../../../config/config.schema';
 import type { IR } from '../../../ir/ir.types';
 

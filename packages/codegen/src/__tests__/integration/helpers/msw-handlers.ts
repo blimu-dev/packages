@@ -1,4 +1,5 @@
-import { http, HttpResponse, RequestHandler } from 'msw';
+import type { RequestHandler } from 'msw';
+import { http, HttpResponse } from 'msw';
 
 const BASE_URL = 'https://api.test.com/v1';
 

@@ -86,8 +86,9 @@ describe('Generated SDK - Custom srcDir', () => {
       expect(fs.existsSync(tsupConfigPath)).toBe(true);
 
       const tsupConfig = fs.readFileSync(tsupConfigPath, 'utf-8');
-      // Prettier formats with single quotes, so check for that
-      expect(tsupConfig).toContain("entry: ['src/sdk/index.ts']");
+      // Template uses explicit entry points; verify custom srcDir is applied
+      expect(tsupConfig).toContain("'src/sdk/index.ts'");
+      expect(tsupConfig).toContain("'src/sdk/client.ts'");
     });
 
     it('should have correct package.json with custom srcDir', () => {
