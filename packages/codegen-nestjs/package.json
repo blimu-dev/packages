@@ -1,6 +1,6 @@
 {
   "name": "@blimu/codegen-nestjs",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "NestJS module for generating type-safe SDKs from OpenAPI specifications",
   "repository": "https://github.com/blimu-dev/packages",
   "author": "viniciusdacal",
