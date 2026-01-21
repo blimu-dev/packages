@@ -12,5 +12,11 @@ export default defineConfig({
   outExtension({ format }) {
     return format === 'esm' ? { js: '.mjs' } : { js: '.cjs' };
   },
-  external: ['@nestjs/common', '@nestjs/core', 'reflect-metadata', 'rxjs'],
+  external: [
+    '@blimu/codegen',
+    '@nestjs/common',
+    '@nestjs/core',
+    'reflect-metadata',
+    'rxjs',
+  ],
 });
