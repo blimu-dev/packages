@@ -1,0 +1,65 @@
+{
+  "name": "@blimu/nestjs-env",
+  "version": "0.0.1",
+  "description": "Type-safe environment variable management for NestJS using Zod schemas",
+  "repository": "https://github.com/blimu-dev/packages",
+  "author": "viniciusdacal",
+  "license": "MIT",
+  "keywords": [
+    "nestjs",
+    "environment",
+    "variables",
+    "zod",
+    "validation",
+    "typescript",
+    "config",
+    "env"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.mjs"
+    }
+  },
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit",
+    "test": "echo \"No tests yet\" && exit 0",
+    "prepublishOnly": "yarn build"
+  },
+  "peerDependencies": {
+    "@nestjs/common": ">=11.0.0",
+    "@nestjs/config": "^4.0.2",
+    "zod": "^3.0.0"
+  },
+  "devDependencies": {
+    "@nestjs/common": "^11.1.12",
+    "@nestjs/config": "^4.0.2",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3",
+    "zod": "^4.3.5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "packageManager": "yarn@4.12.0",
+  "volta": {
+    "extends": "../../package.json"
+  }
+}
