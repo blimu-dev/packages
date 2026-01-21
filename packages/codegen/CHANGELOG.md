@@ -1,5 +1,11 @@
 # @blimu/codegen
 
+## 0.5.1
+
+### Patch Changes
+
+- 6a1395e: Fix tsup.config template to use explicit entry points instead of glob pattern for better build output
+
 ## 0.5.0
 
 ### Minor Changes
