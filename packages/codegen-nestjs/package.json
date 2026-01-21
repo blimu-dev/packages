@@ -35,8 +35,7 @@
   "scripts": {
     "build": "tsup",
     "clean": "rm -rf dist",
-    "typecheck": "tsc --noEmit",
-    "prepublishOnly": "yarn build"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@blimu/codegen": "workspace:*"
