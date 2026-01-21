@@ -52,6 +52,7 @@ export default defineConfig(
       '**/.tests/**',
       '**/generated-sdk/**',
       '**/.lintstagedrc.json',
+      'scripts/**',
     ],
   },
   {

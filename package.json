@@ -31,7 +31,8 @@
     "test:coverage": "yarn workspaces foreach -A run test:coverage",
     "changeset": "changeset",
     "changeset:version": "changeset version && yarn install",
-    "changeset:publish": "changeset publish",
+    "changeset:publish": "yarn replace-workspace-deps && changeset publish",
+    "replace-workspace-deps": "node scripts/replace-workspace-deps.js",
     "version-packages": "changeset version && yarn install",
     "release": "yarn build && changeset publish",
     "prepare": "husky"
