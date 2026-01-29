@@ -5,9 +5,7 @@
 ### Patch Changes
 
 - 88cd5a2: Patch release: replace-workspace-deps script, release workflow, and related tooling
-- Patch release
 - Updated dependencies [88cd5a2]
-- Updated dependencies
   - @blimu/codegen@0.5.2
 
 ## 0.0.3
