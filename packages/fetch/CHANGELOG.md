@@ -1,5 +1,11 @@
 # @blimu/fetch
 
+## 0.4.2
+
+### Patch Changes
+
+- 8e06086: Patch release
+
 ## 0.4.1
 
 ### Patch Changes

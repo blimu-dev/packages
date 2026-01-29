@@ -1,5 +1,11 @@
 # @blimu/codegen
 
+## 0.5.3
+
+### Patch Changes
+
+- 8e06086: Patch release
+
 ## 0.5.2
 
 ### Patch Changes

@@ -1,6 +1,6 @@
 {
   "name": "@blimu/codegen",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "publisher": "blimu-dev",
   "description": "Generate type-safe SDKs from OpenAPI specifications",
   "repository": "https://github.com/blimu-dev/packages",
@@ -44,7 +44,7 @@
     "zod": ">=4.3.0"
   },
   "devDependencies": {
-    "@blimu/fetch": "^0.4.1",
+    "@blimu/fetch": "^0.4.2",
     "@swc/cli": "^0.7.10",
     "@swc/core": "^1.15.11",
     "@types/handlebars": "^4.1.0",
