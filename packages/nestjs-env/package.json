@@ -1,6 +1,6 @@
 {
   "name": "@blimu/nestjs-env",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Type-safe environment variable management for NestJS using Zod schemas",
   "repository": "https://github.com/blimu-dev/packages",
   "author": "viniciusdacal",
