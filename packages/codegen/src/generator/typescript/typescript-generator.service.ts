@@ -638,8 +638,7 @@ export class TypeScriptGeneratorService implements Generator<TypeScriptClient> {
 
         break;
       } catch {
-        this.logger.debug(`Template not found at: ${possiblePath}`);
-        // Continue to next path
+        // Continue to next path; only log if none succeed
       }
     }
 
