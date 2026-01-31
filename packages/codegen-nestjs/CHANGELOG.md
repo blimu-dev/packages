@@ -1,5 +1,12 @@
 # @blimu/codegen-nestjs
 
+## 0.0.6
+
+### Patch Changes
+
+- Updated dependencies [4d7f6db]
+  - @blimu/codegen@0.5.4
+
 ## 0.0.5
 
 ### Patch Changes
