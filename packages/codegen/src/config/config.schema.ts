@@ -51,6 +51,8 @@ const BaseClientSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   includeTags: z.array(z.string()).optional(),
   excludeTags: z.array(z.string()).optional(),
+  // Component schema names to always include in the SDK even if no operation references them (e.g. OAuthAccessTokenPayload)
+  alwaysIncludeSchemas: z.array(z.string()).optional(),
   // OperationIDParser is an optional function to transform operationId to a method name.
   // Function signature: (operationId: string, method: string, path: string) => string | Promise<string>
   // Note: Zod doesn't validate function signatures at runtime, but TypeScript will enforce the type

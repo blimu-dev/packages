@@ -72,7 +72,7 @@ export class IrBuilderService {
       }
     }
 
-    // Filter ModelDefs to only include those referenced by filtered operations
+    // Filter ModelDefs to only include those referenced by filtered operations (plus alwaysIncludeSchemas)
     const filteredIR: IR = {
       services: filteredServices,
       models: fullIR.models,
@@ -82,7 +82,8 @@ export class IrBuilderService {
     };
     filteredIR.modelDefs = this.filterUnusedModelDefs(
       filteredIR,
-      fullIR.modelDefs
+      fullIR.modelDefs,
+      client.alwaysIncludeSchemas
     );
 
     return filteredIR;
@@ -1178,11 +1179,13 @@ export class IrBuilderService {
   }
 
   /**
-   * Filter unused ModelDefs
+   * Filter unused ModelDefs.
+   * Keeps model defs that are referenced by filtered operations (transitively) or listed in alwaysIncludeNames.
    */
   private filterUnusedModelDefs(
     filteredIR: IR,
-    allModelDefs: IRModelDef[]
+    allModelDefs: IRModelDef[],
+    alwaysIncludeNames?: string[]
   ): IRModelDef[] {
     // Build a map of all ModelDefs for quick lookup
     const modelDefMap = new Map<string, IRModelDef>();
@@ -1259,7 +1262,13 @@ export class IrBuilderService {
       }
     }
 
-    // Filter ModelDefs to only include referenced ones
-    return allModelDefs.filter((md) => referenced.has(md.name));
+    // Filter ModelDefs to only include referenced ones (or always-include names)
+    const alwaysSet =
+      alwaysIncludeNames && alwaysIncludeNames.length > 0
+        ? new Set(alwaysIncludeNames)
+        : null;
+    return allModelDefs.filter(
+      (md) => referenced.has(md.name) || (alwaysSet?.has(md.name) ?? false)
+    );
   }
 }

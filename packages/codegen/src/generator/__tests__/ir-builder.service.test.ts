@@ -471,6 +471,63 @@ describe('IrBuilderService', () => {
       expect(modelNames).toContain('User');
       expect(modelNames).not.toContain('UnusedModel');
     });
+
+    it('should keep model definitions listed in alwaysIncludeSchemas even when unused by operations', () => {
+      const doc = createMockOpenAPI30Document({
+        paths: {
+          '/users': {
+            get: {
+              operationId: 'listUsers',
+              tags: ['users'],
+              responses: {
+                '200': {
+                  description: 'OK',
+                  content: {
+                    'application/json': {
+                      schema: {
+                        $ref: '#/components/schemas/User',
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        components: {
+          schemas: {
+            User: {
+              type: 'object',
+              properties: {
+                id: { type: 'string' },
+              },
+            },
+            UnusedModel: {
+              type: 'object',
+              properties: {
+                value: { type: 'string' },
+              },
+            },
+          },
+        },
+      });
+
+      const fullIR = service.buildIR(doc);
+      const client: Client = {
+        type: 'typescript',
+        outDir: './test',
+        packageName: 'test',
+        name: 'TestClient',
+        includeTags: ['users'],
+        alwaysIncludeSchemas: ['UnusedModel'],
+      };
+
+      const filteredIR = service.filterIR(fullIR, client);
+
+      const modelNames = filteredIR.modelDefs.map((m) => m.name);
+      expect(modelNames).toContain('User');
+      expect(modelNames).toContain('UnusedModel');
+    });
   });
 
   describe('buildStructuredModels', () => {
