@@ -1,5 +1,11 @@
 # @blimu/codegen
 
+## 0.5.4
+
+### Patch Changes
+
+- 4d7f6db: Add `alwaysIncludeSchemas` client option so component schemas that are not referenced by any operation (e.g. `OAuthAccessTokenPayload`) are still included in the generated SDK. This allows API specs to expose types for documentation and SDK consumers without attaching them to an endpoint.
+
 ## 0.5.3
 
 ### Patch Changes
